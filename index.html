@@ -213,6 +213,8 @@ dialog::backdrop { background: rgb(10 14 10 / .45); }
   .mix-p { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+.imp-res { margin-top: 6px; font-size: 12.5px; font-weight: 600; }
+.imp-res.ok { color: var(--bom); } .imp-res.erro { color: var(--ruim); overflow-wrap: anywhere; } .imp-res.andamento { color: var(--ink-2); }
 
 </style>
 </head>
@@ -325,7 +327,6 @@ dialog::backdrop { background: rgb(10 14 10 / .45); }
 <script>
 window.FT_CONFIG = {
   SUPABASE_URL: 'https://wncpvwvaxqwdsunejyum.supabase.co',
-  // >>> sb_publishable_u3NQhe2kReI0vtmMGwP9_w_puw3FCQ9 (Supabase > Project Settings > API Keys) entre as aspas <<<
   SUPABASE_ANON_KEY: 'sb_publishable_u3NQhe2kReI0vtmMGwP9_w_puw3FCQ9'
 };
 </script>
@@ -707,7 +708,7 @@ window.FT_CONFIG = {
       m.mo.dias = Object.keys(diasMO).length;
       m.mo.diasComVenda = Object.keys(dias).filter(function (d) { return diasMO[d]; }).length;
       m.mo.temDados = m.mo.dias > 0;
-      m.mo.completo = m.mo.temDados && m.mo.diasComVenda >= m.diasComVenda;
+      m.mo.completo = m.mo.temDados && m.diasComVenda > 0 && m.mo.diasComVenda >= m.diasComVenda;
       m.mo.total = m.mo.diariaEquipe + m.mo.diariaMoto + m.mo.dezEquipe + m.mo.entregaMoto;
       // % do custo de mão de obra sobre o faturamento líquido dos MESMOS dias cobertos pela planilha
       let fatDiasMO = 0;
@@ -861,7 +862,7 @@ window.FT_CONFIG = {
 
   function kpis(m, p) {
     const pv = p.temVendas, pn = p.nomeCurto;
-    const moNota = m.mo.temDados ? (m.mo.completo ? 'mês completo' : m.semanasComMO + ' de ' + m.semanasComVenda + ' semanas com planilha') : 'nenhuma planilha de diárias no mês';
+    const moNota = m.mo.temDados && !m.temVendas ? 'as vendas deste mês ainda não foram importadas' : m.mo.temDados ? (m.mo.completo ? 'mês completo' : m.semanasComMO + ' de ' + m.semanasComVenda + ' semanas com planilha') : 'nenhuma planilha de diárias no mês';
     const pMo = p.mo.temDados && p.mo.completo && m.mo.completo;
     const tiles = [
       { t: 'Faturamento bruto', v: fmt(m.bruto), d: delta(m.bruto, pv ? p.bruto : null, false, pn), destaque: true },
@@ -1117,24 +1118,56 @@ window.FT_CONFIG = {
     const sel = Array.from(document.querySelectorAll('#imp-lista input:checked')).map(function (c) { return estado.achados[+c.dataset.i]; });
     if (!sel.length) return;
     const btn = $('#imp-salvar'); btn.disabled = true; btn.textContent = 'Salvando…';
-    try {
-      for (const a of sel) {
-        if (estado.modo === 'previa') mesclarNaMemoria(a);
-        else {
-          const fn = a.tipo === 'vendas' ? 'importar_vendas' : 'importar_mao_obra';
-          const itens = a.itens.map(function (x) { const y = Object.assign({}, x); delete y.bruto; return y; });
-          const r = await estado.sb.rpc(fn, { p_inicio: a.inicio, p_fim: a.fim, p_arquivo: a.arquivo + ' / ' + a.aba, p_itens: itens });
+    $('#imp-msg').textContent = '';
+    const marcar = function (a, txt, cls) {
+      const cb = document.getElementById('imp-' + estado.achados.indexOf(a));
+      const li = cb && cb.closest('li'); if (!li) return;
+      let s = li.querySelector('.imp-res');
+      if (!s) { s = document.createElement('div'); s.className = 'imp-res'; li.appendChild(s); }
+      s.className = 'imp-res ' + cls; s.textContent = txt;
+    };
+    const textoErro = function (e) {
+      return [e && e.message, e && e.details, e && e.hint, e && e.code ? 'código ' + e.code : ''].filter(Boolean).join(' · ') || String(e);
+    };
+    let falhas = 0;
+    for (const a of sel) {
+      const nome = a.tipo === 'vendas' ? 'Vendas' : 'Diárias e 10%';
+      try {
+        if (estado.modo === 'previa') { mesclarNaMemoria(a); marcar(a, '✓ ' + nome + ' carregado na prévia', 'ok'); continue; }
+        // envia em lotes de 800 linhas para não estourar o limite de tamanho do envio
+        const itens = a.itens.map(function (x) { const y = Object.assign({}, x); delete y.bruto; return y; });
+        const LOTE = 800;
+        const tabelaDestino = a.tipo === 'vendas' ? 'vendas_itens' : 'mao_obra_lancamentos';
+        for (let i = 0; i < itens.length; i += LOTE) {
+          const parte = itens.slice(i, i + LOTE);
+          marcar(a, 'Enviando ' + nome.toLowerCase() + '… ' + Math.min(i + LOTE, itens.length) + ' de ' + itens.length + ' linhas', 'andamento');
+          let r;
+          if (i === 0) {
+            // 1º lote: apaga o período do arquivo e grava
+            r = await estado.sb.rpc(a.tipo === 'vendas' ? 'importar_vendas' : 'importar_mao_obra',
+              { p_inicio: a.inicio, p_fim: a.fim, p_arquivo: a.arquivo + ' / ' + a.aba, p_itens: parte });
+          } else {
+            r = await estado.sb.from(tabelaDestino).insert(parte);
+          }
           if (r.error) throw r.error;
         }
+        marcar(a, '✓ ' + nome + ' salvo: ' + fInt.format(itens.length) + ' linhas de ' + dataBR(a.inicio) + ' a ' + dataBR(a.fim), 'ok');
+      } catch (e) {
+        falhas++;
+        console.error('Falha ao importar', a.arquivo, e);
+        marcar(a, '✗ Não salvou: ' + textoErro(e), 'erro');
       }
+    }
+    btn.textContent = 'Importar selecionadas'; atualizarBotaoSalvar();
+    if (estado.modo === 'previa') { estado.dados.atualizadoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + ' (prévia, não salvo)'; render(); }
+    else { try { await carregarSupabase(); } catch (e) { erroCarga(e); } }
+    if (falhas) {
+      $('#imp-msg').textContent = falhas + ' item(ns) não foram salvos. Veja o motivo em vermelho acima e mande um print se precisar de ajuda.';
+    } else {
       $('#dlg-importar').close();
-      if (estado.modo === 'previa') { estado.dados.atualizadoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + ' (prévia, não salvo)'; render(); }
-      else await carregarSupabase();
-      status('Planilhas importadas.');
-      setTimeout(function () { status(''); }, 3500);
-    } catch (e) {
-      $('#imp-msg').textContent = 'Não foi possível salvar: ' + (e.message || e) + '. Confira sua conexão e tente de novo.';
-    } finally { btn.textContent = 'Importar selecionadas'; atualizarBotaoSalvar(); }
+      status('Planilhas importadas e salvas.');
+      setTimeout(function () { status(''); }, 4000);
+    }
   }
 
   function mesclarNaMemoria(a) {
