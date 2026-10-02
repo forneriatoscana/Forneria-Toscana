@@ -398,6 +398,18 @@ dialog::backdrop { background: rgb(10 14 10 / .45); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
+/* ---------- setores e cargos ---------- */
+.campo-col { display: grid; gap: 8px; align-content: start; }
+#dlg-listas { width: min(820px, calc(100vw - 32px)); }
+.listas { align-items: start; }
+.listas h3 { margin: 0 0 8px; font: 600 15px var(--f-body); }
+.listas ul { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; max-height: 46vh; overflow: auto; }
+.listas li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 6px; align-items: center; }
+.listas li input { padding: 6px 8px !important; width: 100%; }
+.listas li.travado { grid-template-columns: minmax(0, 1fr) auto; padding: 7px 8px; background: var(--surface-2); border-radius: 8px; font-size: 14px; }
+.listas .uso { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.lst-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
+
 </style>
 </head>
 <body>
@@ -562,6 +574,28 @@ window.FT_CONFIG = {
   FT.nomeTipo = function (t) { const x = FT.TIPOS.find(function (y) { return y.id === t; }); return x ? x.nome : t; };
   FT.SETORES = ['Caixa', 'Salão', 'Bar', 'Pizzaria', 'Louça', 'Estacionamento', 'Entrega'];
   FT.nomeSetor = function (s) { return s === 'Entrega' ? 'Motoboys (entrega)' : s; };
+  FT.CARGOS = ['Atendente de caixa', 'Garçom', 'Cumim', 'Bartender', 'Pizzaiolo', 'Auxiliar de pizzaiolo', 'Auxiliar de cozinha', 'Lavador de louça', 'Manobrista', 'Motoboy', 'Gerente'];
+
+  // Setores e cargos editáveis (guardados em configuracoes). "Entrega" é fixo: é o setor dos motoboys.
+  function normalizarSetores(lista) {
+    const vistos = {}, r = [];
+    (lista || []).forEach(function (s) { s = String(s || '').trim(); if (s && s !== 'Entrega' && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
+    r.push('Entrega');
+    return r;
+  }
+  function normalizarCargos(lista) {
+    const vistos = {}, r = [];
+    (lista || []).forEach(function (s) { s = String(s || '').trim(); if (s && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
+    return r.sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+  }
+  FT.carregarListas = async function () {
+    try {
+      const s = await FT.store.config.ler('setores'); if (s && s.length) FT.SETORES = normalizarSetores(s);
+      const c = await FT.store.config.ler('cargos'); FT.CARGOS = normalizarCargos(c && c.length ? c : FT.CARGOS);
+    } catch (e) { console.warn('Listas de setores/cargos não carregadas', e); }
+  };
+  FT.salvarSetores = async function (lista) { FT.SETORES = normalizarSetores(lista); await FT.store.config.salvar('setores', FT.SETORES); };
+  FT.salvarCargos = async function (lista) { FT.CARGOS = normalizarCargos(lista); await FT.store.config.salvar('cargos', FT.CARGOS); };
 
   // Quantidade padrão de pessoas por setor em cada dia (0 = domingo … 6 = sábado)
   const qua = { Caixa: 1, Salão: 2, Bar: 1, Pizzaria: 4, Louça: 1, Estacionamento: 0, Entrega: 1 };
@@ -574,7 +608,7 @@ window.FT_CONFIG = {
     6: { aberto: true, vagas: { Caixa: 2, Salão: 6, Bar: 2, Pizzaria: 4, Louça: 2, Estacionamento: 1, Entrega: 4 } },
     0: { aberto: true, vagas: { Caixa: 1, Salão: 2, Bar: 2, Pizzaria: 4, Louça: 1, Estacionamento: 0, Entrega: 2 } }
   };
-  FT.PERCENTUAL_PADRAO = 8;
+  FT.PERCENTUAL_PADRAO = 80; // parte do 10% do dia que vai para a equipe
 
   /* ---------- avisos ---------- */
   let timerAviso;
@@ -1015,8 +1049,8 @@ window.FT_CONFIG = {
 
   /* =================== PAGAMENTO 10% =================== */
   /* dados = {
-   *   percentual: 8,
-   *   dias:    { 'aaaa-mm-dd': { aberto: bool, base: número (valor do dia) } },
+   *   percentual: 80,   (% do valor do 10% que é rateado entre a equipe)
+   *   dias:    { 'aaaa-mm-dd': { aberto: bool, base: número (valor do 10% do dia) } },
    *   pessoas: [{ id, nome, tipo, setor, diaria, dias: { 'aaaa-mm-dd': { t: bool, entrega: número } },
    *               caixinha, adiantamento, consumo, pago }]
    * } */
@@ -1040,6 +1074,7 @@ window.FT_CONFIG = {
 
   // Acrescenta funcionários novos/ativos e tira os que não trabalharam e foram desativados/excluídos.
   C.sincronizarPessoas = function (dados, funcionarios) {
+    if (dados.percentual === 8) dados.percentual = FT.PERCENTUAL_PADRAO;
     const porId = {};
     funcionarios.forEach(function (f) { porId[f.id] = f; });
     const temLancamento = function (p) {
@@ -1137,7 +1172,7 @@ window.FT_CONFIG = {
       if (!r.total && !r.nDias) return;
       const partes = [];
       if (r.diarias) partes.push('diárias ' + FT.moeda(r.diarias));
-      if (r.rateio) partes.push(dados.percentual + '% ' + FT.moeda(r.rateio));
+      if (r.rateio) partes.push('10% ' + FT.moeda(r.rateio));
       if (r.entregas) partes.push('entregas ' + FT.moeda(r.entregas));
       if (r.caixinha) partes.push('caixinha ' + FT.moeda(r.caixinha));
       if (r.adiantamento) partes.push('− adiant. ' + FT.moeda(r.adiantamento));
@@ -1899,6 +1934,7 @@ window.FT_CONFIG = {
     $('#tela-funcionarios').innerHTML =
       '<div class="cab-tela"><div><h1>Funcionários</h1><p>Cadastro usado na escala e no pagamento do 10%.</p></div>' +
       '<div class="acoes-linha"><label class="btn btn-sec" for="func-planilha">Trazer da planilha de diárias</label><input id="func-planilha" type="file" accept=".xls,.xlsx" hidden>' +
+      '<button class="btn btn-sec" id="func-listas" type="button">Setores e cargos</button>' +
       '<button class="btn" id="func-novo" type="button">+ Novo funcionário</button></div></div>' +
       '<div class="filtros">' +
       '<input id="func-busca" type="search" placeholder="Buscar por nome, setor ou cargo" aria-label="Buscar funcionário">' +
@@ -1910,6 +1946,7 @@ window.FT_CONFIG = {
       '<div id="func-candidatos" hidden></div>';
 
     $('#func-novo').addEventListener('click', function () { abrirForm(null); });
+    $('#func-listas').addEventListener('click', abrirListas);
     $('#func-busca').addEventListener('input', function (e) { filtro.busca = e.target.value; desenhar(); });
     $('#func-tipos').addEventListener('click', function (e) {
       const b = e.target.closest('[data-tipo]'); if (!b) return;
@@ -1931,8 +1968,10 @@ window.FT_CONFIG = {
       '<h2 id="h-func">Novo funcionário</h2>' +
       '<label for="ff-nome">Nome completo<input id="ff-nome" required autocomplete="off"></label>' +
       '<fieldset class="tipos"><legend>Tipo</legend>' + FT.TIPOS.map(function (t) { return '<label class="radio"><input type="radio" name="ff-tipo" id="ff-tipo-' + t.id + '" value="' + t.id + '"> ' + t.nome + '</label>'; }).join('') + '</fieldset>' +
-      '<div class="grade2"><label for="ff-setor">Setor<select id="ff-setor" required>' + opcoesSetor('', 'Selecione') + '</select></label>' +
-      '<label for="ff-cargo">Cargo<input id="ff-cargo" placeholder="ex.: Garçom, Pizzaiolo, Caixa"></label></div>' +
+      '<div class="grade2"><div class="campo-col"><label for="ff-setor">Setor<select id="ff-setor" required></select></label>' +
+      '<label for="ff-setor-novo" id="ff-setor-novo-l" hidden>Nome do novo setor<input id="ff-setor-novo" placeholder="ex.: Cozinha" autocomplete="off"></label></div>' +
+      '<div class="campo-col"><label for="ff-cargo">Cargo<select id="ff-cargo"></select></label>' +
+      '<label for="ff-cargo-novo" id="ff-cargo-novo-l" hidden>Nome do novo cargo<input id="ff-cargo-novo" placeholder="ex.: Sommelier" autocomplete="off"></label></div></div>' +
       '<div class="grade2"><label for="ff-salario">Salário mensal (R$)<input id="ff-salario" inputmode="decimal" placeholder="0,00"></label>' +
       '<label for="ff-diaria">Diária (R$)<input id="ff-diaria" inputmode="decimal" placeholder="0,00"></label></div>' +
       '<p class="dica" id="ff-dica"></p>' +
@@ -1945,22 +1984,24 @@ window.FT_CONFIG = {
     FT.$$('input[name="ff-tipo"]').forEach(function (r) { r.addEventListener('change', ajustarTipo); });
     $('#form-func').addEventListener('submit', salvarForm);
     $('#ff-excluir').addEventListener('click', excluir);
+    $('#ff-setor').addEventListener('change', function (e) { const n = e.target.value === '__novo'; $('#ff-setor-novo-l').hidden = !n; if (n) $('#ff-setor-novo').focus(); });
+    $('#ff-cargo').addEventListener('change', function (e) { const n = e.target.value === '__novo'; $('#ff-cargo-novo-l').hidden = !n; if (n) $('#ff-cargo-novo').focus(); });
+    montarListas();
   }
 
   let editando = null, confirmarExclusao = false;
   function ajustarTipo() {
     const t = (FT.$('input[name="ff-tipo"]:checked') || {}).value;
-    const dica = { fixo: 'Fixo: entra no rateio do 8% nos dias marcados. Diária normalmente fica em zero.', freelancer: 'Freelancer: recebe a diária em cada dia trabalhado + a parte do 8%.', motoboy: 'Motoboy: recebe a diária + as taxas de entrega. Não entra no rateio do 8%.' };
+    const dica = { fixo: 'Fixo: entra no rateio do 10% nos dias marcados. Diária normalmente fica em zero.', freelancer: 'Freelancer: recebe a diária em cada dia trabalhado + a parte do 10%.', motoboy: 'Motoboy: recebe a diária + as taxas de entrega. Não entra no rateio do 10%.' };
     $('#ff-dica').textContent = dica[t] || '';
-    if (t === 'motoboy') $('#ff-setor').value = 'Entrega';
+    if (t === 'motoboy') { $('#ff-setor').value = 'Entrega'; $('#ff-setor-novo-l').hidden = true; }
   }
   function abrirForm(f) {
     editando = f; confirmarExclusao = false;
     $('#h-func').textContent = f ? 'Editar funcionário' : 'Novo funcionário';
     $('#ff-nome').value = f ? f.nome : '';
     FT.$$('input[name="ff-tipo"]').forEach(function (r) { r.checked = f ? r.value === f.tipo : r.value === 'freelancer'; });
-    $('#ff-setor').value = f ? (f.setor || '') : '';
-    $('#ff-cargo').value = f ? (f.cargo || '') : '';
+    encherSelects(f ? f.setor || '' : '', f ? f.cargo || '' : '');
     $('#ff-salario').value = f && +f.salario ? FT.num2(+f.salario) : '';
     $('#ff-diaria').value = f && +f.diaria ? FT.num2(+f.diaria) : '';
     $('#ff-ativo').checked = f ? f.ativo !== false : true;
@@ -1974,13 +2015,25 @@ window.FT_CONFIG = {
     e.preventDefault();
     const nome = $('#ff-nome').value.trim().replace(/\s+/g, ' ');
     const tipo = (FT.$('input[name="ff-tipo"]:checked') || {}).value;
-    const setor = $('#ff-setor').value;
+    let setor = $('#ff-setor').value, cargo = $('#ff-cargo').value;
     if (!nome) { $('#ff-erro').textContent = 'Escreva o nome do funcionário.'; return; }
     if (!tipo) { $('#ff-erro').textContent = 'Escolha se é fixo, freelancer ou motoboy.'; return; }
     if (!setor) { $('#ff-erro').textContent = 'Escolha o setor. É ele que define onde a pessoa aparece na escala.'; return; }
+    if (setor === '__novo') {
+      setor = $('#ff-setor-novo').value.trim().replace(/\s+/g, ' ');
+      if (!setor) { $('#ff-erro').textContent = 'Escreva o nome do novo setor.'; return; }
+      const ja = FT.SETORES.find(function (x) { return FT.semAcento(x) === FT.semAcento(setor); });
+      if (ja) setor = ja; else { try { await FT.salvarSetores(FT.SETORES.concat([setor])); } catch (err) { $('#ff-erro').textContent = 'Não foi possível criar o setor: ' + FT.textoErro(err); return; } }
+    }
+    if (cargo === '__novo') {
+      cargo = $('#ff-cargo-novo').value.trim().replace(/\s+/g, ' ');
+      if (!cargo) { $('#ff-erro').textContent = 'Escreva o nome do novo cargo.'; return; }
+      const ja = FT.CARGOS.find(function (x) { return FT.semAcento(x) === FT.semAcento(cargo); });
+      if (ja) cargo = ja; else { try { await FT.salvarCargos(FT.CARGOS.concat([cargo])); } catch (err) { $('#ff-erro').textContent = 'Não foi possível criar o cargo: ' + FT.textoErro(err); return; } }
+    }
     const repetido = cache.find(function (f) { return FT.semAcento(f.nome) === FT.semAcento(nome) && (!editando || f.id !== editando.id); });
     if (repetido) { $('#ff-erro').textContent = 'Já existe um funcionário com esse nome.'; return; }
-    const f = Object.assign({}, editando || {}, { nome: nome, tipo: tipo, setor: setor, cargo: $('#ff-cargo').value.trim(), salario: FT.lerValor($('#ff-salario').value), diaria: FT.lerValor($('#ff-diaria').value), ativo: $('#ff-ativo').checked });
+    const f = Object.assign({}, editando || {}, { nome: nome, tipo: tipo, setor: setor, cargo: cargo, salario: FT.lerValor($('#ff-salario').value), diaria: FT.lerValor($('#ff-diaria').value), ativo: $('#ff-ativo').checked });
     const b = $('#ff-salvar'); b.disabled = true; b.textContent = 'Salvando…';
     try {
       await FT.store.funcionarios.salvar(f);
@@ -2004,6 +2057,120 @@ window.FT_CONFIG = {
       await FT.obterFuncionarios(true); desenhar();
       FT.aviso('Funcionário excluído.');
     } catch (err) { $('#ff-erro').textContent = 'Não foi possível excluir: ' + FT.textoErro(err); }
+  }
+
+  function encherSelects(setor, cargo) {
+    const setores = FT.SETORES.slice();
+    if (setor && setores.indexOf(setor) < 0) setores.splice(setores.length - 1, 0, setor);
+    $('#ff-setor').innerHTML = '<option value="">Selecione</option>' + setores.map(function (s) { return '<option value="' + esc(s) + '"' + (s === setor ? ' selected' : '') + '>' + esc(FT.nomeSetor(s)) + '</option>'; }).join('') +
+      '<option value="__novo">+ Criar novo setor…</option>';
+    const cargos = FT.CARGOS.slice();
+    if (cargo && cargos.indexOf(cargo) < 0) cargos.push(cargo);
+    $('#ff-cargo').innerHTML = '<option value="">Sem cargo</option>' + cargos.map(function (c) { return '<option value="' + esc(c) + '"' + (c === cargo ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') +
+      '<option value="__novo">+ Criar novo cargo…</option>';
+    $('#ff-setor-novo-l').hidden = true; $('#ff-cargo-novo-l').hidden = true;
+    $('#ff-setor-novo').value = ''; $('#ff-cargo-novo').value = '';
+  }
+
+  /* ---- Setores e cargos: criar, renomear e excluir ---- */
+  function montarListas() {
+    const dlg = document.createElement('dialog');
+    dlg.id = 'dlg-listas'; dlg.setAttribute('aria-labelledby', 'h-listas');
+    dlg.innerHTML = '<div class="dlg"><h2 id="h-listas">Setores e cargos</h2>' +
+      '<p>Renomeie direto no campo e clique em Salvar. Ao renomear, todos os funcionários e escalas passam a usar o nome novo.</p>' +
+      '<div class="grade2 listas">' +
+      '<section><h3>Setores</h3><ul id="lst-setores"></ul><div class="lst-add"><input id="lst-setor-novo" placeholder="Novo setor" aria-label="Nome do novo setor"><button class="btn btn-p" type="button" id="lst-setor-add">Adicionar</button></div></section>' +
+      '<section><h3>Cargos</h3><ul id="lst-cargos"></ul><div class="lst-add"><input id="lst-cargo-novo" placeholder="Novo cargo" aria-label="Nome do novo cargo"><button class="btn btn-p" type="button" id="lst-cargo-add">Adicionar</button></div></section>' +
+      '</div><p class="erro-form" id="lst-erro" role="alert"></p><p class="dica" id="lst-ok" role="status"></p>' +
+      '<div class="dlg-acoes"><button class="btn" type="button" id="lst-fechar">Fechar</button></div></div>';
+    document.body.appendChild(dlg);
+    $('#lst-fechar').addEventListener('click', function () { dlg.close(); desenhar(); });
+    $('#lst-setor-add').addEventListener('click', function () { adicionar('setor'); });
+    $('#lst-cargo-add').addEventListener('click', function () { adicionar('cargo'); });
+    $('#lst-setor-novo').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); adicionar('setor'); } });
+    $('#lst-cargo-novo').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); adicionar('cargo'); } });
+    dlg.addEventListener('input', function (e) {
+      const li = e.target.closest('li[data-orig]'); if (!li) return;
+      li.querySelector('[data-acao="renomear"]').hidden = e.target.value.trim() === li.dataset.orig;
+    });
+    dlg.addEventListener('click', function (e) {
+      const b = e.target.closest('[data-acao]'); if (!b) return;
+      const li = b.closest('li');
+      if (b.dataset.acao === 'renomear') renomear(li.dataset.tipo, li.dataset.orig, li.querySelector('input').value);
+      if (b.dataset.acao === 'excluir') excluirItem(li.dataset.tipo, li.dataset.orig);
+    });
+  }
+  function abrirListas() { $('#lst-erro').textContent = ''; $('#lst-ok').textContent = ''; desenharListas(); $('#dlg-listas').showModal(); }
+  function usoDe(tipo, nome) { return (cache || []).filter(function (f) { return (tipo === 'setor' ? f.setor : f.cargo) === nome; }).length; }
+  function desenharListas() {
+    const item = function (tipo, nome) {
+      const n = usoDe(tipo, nome);
+      return '<li data-tipo="' + tipo + '" data-orig="' + esc(nome) + '"><input value="' + esc(nome) + '" aria-label="Nome do ' + tipo + '">' +
+        '<span class="uso">' + (n ? n + (n === 1 ? ' pessoa' : ' pessoas') : 'sem uso') + '</span>' +
+        '<button type="button" class="btn btn-p" data-acao="renomear" hidden>Salvar</button>' +
+        '<button type="button" class="btn btn-p btn-perigo" data-acao="excluir">Excluir</button></li>';
+    };
+    $('#lst-setores').innerHTML = FT.SETORES.map(function (s) {
+      if (s === 'Entrega') return '<li class="travado"><span>Motoboys (entrega)</span><span class="uso">' + usoDe('setor', 'Entrega') + ' pessoas · setor fixo</span></li>';
+      return item('setor', s);
+    }).join('');
+    $('#lst-cargos').innerHTML = FT.CARGOS.length ? FT.CARGOS.map(function (c) { return item('cargo', c); }).join('') : '<li class="travado">Nenhum cargo cadastrado.</li>';
+  }
+  function listaDe(tipo) { return tipo === 'setor' ? FT.SETORES : FT.CARGOS; }
+  function salvarLista(tipo, l) { return tipo === 'setor' ? FT.salvarSetores(l) : FT.salvarCargos(l); }
+  function existe(tipo, nome, exceto) { return listaDe(tipo).some(function (x) { return x !== exceto && FT.semAcento(x) === FT.semAcento(nome); }) || (tipo === 'setor' && FT.semAcento(nome) === 'ENTREGA'); }
+
+  async function adicionar(tipo) {
+    const inp = $(tipo === 'setor' ? '#lst-setor-novo' : '#lst-cargo-novo');
+    const nome = inp.value.trim().replace(/\s+/g, ' ');
+    $('#lst-erro').textContent = ''; $('#lst-ok').textContent = '';
+    if (!nome) { $('#lst-erro').textContent = 'Escreva o nome antes de adicionar.'; return; }
+    if (existe(tipo, nome)) { $('#lst-erro').textContent = 'Já existe "' + nome + '".'; return; }
+    try {
+      const l = listaDe(tipo).slice();
+      if (tipo === 'setor') l.splice(l.length - 1, 0, nome); else l.push(nome);
+      await salvarLista(tipo, l);
+      inp.value = ''; desenharListas();
+      $('#lst-ok').textContent = (tipo === 'setor' ? 'Setor' : 'Cargo') + ' "' + nome + '" criado.' + (tipo === 'setor' ? ' Defina quantas vagas ele tem em Escala → Quantidades padrão.' : '');
+    } catch (e) { $('#lst-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(e); }
+  }
+
+  async function renomear(tipo, antigo, novo) {
+    novo = String(novo || '').trim().replace(/\s+/g, ' ');
+    $('#lst-erro').textContent = ''; $('#lst-ok').textContent = '';
+    if (!novo) { $('#lst-erro').textContent = 'O nome não pode ficar vazio.'; return; }
+    if (novo === antigo) return;
+    if (existe(tipo, novo, antigo)) { $('#lst-erro').textContent = 'Já existe "' + novo + '".'; return; }
+    $('#lst-ok').textContent = 'Renomeando…';
+    try {
+      await salvarLista(tipo, listaDe(tipo).map(function (x) { return x === antigo ? novo : x; }));
+      const afetados = (cache || []).filter(function (f) { return (tipo === 'setor' ? f.setor : f.cargo) === antigo; });
+      for (const f of afetados) { const g = Object.assign({}, f); if (tipo === 'setor') g.setor = novo; else g.cargo = novo; await FT.store.funcionarios.salvar(g); }
+      if (tipo === 'setor') {
+        const troca = function (obj) { if (obj && Object.prototype.hasOwnProperty.call(obj, antigo)) { obj[novo] = obj[antigo]; delete obj[antigo]; return true; } return false; };
+        const padrao = await FT.store.config.ler('escala_padrao');
+        if (padrao) { let m = false; Object.keys(padrao).forEach(function (k) { m = troca(padrao[k].vagas) || m; }); if (m) await FT.store.config.salvar('escala_padrao', padrao); }
+        const escalas = await FT.store.escala.listar('2000-01-01', '2999-12-31');
+        for (const sem of Object.keys(escalas)) {
+          const e = escalas[sem]; let m = false;
+          Object.keys(e.dias || {}).forEach(function (d) { m = troca(e.dias[d].vagas) || m; m = troca(e.dias[d].alocados) || m; });
+          if (m) await FT.store.escala.salvar(sem, e);
+        }
+      }
+      await FT.obterFuncionarios(true); desenharListas(); desenhar();
+      $('#lst-ok').textContent = '"' + antigo + '" agora é "' + novo + '"' + (afetados.length ? ' · ' + afetados.length + ' funcionário(s) atualizado(s)' : '') + '.';
+    } catch (e) { $('#lst-ok').textContent = ''; $('#lst-erro').textContent = 'Não foi possível renomear: ' + FT.textoErro(e); }
+  }
+
+  async function excluirItem(tipo, nome) {
+    $('#lst-erro').textContent = ''; $('#lst-ok').textContent = '';
+    const n = usoDe(tipo, nome);
+    if (n) { $('#lst-erro').textContent = n + (n === 1 ? ' funcionário usa' : ' funcionários usam') + ' "' + nome + '". Troque o ' + tipo + ' deles antes de excluir (contando os desativados).'; return; }
+    try {
+      await salvarLista(tipo, listaDe(tipo).filter(function (x) { return x !== nome; }));
+      desenharListas();
+      $('#lst-ok').textContent = '"' + nome + '" excluído.';
+    } catch (e) { $('#lst-erro').textContent = 'Não foi possível excluir: ' + FT.textoErro(e); }
   }
 
   function desenhar() {
@@ -2093,7 +2260,7 @@ window.FT_CONFIG = {
   };
 })();
 
-/* Forneria Toscana — tela Pagamento 10% (diárias, rateio do 8% e taxas de entrega) */
+/* Forneria Toscana — tela Pagamento 10% (diárias, rateio de 80% do 10% e taxas de entrega) */
 (function () {
   'use strict';
   const FT = window.FT, C = FT.calc;
@@ -2109,17 +2276,16 @@ window.FT_CONFIG = {
 
   function montar() {
     $('#tela-pagamento').innerHTML =
-      '<div class="cab-tela"><div><h1>Pagamento 10%</h1><p>Marque quem trabalhou em cada dia. O valor do dia é rateado entre a equipe marcada e somado às diárias.</p></div>' +
+      '<div class="cab-tela"><div><h1>Pagamento 10%</h1><p>Informe o 10% de cada dia e marque quem trabalhou. 80% do valor informado é dividido entre a equipe marcada e somado às diárias.</p></div>' +
       '<div class="acoes-linha"><span class="pilula" id="pg-estado"></span></div></div>' +
       '<div class="barra">' +
       '<div class="nav-semana"><button type="button" class="btn-icone" id="pg-ant" aria-label="Semana anterior">‹</button>' +
       '<div class="nav-semana-t"><span>Semana</span><b id="pg-rotulo"></b></div>' +
       '<button type="button" class="btn-icone" id="pg-prox" aria-label="Próxima semana">›</button>' +
       '<button type="button" class="btn btn-sec btn-p" id="pg-atual">Semana atual</button></div>' +
-      '<label class="campo-pct" for="pg-pct">Percentual da equipe<span><input id="pg-pct" inputmode="decimal"> %</span></label>' +
+      '<label class="campo-pct" for="pg-pct">Parte da equipe<span><input id="pg-pct" inputmode="decimal"> % do 10%</span></label>' +
       '<div class="acoes-linha">' +
       '<button type="button" class="btn btn-sec" id="pg-escala">Preencher pela escala</button>' +
-      '<label class="btn btn-sec" for="pg-entregas">Importar taxas de entrega</label><input id="pg-entregas" type="file" accept=".xls,.xlsx,.csv" hidden>' +
       '<button type="button" class="btn btn-sec" id="pg-copiar">Copiar resumo</button></div></div>' +
       '<div id="pg-msg" class="msg" hidden></div>' +
       '<div class="kpis kpis-5" id="pg-kpis"></div>' +
@@ -2132,7 +2298,6 @@ window.FT_CONFIG = {
     $('#pg-atual').addEventListener('click', function () { irPara(FT.segunda(FT.hoje())); });
     $('#pg-pct').addEventListener('input', function (e) { st.dados.percentual = FT.lerValor(e.target.value); mudou(); });
     $('#pg-escala').addEventListener('click', preencherEscala);
-    $('#pg-entregas').addEventListener('change', importarEntregas);
     $('#pg-copiar').addEventListener('click', function (e) { FT.copiar(C.textoPagamento(st.semana, st.dados), e.currentTarget); });
     $('#pg-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
 
@@ -2219,13 +2384,13 @@ window.FT_CONFIG = {
   /* ---------- desenho ---------- */
   function diasAbertos() { return FT.diasDaSemana(st.semana).filter(function (d) { return st.dados.dias[d] && st.dados.dias[d].aberto; }); }
 
+  // 10% (taxa de serviço) cobrado no dia, segundo o relatório de vendas importado
   function vendasDoDia(d) {
     if (!st.vendasDia) return null;
     let s = 0, tem = false;
     st.vendasDia.forEach(function (r) {
       if (r.data !== d) return; tem = true;
-      const cat = window.FTIndicadores.categoriaDoGrupo(r.grupo);
-      if (cat !== 'servico' && cat !== 'entrega') s += +r.liquido;
+      if (window.FTIndicadores.categoriaDoGrupo(r.grupo) === 'servico') s += +r.liquido;
     });
     return tem ? FT.r2(s) : null;
   }
@@ -2239,15 +2404,15 @@ window.FT_CONFIG = {
         '<div class="dia-topo"><b>' + FT.DIAS_CURTOS[FT.diaSemana(d)] + ' ' + FT.ddmm(d) + '</b>' +
         '<label class="switch"><input type="checkbox" class="dia-aberto" data-dia="' + d + '" id="pg-ab-' + d + '"' + (dia.aberto ? ' checked' : '') + '><span>' + (dia.aberto ? 'Aberto' : 'Fechado') + '</span></label></div>' +
         (dia.aberto ?
-          '<label class="dia-base-l" for="pg-base-' + d + '">Valor do dia (R$)<input class="dia-base" id="pg-base-' + d + '" data-dia="' + d + '" inputmode="decimal" placeholder="0,00" value="' + (dia.base ? FT.num2(dia.base) : '') + '"></label>' +
+          '<label class="dia-base-l" for="pg-base-' + d + '">10% do dia (R$)<input class="dia-base" id="pg-base-' + d + '" data-dia="' + d + '" inputmode="decimal" placeholder="0,00" value="' + (dia.base ? FT.num2(dia.base) : '') + '"></label>' +
           '<p class="dia-info" id="pg-info-' + d + '">' + infoDia(c, pct) + '</p>' +
-          (v != null ? '<p class="dia-sis">Sistema: ' + FT.moeda(v) + ' <button type="button" class="link usar-sistema" data-dia="' + d + '" data-valor="' + v + '">usar</button></p>' : '')
+          (v != null ? '<p class="dia-sis">10% no sistema: ' + FT.moeda(v) + ' <button type="button" class="link usar-sistema" data-dia="' + d + '" data-valor="' + v + '">usar</button></p>' : '')
           : '<p class="dia-info">Sem atendimento</p>') +
         '</div>';
     }).join('');
   }
   function infoDia(c, pct) {
-    return '<b>' + FT.num2(pct).replace(',00', '') + '% = ' + FT.moeda(c.pool) + '</b><br>' +
+    return '<b>Equipe (' + FT.num2(pct).replace(',00', '') + '%) = ' + FT.moeda(c.pool) + '</b><br>' +
       (c.n ? c.n + (c.n === 1 ? ' pessoa · ' : ' pessoas · ') + FT.moeda(FT.r2(c.cota)) + ' cada' : 'ninguém marcado ainda');
   }
 
@@ -2258,7 +2423,7 @@ window.FT_CONFIG = {
     const nCol = 2 + dias.length + 9;
     let h = '<thead><tr><th class="col-nome">Colaborador</th><th class="num">Diária</th>' +
       dias.map(function (d) { return '<th class="col-dia"><span>' + FT.DIAS_CURTOS[FT.diaSemana(d)] + '</span><small>' + FT.ddmm(d) + '</small></th>'; }).join('') +
-      '<th class="num">Dias</th><th class="num">Diárias</th><th class="num" id="pg-h-pct">' + esc(FT.num2(st.dados.percentual).replace(',00', '')) + '%</th><th class="num">Entregas</th>' +
+      '<th class="num">Dias</th><th class="num">Diárias</th><th class="num">Rateio 10%</th><th class="num">Entregas</th>' +
       '<th class="num">Caixinha</th><th class="num">Adiant.</th><th class="num">Consumo</th><th class="num col-total">Total a pagar</th><th>Pago</th></tr></thead><tbody>';
     const linha = function (p) {
       const moto = p.tipo === 'motoboy';
@@ -2304,11 +2469,10 @@ window.FT_CONFIG = {
     });
     ['diarias', 'rateio', 'entregas', 'caixinha', 'adiantamento', 'consumo'].forEach(function (k) { txt('pg-f-' + k, t[k] ? FT.num2(t[k]) : '—'); });
     txt('pg-f-total', FT.moeda(t.total));
-    txt('pg-h-pct', FT.num2(pct).replace(',00', '') + '%');
     $('#pg-kpis').innerHTML = [
       { t: 'Total a pagar', v: FT.moeda(t.total), s: t.pago ? 'Já pago ' + FT.moeda(t.pago) + ' · falta ' + FT.moeda(t.aPagar) : 'Nada marcado como pago', d: true },
       { t: 'Diárias', v: FT.moeda(t.diarias), s: 'Freelancers e motoboys' },
-      { t: 'Rateio ' + FT.num2(pct).replace(',00', '') + '%', v: FT.moeda(t.rateio), s: 'Sobre ' + FT.moeda(Object.keys(st.dados.dias).reduce(function (s, d) { return s + (st.dados.dias[d].aberto ? +st.dados.dias[d].base || 0 : 0); }, 0)) + ' de valor dos dias' },
+      { t: 'Rateio do 10%', v: FT.moeda(t.rateio), s: FT.num2(pct).replace(',00', '') + '% de ' + FT.moeda(Object.keys(st.dados.dias).reduce(function (s, d) { return s + (st.dados.dias[d].aberto ? +st.dados.dias[d].base || 0 : 0); }, 0)) + ' informados' },
       { t: 'Taxas de entrega', v: FT.moeda(t.entregas), s: 'Pagas aos motoboys' },
       { t: 'Ajustes', v: FT.moeda(t.caixinha - t.adiantamento - t.consumo), s: 'Caixinha − adiantamentos − consumo' }
     ].map(function (k) { return '<article class="kpi' + (k.d ? ' kpi-destaque' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p><p class="kpi-s">' + esc(k.s) + '</p></article>'; }).join('');
@@ -2331,36 +2495,6 @@ window.FT_CONFIG = {
       desenharTudo(); mudou();
       mostrarMsg('Marquei ' + n + ' turnos conforme a escala. Ajuste quem faltou ou foi chamado de última hora.');
     } catch (e) { mostrarMsg('Não consegui ler a escala: ' + esc(FT.textoErro(e)), true); }
-  }
-
-  async function importarEntregas(e) {
-    const file = e.target.files[0]; e.target.value = '';
-    if (!file) return;
-    try {
-      const abas = await FT.lerAbas(file);
-      let itens = null, erro = null;
-      for (const a of abas) { try { const r = C.lerEntregas(a.linhas, st.semana); if (r.length) { itens = r; break; } } catch (x) { erro = x; } }
-      if (!itens) throw erro || new Error('não encontrei valores de entrega no arquivo');
-      const dias = FT.diasDaSemana(st.semana);
-      const fora = itens.filter(function (x) { return dias.indexOf(x.data) < 0; });
-      const motos = st.dados.pessoas.filter(function (p) { return p.tipo === 'motoboy'; });
-      const naoAchei = {}, naoMoto = {}, quem = {};
-      let lancados = 0;
-      itens.filter(function (x) { return dias.indexOf(x.data) >= 0; }).forEach(function (x) {
-        let p = C.casarNome(x.nome, motos);
-        if (!p) { const outro = C.casarNome(x.nome, st.dados.pessoas); if (outro) { naoMoto[outro.nome] = 1; return; } naoAchei[x.nome] = 1; return; }
-        p.dias[x.data] = p.dias[x.data] || { t: false, entrega: 0 };
-        p.dias[x.data].entrega = FT.r2(x.valor); p.dias[x.data].t = true;
-        st.dados.dias[x.data].aberto = true;
-        lancados++; quem[p.nome] = 1;
-      });
-      desenharTudo(); if (lancados) mudou();
-      let m = '<b>' + lancados + ' valores de entrega lançados</b> para ' + Object.keys(quem).length + ' motoboy(s).';
-      if (Object.keys(naoAchei).length) m += '<br>Não encontrei no cadastro: <b>' + Object.keys(naoAchei).map(esc).join(', ') + '</b>. Cadastre como motoboy ou confira o nome e importe de novo.';
-      if (Object.keys(naoMoto).length) m += '<br>Estão cadastrados, mas não como motoboy: ' + Object.keys(naoMoto).map(esc).join(', ') + '.';
-      if (fora.length) m += '<br>' + fora.length + ' valores são de outra semana e foram ignorados.';
-      mostrarMsg(m, !lancados);
-    } catch (err) { mostrarMsg('Não consegui ler as taxas de entrega: ' + esc(err.message || err), true); }
   }
 
   function mostrarMsg(html, erro) { const m = $('#pg-msg'); m.hidden = false; m.className = 'msg' + (erro ? ' erro' : ''); m.innerHTML = html; }
@@ -2666,7 +2800,9 @@ window.FT_CONFIG = {
       if (!montado) { montado = true; montar(); }
       try {
         st.funcs = await FT.obterFuncionarios(true);
-        if (!st.padrao) { const p = await FT.store.config.ler('escala_padrao'); st.padrao = p || JSON.parse(JSON.stringify(FT.PADRAO_ESCALA)); }
+        const p = await FT.store.config.ler('escala_padrao'); st.padrao = p || JSON.parse(JSON.stringify(FT.PADRAO_ESCALA));
+        // setores novos entram no padrão com 0 vagas
+        Object.keys(st.padrao).forEach(function (k) { FT.SETORES.forEach(function (s) { if (st.padrao[k].vagas[s] == null) st.padrao[k].vagas[s] = 0; }); });
       } catch (e) { FT.aviso('Não consegui carregar o cadastro: ' + FT.textoErro(e), true); return; }
       await irPara(st.semana || FT.segunda(FT.hoje()));
     },
@@ -2697,9 +2833,10 @@ window.FT_CONFIG = {
     try { await FT.telas[nome].abrir(); } catch (e) { console.error(e); FT.aviso('Erro ao abrir a tela: ' + FT.textoErro(e), true); }
   }
 
-  function mostrarApp(email) {
+  async function mostrarApp(email) {
     $('#login').hidden = true; $('#app').hidden = false;
     if (email) $('#usuario').textContent = email;
+    await FT.carregarListas();
     abrirTela();
   }
 
