@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Indicadores Forneria Toscana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: faixa superior com meses → números do mês → semana a semana (gráfico + mix + matriz) → mês a mês */
+:root {
+  --bg: #f3f4f0;
+  --surface: #ffffff;
+  --surface-2: #f8f9f6;
+  --ink: #1b1f1a;
+  --ink-2: #4d544b;
+  --ink-3: #6f766c;
+  --line: #e1e4dc;
+  --accent: #23574a;      /* verde manjericão */
+  --accent-soft: #e4eee9;
+  --bar: #2f7a63;
+  --bom: #1d7a3b;
+  --ruim: #b3261e;
+  --aviso-bg: #fff4dc;
+  --aviso-ink: #7a4b00;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131613; --surface: #1b1f1b; --surface-2: #20251f; --ink: #eef1ec; --ink-2: #bfc6bb; --ink-3: #969e92;
+    --line: #2f352e; --accent: #8fd1b8; --accent-soft: #1f3a32; --bar: #4fae8e; --bom: #6fcf8a; --ruim: #ff8a80;
+    --aviso-bg: #3a2c0c; --aviso-ink: #f6d48b; --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131613; --surface: #1b1f1b; --surface-2: #20251f; --ink: #eef1ec; --ink-2: #bfc6bb; --ink-3: #969e92;
+  --line: #2f352e; --accent: #8fd1b8; --accent-soft: #1f3a32; --bar: #4fae8e; --bom: #6fcf8a; --ruim: #ff8a80;
+  --aviso-bg: #3a2c0c; --aviso-ink: #f6d48b; --s1: #3987e5; --s2: #d95926; --s3: #199e70; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; }
+
+/* topo */
+.topo { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.topo .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding-block: 12px; }
+.marca { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.marca svg { width: 34px; height: 34px; flex: none; }
+.marca b { font: 700 18px/1.1 var(--f-display); letter-spacing: -0.01em; display: block; }
+.marca span { font-size: 12px; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase; }
+.meses { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-mes { border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-weight: 500; }
+.chip-mes:hover { border-color: var(--accent); color: var(--ink); }
+.chip-mes[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.acoes { display: flex; gap: 8px; }
+.btn { border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
+.btn:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-sec { background: transparent; color: var(--accent); }
+
+.faixa-previa { background: var(--aviso-bg); color: var(--aviso-ink); font-size: 13px; }
+.faixa-previa .wrap { padding-block: 8px; }
+body:not(.modo-previa) .faixa-previa { display: none; }
+body.modo-previa #btn-sair { display: none; }
+
+#status { margin: 12px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--accent-soft); color: var(--ink); font-size: 14px; }
+#status.erro { background: var(--aviso-bg); color: var(--aviso-ink); }
+
+main { padding-block: 20px 48px; display: grid; gap: 28px; }
+main > *, #conteudo > section { min-width: 0; }
+.cab-secao { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 12px; }
+h2 { font: 700 22px/1.2 var(--f-display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h2 em { font-style: normal; color: var(--accent); }
+.cab-secao p { margin: 0; color: var(--ink-3); font-size: 13px; }
+
+/* KPIs */
+.kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.kpi h3 { margin: 0; font-size: 12px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-v { margin: 2px 0 0; font: 700 clamp(18px, 1.55vw, 23px)/1.15 var(--f-display); white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.kpi-destaque { background: var(--accent); border-color: var(--accent); }
+.kpi-destaque h3, .kpi-destaque .kpi-v, .kpi-destaque .kpi-s, .kpi-destaque .delta, .kpi-destaque .delta.neutro { color: var(--surface); }
+.kpi-destaque .delta.neutro { opacity: .85; }
+.kpi-sep { color: var(--ink-3); margin: 0 6px; font-weight: 400; }
+.kpi-s, .kpi-n, .kpi-d { margin: 0; font-size: 12.5px; color: var(--ink-2); }
+.kpi-n { color: var(--ink-3); }
+.kpi-d { margin-top: auto; padding-top: 4px; }
+.delta { font-weight: 600; font-variant-numeric: tabular-nums; }
+.delta.bom { color: var(--bom); } .delta.ruim { color: var(--ruim); } .delta.neutro { color: var(--ink-3); font-weight: 500; }
+.chip-parcial { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--aviso-bg); color: var(--aviso-ink); border-radius: 4px; padding: 1px 5px; vertical-align: 1px; }
+
+/* painéis */
+.painel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; min-width: 0; }
+.painel h3 { margin: 0 0 2px; font: 600 15px/1.3 var(--f-body); }
+.painel .sub { margin: 0 0 10px; font-size: 12.5px; color: var(--ink-3); }
+.duas { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
+
+#grafico-semanas { position: relative; }
+#grafico-semanas svg { width: 100%; height: auto; display: block; }
+svg .grade { stroke: var(--line); stroke-width: 1; }
+svg .base { stroke: var(--ink-3); stroke-width: 1; }
+svg .barra { fill: var(--bar); transition: opacity .15s; }
+svg .barra.apagada { opacity: .35; }
+svg .alvo { fill: transparent; cursor: pointer; }
+svg .rot-valor { fill: var(--ink); font: 600 12.5px var(--f-body); font-variant-numeric: tabular-nums; }
+svg .rot-eixo { fill: var(--ink-2); font: 600 12px var(--f-body); }
+svg .rot-eixo2 { fill: var(--ink-3); font: 400 11.5px var(--f-body); }
+#tip { position: absolute; z-index: 2; background: var(--ink); color: var(--bg); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; display: grid; gap: 2px; min-width: 190px; pointer-events: none; box-shadow: 0 6px 20px rgb(0 0 0 / .18); }
+#tip span { display: flex; justify-content: space-between; gap: 12px; }
+#tip em { font-style: normal; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.mix { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.mix li { display: grid; grid-template-columns: minmax(0, 9.5em) minmax(40px, 1fr) auto 3.6em; align-items: center; gap: 10px; font-size: 13.5px; }
+.mix-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mix-b { height: 10px; background: var(--surface-2); border-radius: 0 4px 4px 0; }
+.mix-b i { display: block; height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; }
+.mix-v, .mix-p { font-variant-numeric: tabular-nums; text-align: right; }
+.mix-p { color: var(--ink-3); font-size: 12.5px; }
+
+/* matriz */
+.rolagem { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.matriz { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+.matriz th, .matriz td { padding: 7px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.matriz thead th { position: sticky; top: 0; background: var(--surface); text-align: right; vertical-align: bottom; border-bottom: 2px solid var(--line); }
+.matriz thead th.col-rot { text-align: left; font-size: 12px; color: var(--ink-3); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.th-t { display: block; font-weight: 700; font-size: 13.5px; }
+.th-s { display: block; font-weight: 400; color: var(--ink-3); font-size: 12px; }
+.matriz .col-rot { text-align: left; font-weight: 500; position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 15.5em; }
+.matriz tbody th.col-rot { color: var(--ink-2); }
+.matriz td.num { text-align: right; }
+.matriz td small { display: block; font-size: 11.5px; color: var(--ink-3); font-weight: 400; }
+.matriz .col-mes { background: var(--accent-soft); }
+.matriz thead th.col-mes { background: var(--accent-soft); color: var(--ink); box-shadow: inset 0 3px 0 var(--accent); }
+.matriz tr.secao th { text-align: left; background: var(--surface-2); color: var(--accent); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding-top: 12px; position: static; }
+.matriz tr.linha-forte th, .matriz tr.linha-forte td { font-weight: 700; color: var(--ink); }
+.matriz td.negativo { color: var(--ruim); }
+.matriz .vazio { color: var(--ink-3); font-weight: 400; font-size: 12.5px; }
+.matriz .pt { display: inline-block; width: 7px; height: 7px; border-radius: 2px; background: var(--bar); margin-right: 8px; vertical-align: 1px; }
+.matriz .info { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--ink-3); color: var(--ink-3); font-size: 10px; font-weight: 700; font-style: normal; margin-left: 4px; cursor: help; }
+.matriz tbody tr:not(.secao):hover td, .matriz tbody tr:not(.secao):hover th { background: var(--surface-2); }
+.matriz tbody tr:not(.secao):hover td.col-mes { background: var(--accent-soft); }
+.col-var.bom { color: var(--bom); font-weight: 600; } .col-var.ruim { color: var(--ruim); font-weight: 600; }
+.col-var .seta { font-size: 10px; }
+
+.legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); margin-bottom: 10px; }
+.legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.s1 { background: var(--s1); } .s2 { background: var(--s2); } .s3 { background: var(--s3); }
+.comp { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.comp li { display: grid; grid-template-columns: minmax(0, 12em) minmax(0, 1fr); gap: 12px; align-items: center; font-size: 13.5px; }
+.comp-barras { display: grid; gap: 3px; }
+.comp-l { display: grid; min-height: 12px; grid-template-columns: minmax(0, 1fr) 7.5em; gap: 8px; align-items: center; }
+.comp-b { height: 9px; }
+.comp-b i { display: block; height: 100%; border-radius: 0 4px 4px 0; min-width: 0; }
+.comp-v { text-align: right; font-variant-numeric: tabular-nums; font-size: 12.5px; color: var(--ink-2); }
+.aviso { background: var(--aviso-bg); color: var(--aviso-ink); border-radius: 8px; padding: 10px 14px; font-size: 13.5px; margin: 0 0 12px; }
+
+.cobertura { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 14px; }
+.vazio-bloco { color: var(--ink-3); }
+#vazio { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: 40px 24px; text-align: center; }
+#vazio h2 { margin-bottom: 6px; }
+#vazio p { color: var(--ink-2); margin: 0 auto 16px; max-width: 46ch; }
+
+/* login */
+#login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.login-cartao { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px; width: 100%; max-width: 380px; display: grid; gap: 14px; }
+.login-cartao h1 { font: 700 22px/1.2 var(--f-display); margin: 0; }
+.login-cartao label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.login-cartao input { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); color: var(--ink); }
+#login-msg { margin: 0; font-size: 13px; color: var(--ruim); min-height: 1em; }
+
+/* importar */
+dialog { border: 1px solid var(--line); border-radius: 14px; padding: 0; width: min(640px, calc(100vw - 32px)); background: var(--surface); color: var(--ink); }
+dialog::backdrop { background: rgb(10 14 10 / .45); }
+.dlg { padding: 22px; display: grid; gap: 14px; }
+.dlg h2 { font-size: 20px; }
+.dlg p { margin: 0; color: var(--ink-2); font-size: 14px; }
+#imp-zona { border: 2px dashed var(--line); border-radius: 10px; padding: 22px; text-align: center; display: grid; gap: 6px; cursor: pointer; }
+#imp-zona.sobre { border-color: var(--accent); background: var(--accent-soft); }
+#imp-zona b { color: var(--accent); }
+#imp-zona input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+#imp-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 40vh; overflow: auto; }
+#imp-lista li { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13.5px; }
+#imp-lista label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+#imp-lista label > span, .imp-erro { display: grid; gap: 2px; }
+#imp-lista label span span { color: var(--ink-3); font-size: 12.5px; }
+#imp-lista input { margin-top: 3px; accent-color: var(--accent); }
+.imp-erro { border-color: var(--ruim) !important; }
+.imp-erro span { color: var(--ink-2); }
+#imp-lista .imp-alerta { color: var(--aviso-ink); }
+#imp-lista .imp-ok { color: var(--bom); }
+#imp-msg { color: var(--ruim); font-size: 13px; min-height: 1em; }
+.dlg-acoes { display: flex; justify-content: flex-end; gap: 8px; }
+
+@media (max-width: 1100px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 820px) { .duas { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 560px) {
+  .wrap { padding-inline: 16px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .kpi { padding: 12px; } .kpi-v { font-size: 17px; white-space: normal; }
+  .matriz .col-rot { min-width: 11em; white-space: normal; }
+  .comp li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .mix li { grid-template-columns: minmax(0, 7em) minmax(30px, 1fr) auto; }
+  .mix-p { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+</style>
+</head>
+<body>
+
+<section id="login" hidden>
+  <form id="form-login" class="login-cartao" autocomplete="on">
+    <h1>Indicadores Forneria Toscana</h1>
+    <label for="login-email">E-mail<input id="login-email" type="email" required autocomplete="username"></label>
+    <label for="login-senha">Senha<input id="login-senha" type="password" required autocomplete="current-password"></label>
+    <button class="btn" type="submit">Entrar</button>
+    <p id="login-msg" role="status"></p>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header class="topo">
+    <div class="wrap">
+      <div class="marca">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 34 V20 a15 15 0 0 1 30 0 V34 Z" fill="var(--accent)"/><path d="M13 34 V24 a7 7 0 0 1 14 0 V34 Z" fill="var(--surface)"/><path d="M15 31 q5 -6 10 0" stroke="#e0782f" stroke-width="2.4" fill="none" stroke-linecap="round"/><rect x="3" y="33" width="34" height="3" rx="1.5" fill="var(--ink)"/></svg>
+        <div><b>Forneria Toscana</b><span>Indicadores de vendas · Guararema</span></div>
+      </div>
+      <nav class="meses" id="meses" aria-label="Escolher mês"></nav>
+      <div class="acoes">
+        <button class="btn" id="btn-importar" type="button">Importar planilha</button>
+        <button class="btn btn-sec" id="btn-sair" type="button">Sair</button>
+      </div>
+    </div>
+  </header>
+  <div class="faixa-previa"><div class="wrap">Prévia com os dados de setembro enviados em 02/10. Você pode testar o botão Importar, mas nesta prévia nada é salvo. A versão definitiva grava no Supabase.</div></div>
+
+  <div class="wrap">
+    <p id="status" role="status" hidden></p>
+    <main>
+      <section id="vazio" hidden>
+        <h2>Nenhum dado ainda</h2>
+        <p>Importe o relatório de pedidos de venda e a planilha de diárias e 10% para ver os indicadores.</p>
+        <button class="btn" type="button" onclick="document.getElementById('btn-importar').click()">Importar planilha</button>
+      </section>
+
+      <div id="conteudo">
+        <section aria-labelledby="h-mes">
+          <div class="cab-secao">
+            <h2 id="h-mes">Resultado de <em id="titulo-mes"></em></h2>
+            <p>Comparação com o mês anterior</p>
+          </div>
+          <div class="kpis" id="kpis"></div>
+        </section>
+
+        <section aria-labelledby="h-sem" style="margin-top:28px">
+          <div class="cab-secao">
+            <h2 id="h-sem">Semana a semana · <em id="titulo-sem"></em></h2>
+            <p>Semanas de segunda a domingo, cortadas no início e no fim do mês</p>
+          </div>
+          <div class="duas">
+            <div class="painel">
+              <h3>Faturamento bruto por semana</h3>
+              <p class="sub">Passe o mouse ou toque numa barra para ver o detalhe</p>
+              <div id="grafico-semanas"><div id="tip" hidden></div></div>
+            </div>
+            <div class="painel">
+              <h3>Vendas por categoria no mês</h3>
+              <p class="sub" id="mix-total"></p>
+              <div id="mix"></div>
+            </div>
+          </div>
+          <div class="rolagem" id="tabela-semanas"></div>
+        </section>
+
+        <section aria-labelledby="h-meses" style="margin-top:28px">
+          <div class="cab-secao">
+            <h2 id="h-meses">Mês a mês</h2>
+            <p>Mês fechado contra mês fechado</p>
+          </div>
+          <p class="aviso" id="aviso-comparativo" hidden></p>
+          <div class="rolagem" id="tabela-meses" style="margin-bottom:12px"></div>
+          <div class="painel">
+            <h3>Categorias: comparação entre meses</h3>
+            <p class="sub">Valor bruto vendido em cada categoria</p>
+            <div id="comp-categorias"></div>
+          </div>
+        </section>
+
+        <footer class="cobertura" id="cobertura" style="margin-top:28px"></footer>
+      </div>
+    </main>
+  </div>
+</div>
+
+<dialog id="dlg-importar" aria-labelledby="h-imp">
+  <div class="dlg">
+    <h2 id="h-imp">Importar planilhas</h2>
+    <p>Envie o <b>relatório de pedidos de venda</b> (.xls do sistema) e/ou a <b>planilha de diárias e 10%</b> (.xlsx). O painel reconhece cada uma sozinho. Se o período já existir, os dados são substituídos, sem duplicar.</p>
+    <label id="imp-zona" for="imp-arquivos">
+      <b>Escolher arquivos</b>
+      <span>ou arraste para cá · .xls e .xlsx</span>
+      <input id="imp-arquivos" type="file" accept=".xls,.xlsx" multiple>
+    </label>
+    <ul id="imp-lista"></ul>
+    <p id="imp-msg" role="status"></p>
+    <div class="dlg-acoes">
+      <button class="btn btn-sec" id="imp-cancelar" type="button">Cancelar</button>
+      <button class="btn" id="imp-salvar" type="button" disabled>Importar selecionadas</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.FT_CONFIG = {
+  SUPABASE_URL: 'https://wncpvwvaxqwdsunejyum.supabase.co',
+  // >>> sb_publishable_u3NQhe2kReI0vtmMGwP9_w_puw3FCQ9 (Supabase > Project Settings > API Keys) entre as aspas <<<
+  SUPABASE_ANON_KEY: 'COLE-AQUI-A-CHAVE'
+};
+</script>
+<script>
+/* Forneria Toscana — leitura das planilhas
+ * Recebe as linhas de uma aba no formato "array de arrays"
+ * (SheetJS: XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null}))
+ * e devolve registros normalizados. Não depende do navegador.
+ */
+(function (root) {
+  'use strict';
+
+  function semAcento(s) {
+    return String(s == null ? '' : s)
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toUpperCase().trim().replace(/\s+/g, ' ');
+  }
+
+  // "1.234,56" -> 1234.56 ; 12.5 -> 12.5 ; vazio -> 0
+  function numero(v) {
+    if (v == null || v === '') return 0;
+    if (typeof v === 'number') return isFinite(v) ? v : 0;
+    if (typeof v === 'boolean') return 0;
+    let s = String(v).trim().replace(/R\$\s?/i, '');
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(s);
+    return isFinite(n) ? n : 0;
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function isoDeData(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+  // Aceita Date, número serial do Excel ou texto "dd/mm/aaaa [hh:mm:ss]"
+  // Devolve { data: 'aaaa-mm-dd', dataHora: 'aaaa-mm-ddThh:mm:ss' } ou null
+  function lerData(v) {
+    if (v == null || v === '') return null;
+    if (v instanceof Date && !isNaN(v)) {
+      const iso = isoDeData(v);
+      return { data: iso, dataHora: iso + 'T' + pad(v.getHours()) + ':' + pad(v.getMinutes()) + ':' + pad(v.getSeconds()) };
+    }
+    if (typeof v === 'number' && v > 20000 && v < 80000) {
+      const ms = Math.round((v - 25569) * 86400000);
+      const d = new Date(ms);
+      const iso = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+      return { data: iso, dataHora: iso + 'T' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()) + ':' + pad(d.getUTCSeconds()) };
+    }
+    const m = String(v).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) {
+      let a = +m[3]; if (a < 100) a += 2000;
+      const iso = a + '-' + pad(+m[2]) + '-' + pad(+m[1]);
+      return { data: iso, dataHora: iso + 'T' + pad(+(m[4] || 0)) + ':' + pad(+(m[5] || 0)) + ':' + pad(+(m[6] || 0)) };
+    }
+    const m2 = String(v).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m2) {
+      const iso = m2[1] + '-' + m2[2] + '-' + m2[3];
+      return { data: iso, dataHora: iso + 'T' + (m2[4] || '00') + ':' + (m2[5] || '00') + ':' + (m2[6] || '00') };
+    }
+    return null;
+  }
+
+  function somaDias(iso, n) {
+    const d = new Date(iso + 'T12:00:00');
+    d.setDate(d.getDate() + n);
+    return isoDeData(d);
+  }
+
+  /* ---------------- Relatório "pedidos de venda" ---------------- */
+
+  function acharCabecalhoVendas(linhas) {
+    for (let i = 0; i < Math.min(linhas.length, 30); i++) {
+      const r = (linhas[i] || []).map(semAcento);
+      if (r.indexOf('DATA PEDIDO') >= 0 && r.indexOf('GRUPO') >= 0 && r.indexOf('TOTAL') >= 0) return i;
+    }
+    return -1;
+  }
+
+  function pareceVendas(linhas) { return acharCabecalhoVendas(linhas) >= 0; }
+
+  function lerVendas(linhas) {
+    const h = acharCabecalhoVendas(linhas);
+    if (h < 0) throw new Error('Não encontrei o cabeçalho do relatório de pedidos (colunas "Data pedido", "Grupo", "Total").');
+    const cab = linhas[h].map(semAcento);
+    const col = function (nome) { return cab.indexOf(nome); };
+    const c = {
+      pedido: col('ID PEDIDO'), tipo: col('TIPO PEDIDO'), data: col('DATA PEDIDO'),
+      produto: col('PRODUTO'), grupo: col('GRUPO'), garcom: col('GARCOM'),
+      qtde: col('QTDE'), unit: col('UNITARIO'), desc: col('DESCONTO'), total: col('TOTAL')
+    };
+    ['pedido', 'data', 'grupo', 'qtde', 'unit', 'total'].forEach(function (k) {
+      if (c[k] < 0) throw new Error('Coluna obrigatória não encontrada no relatório de pedidos: ' + k);
+    });
+    const itens = [];
+    let ignoradas = 0;
+    for (let i = h + 1; i < linhas.length; i++) {
+      const r = linhas[i];
+      if (!r || r.every(function (x) { return x == null || x === ''; })) continue;
+      const d = lerData(r[c.data]);
+      if (!d || r[c.pedido] == null || r[c.pedido] === '') { ignoradas++; continue; }
+      const qtde = numero(r[c.qtde]);
+      const unitario = numero(r[c.unit]);
+      const desconto = c.desc >= 0 ? numero(r[c.desc]) : 0;
+      const total = numero(r[c.total]);
+      itens.push({
+        data: d.data,
+        data_hora: d.dataHora,
+        pedido_id: String(r[c.pedido]).trim(),
+        tipo_pedido: c.tipo >= 0 ? semAcento(r[c.tipo]) || 'OUTROS' : 'OUTROS',
+        grupo: semAcento(r[c.grupo]) || 'SEM GRUPO',
+        produto: c.produto >= 0 ? String(r[c.produto] || '').trim() : '',
+        garcom: c.garcom >= 0 ? String(r[c.garcom] || '').trim() : '',
+        qtde: qtde,
+        unitario: unitario,
+        desconto: desconto,
+        // valor bruto = antes do desconto. Quando o sistema não traz preço unitário,
+        // usamos total + desconto.
+        bruto: Math.round(((unitario ? qtde * unitario : total + desconto)) * 100) / 100,
+        total: total
+      });
+    }
+    if (!itens.length) throw new Error('O relatório de pedidos não tem nenhuma linha de venda.');
+    const datas = itens.map(function (x) { return x.data; }).sort();
+    return { tipo: 'vendas', itens: itens, inicio: datas[0], fim: datas[datas.length - 1], ignoradas: ignoradas };
+  }
+
+  /* ---------------- Planilha de diárias e 10% ---------------- */
+
+  function ehVerdadeiro(v) {
+    if (v === true || v === 1) return true;
+    const s = semAcento(v);
+    return s === 'TRUE' || s === 'VERDADEIRO' || s === 'SIM' || s === 'X';
+  }
+
+  function acharCabecalhoMO(linhas) {
+    for (let i = 0; i < Math.min(linhas.length, 40); i++) {
+      const r = (linhas[i] || []).map(semAcento);
+      if (r[0] === 'NOME' && r.filter(function (x) { return x === 'DIARIA'; }).length >= 2) return i;
+    }
+    return -1;
+  }
+
+  function pareceMaoDeObra(linhas) { return acharCabecalhoMO(linhas) >= 0; }
+
+  /* Estrutura esperada (aba semanal):
+   *  - linha "NOME" com blocos de 4 colunas por dia: [DIÁRIA | marcação | valor diária | 10%]
+   *  - acima, a data de cada dia na 1ª coluna do bloco (pelo menos um dia precisa ter data)
+   *  - uma linha por colaborador até a linha "TOTAL"
+   *  - Marcação VERDADEIRO = trabalhou (equipe: diária + parte do 10%)
+   *  - Sem marcação mas com valores = motoboy (diária + valor das entregas)
+   */
+  function lerMaoDeObra(linhas) {
+    const h = acharCabecalhoMO(linhas);
+    if (h < 0) throw new Error('Não encontrei a linha "NOME / DIÁRIA" da planilha de diárias.');
+    const cab = linhas[h].map(semAcento);
+    const blocos = [];
+    cab.forEach(function (v, j) { if (v === 'DIARIA') blocos.push({ col: j, data: null }); });
+
+    // datas: procura nas linhas acima do cabeçalho, nas 4 colunas de cada bloco
+    blocos.forEach(function (b) {
+      for (let i = 0; i < h && !b.data; i++) {
+        const r = linhas[i] || [];
+        for (let k = 0; k < 4 && !b.data; k++) {
+          const v = r[b.col + k];
+          if (v instanceof Date || (typeof v === 'number' && v > 40000 && v < 80000) ||
+              (typeof v === 'string' && /^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(v.trim()))) {
+            const d = lerData(v); if (d) b.data = d.data;
+          }
+        }
+      }
+    });
+    const ref = blocos.findIndex(function (b) { return b.data; });
+    if (ref < 0) throw new Error('A planilha de diárias não tem nenhuma data preenchida nos dias da semana.');
+    blocos.forEach(function (b, i) { if (!b.data) b.data = somaDias(blocos[ref].data, i - ref); });
+
+    const lanc = [];
+    for (let i = h + 1; i < linhas.length; i++) {
+      const r = linhas[i] || [];
+      const nome = String(r[0] == null ? '' : r[0]).trim();
+      if (semAcento(nome) === 'TOTAL') break;
+      if (!nome) continue;
+      blocos.forEach(function (b) {
+        const marcado = ehVerdadeiro(r[b.col + 1]);
+        const diaria = numero(r[b.col + 2]);
+        const dez = numero(r[b.col + 3]);
+        if (!diaria && !dez) return;
+        const marcacaoVazia = r[b.col + 1] == null || r[b.col + 1] === '';
+        if (!marcado && !marcacaoVazia) return; // desmarcado = não trabalhou
+        lanc.push({
+          data: b.data,
+          colaborador: nome,
+          tipo: marcado ? 'equipe' : 'motoboy',
+          diaria: Math.round(diaria * 100) / 100,
+          dez_porcento: Math.round(dez * 100) / 100
+        });
+      });
+    }
+    const datas = blocos.map(function (b) { return b.data; }).sort();
+    return { tipo: 'mao_obra', itens: lanc, inicio: datas[0], fim: datas[datas.length - 1] };
+  }
+
+  /* Lê todas as abas de um arquivo e devolve o que foi reconhecido.
+   * abas: [{nome, linhas}] */
+  function lerArquivo(nomeArquivo, abas) {
+    const achados = [];
+    abas.forEach(function (aba) {
+      try {
+        if (pareceVendas(aba.linhas)) {
+          const r = lerVendas(aba.linhas); r.aba = aba.nome; r.arquivo = nomeArquivo; achados.push(r);
+        } else if (pareceMaoDeObra(aba.linhas)) {
+          const r = lerMaoDeObra(aba.linhas); r.aba = aba.nome; r.arquivo = nomeArquivo; achados.push(r);
+        }
+      } catch (e) {
+        achados.push({ tipo: 'erro', aba: aba.nome, arquivo: nomeArquivo, mensagem: e.message });
+      }
+    });
+    return achados;
+  }
+
+  /* ---------- Agregação (mesmo formato das views do Supabase) ---------- */
+  function agregarVendas(itens) {
+    const g = {}, p = {}, pedidosVistos = {};
+    itens.forEach(function (x) {
+      const k = x.data + '|' + x.grupo;
+      const a = g[k] || (g[k] = { data: x.data, grupo: x.grupo, bruto: 0, desconto: 0, liquido: 0, qtde: 0 });
+      a.bruto += x.bruto; a.desconto += x.desconto; a.liquido += x.total; a.qtde += x.qtde;
+      const kp = x.data + '|' + x.tipo_pedido;
+      const b = p[kp] || (p[kp] = { data: x.data, tipo_pedido: x.tipo_pedido, pedidos: 0, liquido: 0 });
+      b.liquido += x.total;
+      const kv = kp + '|' + x.pedido_id;
+      if (!pedidosVistos[kv]) { pedidosVistos[kv] = 1; b.pedidos++; }
+    });
+    const r2 = function (o) { ['bruto', 'desconto', 'liquido', 'qtde'].forEach(function (k) { if (k in o) o[k] = Math.round(o[k] * 100) / 100; }); return o; };
+    return {
+      vendasDia: Object.values(g).map(r2),
+      pedidosDia: Object.values(p).map(r2)
+    };
+  }
+
+  function agregarMaoDeObra(itens) {
+    const g = {};
+    itens.forEach(function (x) {
+      const k = x.data + '|' + x.tipo;
+      const a = g[k] || (g[k] = { data: x.data, tipo: x.tipo, diaria: 0, dez_porcento: 0, pessoas: 0 });
+      a.diaria += x.diaria; a.dez_porcento += x.dez_porcento; a.pessoas++;
+    });
+    return Object.values(g).map(function (o) {
+      o.diaria = Math.round(o.diaria * 100) / 100; o.dez_porcento = Math.round(o.dez_porcento * 100) / 100; return o;
+    });
+  }
+
+  const api = {
+    semAcento: semAcento, numero: numero, lerData: lerData, somaDias: somaDias,
+    lerVendas: lerVendas, lerMaoDeObra: lerMaoDeObra, lerArquivo: lerArquivo,
+    pareceVendas: pareceVendas, pareceMaoDeObra: pareceMaoDeObra,
+    agregarVendas: agregarVendas, agregarMaoDeObra: agregarMaoDeObra
+  };
+  root.FTParsers = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* Forneria Toscana — cálculo dos indicadores
+ * Entrada (mesmo formato das views do Supabase):
+ *   vendasDia:  [{data, grupo, bruto, desconto, liquido, qtde}]
+ *   pedidosDia: [{data, tipo_pedido, pedidos, liquido}]
+ *   maoObraDia: [{data, tipo:'equipe'|'motoboy', diaria, dez_porcento, pessoas}]
+ */
+(function (root) {
+  'use strict';
+
+  // Grupos do sistema -> categorias do painel. Para mudar, edite aqui.
+  const CATEGORIAS = [
+    { id: 'pizzas', nome: 'Pizzas', grupos: ['PIZZA GRANDE', 'PIZZA BROTO', 'PIZZAS FORNEARIA TOSCANA', 'DISCO DE PIZZA'] },
+    { id: 'adicionais', nome: 'Adicionais', grupos: ['ADICIONAIS'] },
+    { id: 'entradas', nome: 'Entradas', grupos: ['ENTRADAS'] },
+    { id: 'sobremesas', nome: 'Sobremesas', grupos: ['SOBREMESAS'] },
+    { id: 'bebidas', nome: 'Bebidas não alcoólicas', grupos: ['BEBIDAS', 'CAFE E CHA'] },
+    { id: 'cervejas', nome: 'Cervejas', grupos: ['CERVEJAS'] },
+    { id: 'vinhos', nome: 'Vinhos', grupos: ['VINHOS'] },
+    { id: 'drinks', nome: 'Drinks, caipirinhas e doses', grupos: ['DRINKS', 'CAIPIRINHAS', 'DOSES'] },
+    { id: 'outros', nome: 'Outros produtos', grupos: [] },
+    { id: 'entrega', nome: 'Taxa de entrega', grupos: ['TAXA DE ENTREGA'], taxa: true },
+    { id: 'servico', nome: 'Taxa de serviço 10%', grupos: ['TAXA DE SERVICO'], taxa: true }
+  ];
+
+  const CANAIS = [
+    { id: 'COMANDA', nome: 'Salão (comandas)' },
+    { id: 'DELIVERY', nome: 'Delivery' },
+    { id: 'BALCAO', nome: 'Balcão / retirada' }
+  ];
+
+  const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+  function semAcento(s) {
+    return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim().replace(/\s+/g, ' ');
+  }
+  const mapaGrupo = {};
+  CATEGORIAS.forEach(function (c) { c.grupos.forEach(function (g) { mapaGrupo[g] = c.id; }); });
+  function categoriaDoGrupo(grupo) { return mapaGrupo[semAcento(grupo)] || 'outros'; }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function dataLocal(s) { return new Date(s + 'T12:00:00'); }
+
+  function nomeMes(chave, curto) {
+    const p = chave.split('-');
+    const n = MESES[+p[1] - 1];
+    return curto ? n.slice(0, 3) + '/' + p[0].slice(2) : n.charAt(0).toUpperCase() + n.slice(1) + ' ' + p[0];
+  }
+
+  // Semanas de segunda a domingo, cortadas nos limites do mês
+  // (assim a soma das semanas fecha exatamente com o mês).
+  function semanasDoMes(chave) {
+    const p = chave.split('-').map(Number);
+    const ini = new Date(p[0], p[1] - 1, 1, 12);
+    const fim = new Date(p[0], p[1], 0, 12);
+    const semanas = [];
+    let d = new Date(ini);
+    while (d <= fim) {
+      const s = new Date(d);
+      const e = new Date(d);
+      const ateDomingo = (7 - e.getDay()) % 7;
+      e.setDate(e.getDate() + ateDomingo);
+      if (e > fim) e.setTime(fim.getTime());
+      semanas.push({ inicio: iso(s), fim: iso(e) });
+      d = new Date(e); d.setDate(d.getDate() + 1);
+    }
+    return semanas.map(function (w, i) {
+      const a = dataLocal(w.inicio), b = dataLocal(w.fim);
+      w.numero = i + 1;
+      w.rotulo = 'Semana ' + (i + 1);
+      w.periodo = a.getDate() === b.getDate() ? pad(a.getDate()) + '/' + pad(a.getMonth() + 1)
+        : pad(a.getDate()) + ' a ' + pad(b.getDate()) + '/' + pad(b.getMonth() + 1);
+      return w;
+    });
+  }
+
+  function criar(dados) {
+    const vendasDia = dados.vendasDia || [], pedidosDia = dados.pedidosDia || [], maoObraDia = dados.maoObraDia || [];
+
+    function meses() {
+      const s = {};
+      vendasDia.forEach(function (r) { s[r.data.slice(0, 7)] = 1; });
+      maoObraDia.forEach(function (r) { s[r.data.slice(0, 7)] = 1; });
+      return Object.keys(s).sort();
+    }
+
+    function periodo(inicio, fim) {
+      const dentro = function (r) { return r.data >= inicio && r.data <= fim; };
+      const m = {
+        inicio: inicio, fim: fim, bruto: 0, desconto: 0, liquido: 0, cat: {}, catDesconto: {},
+        produtosBruto: 0, pedidos: 0, canal: {}, canalPedidos: {}, diasComVenda: 0,
+        mo: { diariaEquipe: 0, diariaMoto: 0, dezEquipe: 0, entregaMoto: 0, total: 0, dias: 0, diasComVenda: 0, temDados: false }
+      };
+      CATEGORIAS.forEach(function (c) { m.cat[c.id] = 0; m.catDesconto[c.id] = 0; });
+      CANAIS.forEach(function (c) { m.canal[c.id] = 0; m.canalPedidos[c.id] = 0; });
+      const dias = {};
+      vendasDia.filter(dentro).forEach(function (r) {
+        const c = categoriaDoGrupo(r.grupo);
+        m.bruto += +r.bruto; m.desconto += +r.desconto; m.liquido += +r.liquido;
+        m.cat[c] += +r.bruto; m.catDesconto[c] += +r.desconto;
+        if (!CATEGORIAS.find(function (x) { return x.id === c; }).taxa) m.produtosBruto += +r.bruto;
+        if (+r.bruto) dias[r.data] = 1;
+      });
+      m.diasComVenda = Object.keys(dias).length;
+      pedidosDia.filter(dentro).forEach(function (r) {
+        const t = semAcento(r.tipo_pedido);
+        const k = m.canal[t] != null ? t : null;
+        m.pedidos += +r.pedidos;
+        if (k) { m.canal[k] += +r.liquido; m.canalPedidos[k] += +r.pedidos; }
+      });
+      m.ticket = m.pedidos ? m.liquido / m.pedidos : null;
+      m.pctDesconto = m.bruto ? m.desconto / m.bruto : null;
+
+      const diasMO = {};
+      maoObraDia.filter(dentro).forEach(function (r) {
+        diasMO[r.data] = 1;
+        if (r.tipo === 'motoboy') { m.mo.diariaMoto += +r.diaria; m.mo.entregaMoto += +r.dez_porcento; }
+        else { m.mo.diariaEquipe += +r.diaria; m.mo.dezEquipe += +r.dez_porcento; }
+      });
+      m.mo.dias = Object.keys(diasMO).length;
+      m.mo.diasComVenda = Object.keys(dias).filter(function (d) { return diasMO[d]; }).length;
+      m.mo.temDados = m.mo.dias > 0;
+      m.mo.completo = m.mo.temDados && m.mo.diasComVenda >= m.diasComVenda;
+      m.mo.total = m.mo.diariaEquipe + m.mo.diariaMoto + m.mo.dezEquipe + m.mo.entregaMoto;
+      // % do custo de mão de obra sobre o faturamento líquido dos MESMOS dias cobertos pela planilha
+      let fatDiasMO = 0;
+      vendasDia.filter(dentro).forEach(function (r) { if (diasMO[r.data]) fatDiasMO += +r.liquido; });
+      m.mo.faturamentoCoberto = fatDiasMO;
+      m.mo.pctFaturamento = fatDiasMO ? m.mo.total / fatDiasMO : null;
+      m.temVendas = m.bruto !== 0 || m.pedidos !== 0;
+      return m;
+    }
+
+    function mes(chave) {
+      const p = chave.split('-').map(Number);
+      const ultimo = new Date(p[0], p[1], 0).getDate();
+      const r = periodo(chave + '-01', chave + '-' + pad(ultimo));
+      r.chave = chave; r.nome = nomeMes(chave); r.nomeCurto = nomeMes(chave, true);
+      r.semanas = semanasDoMes(chave).map(function (w) { return Object.assign(periodo(w.inicio, w.fim), w); });
+      r.semanasComMO = r.semanas.filter(function (w) { return w.mo.temDados; }).length;
+      r.semanasComVenda = r.semanas.filter(function (w) { return w.temVendas; }).length;
+      return r;
+    }
+
+    return { meses: meses, mes: mes, periodo: periodo };
+  }
+
+  const api = { CATEGORIAS: CATEGORIAS, CANAIS: CANAIS, criar: criar, semanasDoMes: semanasDoMes, nomeMes: nomeMes, categoriaDoGrupo: categoriaDoGrupo };
+  root.FTIndicadores = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* Forneria Toscana — painel de indicadores (tela) */
+(function () {
+  'use strict';
+  const I = window.FTIndicadores, P = window.FTParsers;
+  const $ = function (s, el) { return (el || document).querySelector(s); };
+
+  const estado = { dados: null, mesSel: null, modo: 'supabase', sb: null, achados: [] };
+
+  /* ---------------- formatação ---------------- */
+  const fMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fMoeda0 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  const fInt = new Intl.NumberFormat('pt-BR');
+  const fPct = new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  function fmt(v, tipo) {
+    if (v == null || !isFinite(v)) return '—';
+    if (tipo === 'int') return fInt.format(v);
+    if (tipo === 'pct') return fPct.format(v);
+    if (tipo === 'moeda0') return fMoeda0.format(v);
+    return fMoeda.format(v);
+  }
+  function compacto(v) {
+    if (Math.abs(v) >= 1000) return 'R$ ' + (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil';
+    return fMoeda0.format(v);
+  }
+  function dataBR(iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function mesAnterior(chave) { const p = chave.split('-').map(Number); const d = new Date(p[0], p[1] - 2, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function hojeISO() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  /* ---------------- linhas das tabelas ---------------- */
+  function linhas(mostrarOutros) {
+    const L = [];
+    L.push({ secao: 'Faturamento' });
+    L.push({ rot: 'Faturamento bruto', dica: 'Tudo o que foi vendido antes dos descontos, incluindo 10% e taxa de entrega', v: function (m) { return m.temVendas ? m.bruto : null; }, forte: true });
+    L.push({ rot: 'Descontos concedidos', v: function (m) { return m.temVendas ? m.desconto : null; }, neg: true, sub: function (m) { return m.temVendas && m.bruto ? fmt(m.pctDesconto, 'pct') + ' do bruto' : ''; } });
+    L.push({ rot: 'Faturamento líquido', dica: 'Bruto menos descontos', v: function (m) { return m.temVendas ? m.liquido : null; }, forte: true });
+    L.push({ rot: 'Pedidos', v: function (m) { return m.temVendas ? m.pedidos : null; }, tipo: 'int' });
+    L.push({ rot: 'Ticket médio', dica: 'Faturamento líquido dividido pelo número de pedidos', v: function (m) { return m.ticket; } });
+
+    L.push({ secao: 'Vendas por categoria · valor bruto' });
+    I.CATEGORIAS.filter(function (c) { return !c.taxa && (c.id !== 'outros' || mostrarOutros); }).forEach(function (c) {
+      L.push({ rot: c.nome, v: function (m) { return m.temVendas ? m.cat[c.id] : null; }, cat: c.id });
+    });
+    L.push({ rot: 'Total em produtos', dica: 'Soma das categorias acima, sem 10% e sem taxa de entrega', v: function (m) { return m.temVendas ? m.produtosBruto : null; }, forte: true });
+    I.CATEGORIAS.filter(function (c) { return c.taxa; }).forEach(function (c) {
+      L.push({ rot: c.id === 'servico' ? '10% cobrado dos clientes' : 'Taxa de entrega cobrada', v: function (m) { return m.temVendas ? m.cat[c.id] : null; } });
+    });
+
+    L.push({ secao: 'Onde vendemos · valor líquido' });
+    I.CANAIS.forEach(function (c) {
+      L.push({ rot: c.nome, v: function (m) { return m.temVendas ? m.canal[c.id] : null; }, sub: function (m) { return m.temVendas && m.canalPedidos[c.id] ? fInt.format(m.canalPedidos[c.id]) + ' pedidos' : ''; } });
+    });
+
+    L.push({ secao: 'Mão de obra · planilha de diárias e 10%' });
+    const mo = function (f) { return function (m) { return m.mo.temDados ? f(m.mo) : null; }; };
+    L.push({ rot: 'Diárias de freelancers', v: mo(function (o) { return o.diariaEquipe; }), mo: true });
+    L.push({ rot: 'Diárias de motoboys', v: mo(function (o) { return o.diariaMoto; }), mo: true });
+    L.push({ rot: '10% pago à equipe', v: mo(function (o) { return o.dezEquipe; }), mo: true });
+    L.push({ rot: 'Entregas pagas aos motoboys', v: mo(function (o) { return o.entregaMoto; }), mo: true });
+    L.push({ rot: 'Custo total de mão de obra', v: mo(function (o) { return o.total; }), mo: true, forte: true });
+    L.push({ rot: '% sobre o faturamento líquido', dica: 'Calculado só sobre os dias que têm planilha de diárias', v: mo(function (o) { return o.pctFaturamento; }), tipo: 'pct', mo: true });
+    return L;
+  }
+
+  function celula(l, m, destaque) {
+    const v = l.v(m);
+    let cls = 'num' + (destaque ? ' col-mes' : '') + (l.forte ? ' forte' : '');
+    let txt;
+    if (v == null) {
+      if (l.mo && m.temVendas) { txt = '<span class="vazio">sem planilha</span>'; }
+      else txt = '<span class="vazio">—</span>';
+    } else {
+      txt = (l.neg && v ? '− ' : '') + fmt(v, l.tipo);
+      if (l.neg && v) cls += ' negativo';
+    }
+    let sub = l.sub ? l.sub(m) : '';
+    if (l.mo && m.mo.temDados && !m.mo.completo) sub = '<span class="chip-parcial">parcial</span>';
+    return '<td class="' + cls + '">' + txt + (sub ? '<small>' + sub + '</small>' : '') + '</td>';
+  }
+
+  function tabela(colunas, idxDestaque, mostrarOutros, extra) {
+    const L = linhas(mostrarOutros);
+    let h = '<table class="matriz"><thead><tr><th class="col-rot" scope="col">Indicador</th>';
+    colunas.forEach(function (c, i) {
+      h += '<th scope="col" class="num' + (i === idxDestaque ? ' col-mes' : '') + '"><span class="th-t">' + esc(c.titulo) + '</span>' + (c.sub ? '<span class="th-s">' + esc(c.sub) + '</span>' : '') + '</th>';
+    });
+    if (extra) h += '<th scope="col" class="num col-var"><span class="th-t">' + esc(extra.titulo) + '</span><span class="th-s">' + esc(extra.sub) + '</span></th>';
+    h += '</tr></thead><tbody>';
+    const ncol = colunas.length + 1 + (extra ? 1 : 0);
+    L.forEach(function (l) {
+      if (l.secao) { h += '<tr class="secao"><th colspan="' + ncol + '" scope="colgroup">' + esc(l.secao) + '</th></tr>'; return; }
+      h += '<tr' + (l.forte ? ' class="linha-forte"' : '') + '><th scope="row" class="col-rot"' + (l.dica ? ' title="' + esc(l.dica) + '"' : '') + '>' +
+        (l.cat ? '<i class="pt" aria-hidden="true"></i>' : '') + esc(l.rot) + (l.dica ? ' <span class="info" aria-hidden="true">i</span>' : '') + '</th>';
+      colunas.forEach(function (c, i) { h += celula(l, c.m, i === idxDestaque); });
+      if (extra) h += extra.celula(l);
+      h += '</tr>';
+    });
+    return h + '</tbody></table>';
+  }
+
+  function variacao(l, atual, anterior) {
+    const a = l.v(atual), b = l.v(anterior);
+    if (a == null || b == null || !isFinite(a) || !isFinite(b)) return '<td class="num col-var"><span class="vazio">—</span></td>';
+    let txt, sinal;
+    if (l.tipo === 'pct') { const d = (a - b) * 100; sinal = d; txt = (d > 0 ? '+' : '') + d.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' p.p.'; }
+    else if (!b) return '<td class="num col-var"><span class="vazio">—</span></td>';
+    else { const d = (a - b) / Math.abs(b); sinal = d; txt = (d > 0 ? '+' : '') + fPct.format(d); }
+    // para custos e descontos, subir é ruim
+    const ruimSubir = l.neg || l.mo;
+    const bom = sinal === 0 ? 'neutro' : ((sinal > 0) !== !!ruimSubir ? 'bom' : 'ruim');
+    const seta = sinal > 0 ? '▲' : sinal < 0 ? '▼' : '';
+    return '<td class="num col-var ' + bom + '"><span class="seta" aria-hidden="true">' + seta + '</span> ' + txt + '</td>';
+  }
+
+  /* ---------------- KPIs ---------------- */
+  function delta(atual, anterior, ruimSubir, prevNome) {
+    if (atual == null || anterior == null || !anterior) return '<span class="delta neutro">sem dados de ' + esc(prevNome) + '</span>';
+    const d = (atual - anterior) / Math.abs(anterior);
+    const bom = d === 0 ? 'neutro' : ((d > 0) !== ruimSubir ? 'bom' : 'ruim');
+    return '<span class="delta ' + bom + '"><span aria-hidden="true">' + (d > 0 ? '▲' : d < 0 ? '▼' : '') + '</span> ' + (d > 0 ? '+' : '') + fPct.format(d) + ' vs ' + esc(prevNome) + '</span>';
+  }
+
+  function kpis(m, p) {
+    const pv = p.temVendas, pn = p.nomeCurto;
+    const moNota = m.mo.temDados ? (m.mo.completo ? 'mês completo' : m.semanasComMO + ' de ' + m.semanasComVenda + ' semanas com planilha') : 'nenhuma planilha de diárias no mês';
+    const pMo = p.mo.temDados && p.mo.completo && m.mo.completo;
+    const tiles = [
+      { t: 'Faturamento bruto', v: fmt(m.bruto), d: delta(m.bruto, pv ? p.bruto : null, false, pn), destaque: true },
+      { t: 'Descontos concedidos', v: fmt(m.desconto), s: m.bruto ? fmt(m.pctDesconto, 'pct') + ' do faturamento bruto' : '', d: delta(m.desconto, pv ? p.desconto : null, true, pn) },
+      { t: 'Faturamento líquido', v: fmt(m.liquido), d: delta(m.liquido, pv ? p.liquido : null, false, pn) },
+      { t: 'Pedidos · ticket médio', v: fInt.format(m.pedidos) + '<span class="kpi-sep">·</span>' + fmt(m.ticket), d: delta(m.pedidos, pv ? p.pedidos : null, false, pn) },
+      { t: 'Diárias pagas', v: m.mo.temDados ? fmt(m.mo.diariaEquipe + m.mo.diariaMoto) : '—', s: m.mo.temDados ? 'Freelancers ' + fmt(m.mo.diariaEquipe, 'moeda0') + ' · motoboys ' + fmt(m.mo.diariaMoto, 'moeda0') : '', nota: moNota, parcial: m.mo.temDados && !m.mo.completo, d: pMo ? delta(m.mo.diariaEquipe + m.mo.diariaMoto, p.mo.diariaEquipe + p.mo.diariaMoto, true, pn) : '' },
+      { t: '10% pago à equipe', v: m.mo.temDados ? fmt(m.mo.dezEquipe) : '—', s: m.mo.temDados ? '10% cobrado nos mesmos dias: ' + fmt(diasCobertos10(m), 'moeda0') : '', nota: moNota, parcial: m.mo.temDados && !m.mo.completo, d: pMo ? delta(m.mo.dezEquipe, p.mo.dezEquipe, true, pn) : '' }
+    ];
+    return tiles.map(function (k) {
+      return '<article class="kpi' + (k.destaque ? ' kpi-destaque' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p>' +
+        (k.s ? '<p class="kpi-s">' + k.s + '</p>' : '') +
+        (k.nota ? '<p class="kpi-n">' + (k.parcial ? '<span class="chip-parcial">parcial</span> ' : '') + esc(k.nota) + '</p>' : '') +
+        (k.d ? '<p class="kpi-d">' + k.d + '</p>' : '') + '</article>';
+    }).join('');
+  }
+  function diasCobertos10(m) {
+    // 10% cobrado (taxa de serviço) apenas nos dias cobertos pela planilha de diárias
+    const dias = {};
+    estado.dados.maoObraDia.forEach(function (r) { if (r.data >= m.inicio && r.data <= m.fim) dias[r.data] = 1; });
+    let s = 0;
+    estado.dados.vendasDia.forEach(function (r) { if (dias[r.data] && I.categoriaDoGrupo(r.grupo) === 'servico') s += +r.bruto; });
+    return s;
+  }
+
+  /* ---------------- gráficos ---------------- */
+  function graficoSemanas(m) {
+    const ws = m.semanas, n = ws.length;
+    const W = 640, H = 260, top = 34, bot = 46, left = 8, right = 8;
+    const max = Math.max.apply(null, ws.map(function (w) { return w.bruto; }).concat([1]));
+    const passo = escalaPasso(max);
+    const topo = Math.ceil(max / passo) * passo;
+    const ih = H - top - bot, iw = W - left - right;
+    const bw = Math.min(64, iw / n * 0.56);
+    const y = function (v) { return top + ih - v / topo * ih; };
+    let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Faturamento bruto por semana em ' + esc(m.nome) + '">';
+    for (let g = 0; g <= topo + 1e-6; g += passo) {
+      s += '<line x1="' + left + '" x2="' + (W - right) + '" y1="' + y(g) + '" y2="' + y(g) + '" class="grade"/>';
+    }
+    ws.forEach(function (w, i) {
+      const cx = left + iw / n * (i + 0.5);
+      const h = Math.max(0, w.bruto / topo * ih);
+      const x = cx - bw / 2, yy = top + ih - h;
+      const r = Math.min(4, h);
+      if (h > 0) s += '<path class="barra" d="M' + x + ',' + (top + ih) + 'V' + (yy + r) + 'Q' + x + ',' + yy + ' ' + (x + r) + ',' + yy + 'H' + (x + bw - r) + 'Q' + (x + bw) + ',' + yy + ' ' + (x + bw) + ',' + (yy + r) + 'V' + (top + ih) + 'Z"/>';
+      s += '<text x="' + cx + '" y="' + (yy - 8) + '" class="rot-valor" text-anchor="middle">' + (w.bruto ? compacto(w.bruto) : 'sem vendas') + '</text>';
+      s += '<text x="' + cx + '" y="' + (H - bot + 20) + '" class="rot-eixo" text-anchor="middle">' + esc(w.rotulo.replace('Semana', 'Sem.')) + '</text>';
+      s += '<text x="' + cx + '" y="' + (H - bot + 36) + '" class="rot-eixo2" text-anchor="middle">' + esc(w.periodo) + '</text>';
+      s += '<rect class="alvo" x="' + (left + iw / n * i) + '" y="' + top + '" width="' + (iw / n) + '" height="' + ih + '" data-i="' + i + '"/>';
+    });
+    s += '<line x1="' + left + '" x2="' + (W - right) + '" y1="' + (top + ih) + '" y2="' + (top + ih) + '" class="base"/>';
+    return s + '</svg>';
+  }
+  function escalaPasso(max) {
+    const bruto = max / 4, p = Math.pow(10, Math.floor(Math.log10(bruto))), f = bruto / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+  }
+
+  function mixCategorias(m) {
+    const cats = I.CATEGORIAS.filter(function (c) { return !c.taxa && m.cat[c.id] > 0; })
+      .map(function (c) { return { nome: c.nome, v: m.cat[c.id] }; })
+      .sort(function (a, b) { return b.v - a.v; });
+    const tot = m.produtosBruto || 1, max = cats.length ? cats[0].v : 1;
+    if (!cats.length) return '<p class="vazio-bloco">Sem vendas neste mês.</p>';
+    return '<ul class="mix">' + cats.map(function (c) {
+      return '<li><span class="mix-n">' + esc(c.nome) + '</span><span class="mix-b"><i style="width:' + (c.v / max * 100).toFixed(1) + '%"></i></span>' +
+        '<span class="mix-v">' + fmt(c.v, 'moeda0') + '</span><span class="mix-p">' + fPct.format(c.v / tot) + '</span></li>';
+    }).join('') + '</ul>';
+  }
+
+  function comparativoCategorias(lista) {
+    // lista: meses (até 3, do mais antigo ao mais novo), barras agrupadas por categoria
+    const cats = I.CATEGORIAS.filter(function (c) { return !c.taxa && lista.some(function (m) { return m.cat[c.id] > 0; }); });
+    const max = Math.max.apply(null, [1].concat(...lista.map(function (m) { return cats.map(function (c) { return m.cat[c.id]; }); })));
+    let h = '<div class="legenda">' + lista.map(function (m, i) { return '<span><i class="s' + (i + 1) + '"></i>' + esc(m.nome) + '</span>'; }).join('') + '</div><ul class="comp">';
+    cats.forEach(function (c) {
+      h += '<li><span class="comp-n">' + esc(c.nome) + '</span><span class="comp-barras">';
+      lista.forEach(function (m, i) {
+        const v = m.cat[c.id];
+        h += '<span class="comp-l"><span class="comp-b"><i class="s' + (i + 1) + '" style="width:' + (v / max * 100).toFixed(1) + '%"></i></span><span class="comp-v">' + (m.temVendas ? fmt(v, 'moeda0') : '—') + '</span></span>';
+      });
+      h += '</span></li>';
+    });
+    return h + '</ul>';
+  }
+
+  /* ---------------- tela ---------------- */
+  function render() {
+    const ind = I.criar(estado.dados);
+    const meses = ind.meses();
+    const vazio = !meses.length;
+    $('#vazio').hidden = !vazio;
+    $('#conteudo').hidden = vazio;
+    if (vazio) { $('#meses').innerHTML = ''; return; }
+    if (!estado.mesSel || meses.indexOf(estado.mesSel) < 0) {
+      const comVendas = meses.filter(function (k) { return ind.mes(k).temVendas; });
+      estado.mesSel = (comVendas.length ? comVendas : meses)[(comVendas.length ? comVendas : meses).length - 1];
+    }
+    const m = ind.mes(estado.mesSel);
+    const p = ind.mes(mesAnterior(estado.mesSel));
+
+    $('#meses').innerHTML = meses.map(function (k) {
+      return '<button type="button" class="chip-mes" aria-pressed="' + (k === estado.mesSel) + '" data-mes="' + k + '">' + esc(I.nomeMes(k)) + '</button>';
+    }).join('');
+
+    $('#kpis').innerHTML = kpis(m, p);
+    $('#titulo-mes').textContent = m.nome;
+    $('#titulo-sem').textContent = m.nome;
+    const fechado = m.fim < hojeISO();
+    $('#grafico-semanas').innerHTML = graficoSemanas(m);
+    $('#mix').innerHTML = mixCategorias(m);
+    $('#mix-total').textContent = fmt(m.produtosBruto, 'moeda0') + ' em produtos';
+
+    const mostrarOutros = meses.some(function (k) { return ind.mes(k).cat.outros > 0; });
+    const colsSem = m.semanas.map(function (w) { return { titulo: w.rotulo, sub: w.periodo, m: w }; });
+    colsSem.push({ titulo: fechado ? 'Mês fechado' : 'Mês até agora', sub: m.nomeCurto, m: m });
+    $('#tabela-semanas').innerHTML = tabela(colsSem, colsSem.length - 1, mostrarOutros);
+
+    // comparativo mensal: até 6 meses terminando no selecionado
+    const ate = meses.filter(function (k) { return k <= estado.mesSel; }).slice(-6);
+    const objs = ate.map(function (k) { return ind.mes(k); });
+    // mostra sempre o mês anterior, mesmo vazio, para deixar claro o que falta importar
+    if (ate.indexOf(p.chave) < 0) objs.splice(objs.length - 1, 0, p);
+    const colsMes = objs.map(function (o) { return { titulo: o.nome, sub: !o.temVendas ? 'sem dados' : (o.fim < hojeISO() ? 'mês fechado' : 'em andamento'), m: o }; });
+    const extra = objs.length >= 1 ? {
+      titulo: 'Variação', sub: p.nomeCurto + ' → ' + m.nomeCurto,
+      celula: function (l) { return variacao(l, m, p); }
+    } : null;
+    $('#tabela-meses').innerHTML = tabela(colsMes, colsMes.length - 1, mostrarOutros, extra);
+    const ult3 = objs.slice(-3);
+    $('#comp-categorias').innerHTML = comparativoCategorias(ult3);
+    $('#aviso-comparativo').hidden = p.temVendas;
+    $('#aviso-comparativo').textContent = 'Ainda não há vendas de ' + p.nome.toLowerCase() + ' no painel. Importe o relatório de pedidos de ' + p.nome.split(' ')[0] + ' para comparar os dois meses.';
+
+    // cobertura
+    const cobV = estado.dados.vendasDia.map(function (r) { return r.data; }).sort();
+    const cobM = estado.dados.maoObraDia.map(function (r) { return r.data; }).sort();
+    $('#cobertura').innerHTML =
+      '<span><b>Vendas:</b> ' + (cobV.length ? dataBR(cobV[0]) + ' a ' + dataBR(cobV[cobV.length - 1]) : 'nenhuma') + '</span>' +
+      '<span><b>Diárias e 10%:</b> ' + (cobM.length ? semanasCobertas(cobM) : 'nenhuma planilha') + '</span>' +
+      (estado.dados.atualizadoEm ? '<span><b>Atualizado em:</b> ' + esc(estado.dados.atualizadoEm) + '</span>' : '');
+
+    ligarTooltip(m);
+  }
+
+  function semanasCobertas(datas) {
+    const u = Array.from(new Set(datas)).sort(), grupos = [];
+    u.forEach(function (d) {
+      const g = grupos[grupos.length - 1];
+      if (g && P.somaDias(g.fim, 1) === d) g.fim = d; else grupos.push({ ini: d, fim: d });
+    });
+    return grupos.map(function (g) { return dataBR(g.ini).slice(0, 5) + ' a ' + dataBR(g.fim); }).join(' · ');
+  }
+
+  function ligarTooltip(m) {
+    const svg = $('#grafico-semanas svg'), tip = $('#tip');
+    if (!svg) return;
+    svg.querySelectorAll('.alvo').forEach(function (r) {
+      const mostrar = function (ev) {
+        const w = m.semanas[+r.dataset.i];
+        tip.innerHTML = '<b>' + esc(w.rotulo) + ' · ' + esc(w.periodo) + '</b>' +
+          '<span>Bruto <em>' + fmt(w.bruto) + '</em></span><span>Descontos <em>− ' + fmt(w.desconto) + '</em></span>' +
+          '<span>Líquido <em>' + fmt(w.liquido) + '</em></span><span>Pedidos <em>' + fInt.format(w.pedidos) + '</em></span>' +
+          (w.mo.temDados ? '<span>Mão de obra <em>' + fmt(w.mo.total) + '</em></span>' : '');
+        tip.hidden = false;
+        const box = $('#grafico-semanas').getBoundingClientRect();
+        const rb = r.getBoundingClientRect();
+        const x = rb.left - box.left + rb.width / 2;
+        tip.style.left = Math.max(8, Math.min(box.width - tip.offsetWidth - 8, x - tip.offsetWidth / 2)) + 'px';
+        tip.style.top = '4px';
+        svg.querySelectorAll('.barra').forEach(function (b, j) { b.classList.toggle('apagada', j !== +r.dataset.i); });
+      };
+      r.addEventListener('mouseenter', mostrar);
+      r.addEventListener('click', mostrar);
+    });
+    svg.addEventListener('mouseleave', function () { tip.hidden = true; svg.querySelectorAll('.barra').forEach(function (b) { b.classList.remove('apagada'); }); });
+  }
+
+  /* ---------------- dados: Supabase ---------------- */
+  async function buscarTudo(tabela) {
+    const linhas = [];
+    for (let de = 0; ; de += 1000) {
+      const r = await estado.sb.from(tabela).select('*').order('data', { ascending: true }).range(de, de + 999);
+      if (r.error) throw r.error;
+      linhas.push.apply(linhas, r.data);
+      if (r.data.length < 1000) break;
+    }
+    return linhas;
+  }
+  async function carregarSupabase() {
+    status('Carregando dados…');
+    const res = await Promise.all([buscarTudo('vw_vendas_dia_grupo'), buscarTudo('vw_pedidos_dia'), buscarTudo('vw_mao_obra_dia')]);
+    const ult = await estado.sb.from('importacoes').select('criado_em').order('criado_em', { ascending: false }).limit(1);
+    estado.dados = {
+      vendasDia: res[0], pedidosDia: res[1], maoObraDia: res[2],
+      atualizadoEm: ult.data && ult.data[0] ? new Date(ult.data[0].criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : ''
+    };
+    status('');
+    render();
+  }
+
+  function status(t, erro) { const s = $('#status'); s.textContent = t; s.classList.toggle('erro', !!erro); s.hidden = !t; }
+
+  /* ---------------- importação ---------------- */
+  function lerArquivoNavegador(file) {
+    return new Promise(function (ok, falha) {
+      const fr = new FileReader();
+      fr.onload = function () {
+        try {
+          const wb = XLSX.read(new Uint8Array(fr.result), { type: 'array', cellDates: false });
+          const abas = wb.SheetNames.map(function (n) { return { nome: n, linhas: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null }) }; });
+          ok(P.lerArquivo(file.name, abas));
+        } catch (e) { falha(e); }
+      };
+      fr.onerror = function () { falha(fr.error); };
+      fr.readAsArrayBuffer(file);
+    });
+  }
+
+  async function aoEscolherArquivos(files) {
+    const lista = $('#imp-lista');
+    lista.innerHTML = '<li class="imp-lendo">Lendo ' + files.length + ' arquivo(s)…</li>';
+    $('#imp-salvar').disabled = true;
+    estado.achados = [];
+    for (const f of files) {
+      if (/fluxo/i.test(f.name)) { estado.achados.push({ tipo: 'erro', arquivo: f.name, aba: '', mensagem: 'O fluxo de caixa não alimenta este painel. Envie o relatório de pedidos de venda e a planilha de diárias.' }); continue; }
+      try {
+        const r = await lerArquivoNavegador(f);
+        if (!r.length) estado.achados.push({ tipo: 'erro', arquivo: f.name, aba: '', mensagem: 'Não reconheci este arquivo. Ele precisa ser o relatório de pedidos de venda ou a planilha de diárias e 10%.' });
+        estado.achados.push.apply(estado.achados, r);
+      } catch (e) {
+        estado.achados.push({ tipo: 'erro', arquivo: f.name, aba: '', mensagem: 'Não consegui abrir o arquivo (' + e.message + ').' });
+      }
+    }
+    const limite = P.somaDias(hojeISO(), -180);
+    lista.innerHTML = estado.achados.map(function (a, i) {
+      if (a.tipo === 'erro') return '<li class="imp-erro"><b>' + esc(a.arquivo) + (a.aba ? ' · aba ' + esc(a.aba) : '') + '</b><span>' + esc(a.mensagem) + '</span></li>';
+      const antigo = a.fim < limite;
+      const desc = a.tipo === 'vendas'
+        ? 'Pedidos de venda · ' + fInt.format(a.itens.length) + ' itens · ' + fInt.format(new Set(a.itens.map(function (x) { return x.pedido_id; })).size) + ' pedidos'
+        : 'Diárias e 10% · ' + fInt.format(a.itens.length) + ' lançamentos · ' + fInt.format(new Set(a.itens.map(function (x) { return x.colaborador; })).size) + ' colaboradores';
+      return '<li><label><input type="checkbox" id="imp-' + i + '" data-i="' + i + '"' + (antigo ? '' : ' checked') + '>' +
+        '<span><b>' + esc(desc) + '</b><span>' + esc(a.arquivo) + ' · aba "' + esc(a.aba) + '" · período ' + dataBR(a.inicio) + ' a ' + dataBR(a.fim) + '</span>' +
+        (antigo ? '<span class="imp-alerta">Período antigo, desmarcado. Marque se quiser importar.</span>' : '<span class="imp-ok">Substitui o que já existe nesse período.</span>') + '</span></label></li>';
+    }).join('');
+    atualizarBotaoSalvar();
+  }
+  function atualizarBotaoSalvar() {
+    $('#imp-salvar').disabled = !document.querySelectorAll('#imp-lista input:checked').length;
+  }
+
+  async function salvarImportacao() {
+    const sel = Array.from(document.querySelectorAll('#imp-lista input:checked')).map(function (c) { return estado.achados[+c.dataset.i]; });
+    if (!sel.length) return;
+    const btn = $('#imp-salvar'); btn.disabled = true; btn.textContent = 'Salvando…';
+    try {
+      for (const a of sel) {
+        if (estado.modo === 'previa') mesclarNaMemoria(a);
+        else {
+          const fn = a.tipo === 'vendas' ? 'importar_vendas' : 'importar_mao_obra';
+          const itens = a.itens.map(function (x) { const y = Object.assign({}, x); delete y.bruto; return y; });
+          const r = await estado.sb.rpc(fn, { p_inicio: a.inicio, p_fim: a.fim, p_arquivo: a.arquivo + ' / ' + a.aba, p_itens: itens });
+          if (r.error) throw r.error;
+        }
+      }
+      $('#dlg-importar').close();
+      if (estado.modo === 'previa') { estado.dados.atualizadoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + ' (prévia, não salvo)'; render(); }
+      else await carregarSupabase();
+      status('Planilhas importadas.');
+      setTimeout(function () { status(''); }, 3500);
+    } catch (e) {
+      $('#imp-msg').textContent = 'Não foi possível salvar: ' + (e.message || e) + '. Confira sua conexão e tente de novo.';
+    } finally { btn.textContent = 'Importar selecionadas'; atualizarBotaoSalvar(); }
+  }
+
+  function mesclarNaMemoria(a) {
+    const fora = function (r) { return r.data < a.inicio || r.data > a.fim; };
+    if (a.tipo === 'vendas') {
+      const ag = P.agregarVendas(a.itens);
+      estado.dados.vendasDia = estado.dados.vendasDia.filter(fora).concat(ag.vendasDia);
+      estado.dados.pedidosDia = estado.dados.pedidosDia.filter(fora).concat(ag.pedidosDia);
+    } else {
+      estado.dados.maoObraDia = estado.dados.maoObraDia.filter(fora).concat(P.agregarMaoDeObra(a.itens));
+    }
+  }
+
+  /* ---------------- inicialização ---------------- */
+  function ligarEventos() {
+    $('#meses').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-mes]'); if (!b) return;
+      estado.mesSel = b.dataset.mes; render();
+    });
+    $('#btn-importar').addEventListener('click', function () {
+      $('#imp-lista').innerHTML = ''; $('#imp-msg').textContent = ''; $('#imp-arquivos').value = '';
+      $('#imp-salvar').disabled = true;
+      if (typeof XLSX === 'undefined') $('#imp-msg').textContent = 'O leitor de planilhas não carregou. Verifique a internet e recarregue a página.';
+      $('#dlg-importar').showModal();
+    });
+    $('#imp-arquivos').addEventListener('change', function (e) { if (e.target.files.length) aoEscolherArquivos(Array.from(e.target.files)); });
+    $('#imp-lista').addEventListener('change', atualizarBotaoSalvar);
+    $('#imp-salvar').addEventListener('click', salvarImportacao);
+    $('#imp-cancelar').addEventListener('click', function () { $('#dlg-importar').close(); });
+    const zona = $('#imp-zona');
+    zona.addEventListener('dragover', function (e) { e.preventDefault(); zona.classList.add('sobre'); });
+    zona.addEventListener('dragleave', function () { zona.classList.remove('sobre'); });
+    zona.addEventListener('drop', function (e) { e.preventDefault(); zona.classList.remove('sobre'); if (e.dataTransfer.files.length) aoEscolherArquivos(Array.from(e.dataTransfer.files)); });
+    const sair = $('#btn-sair');
+    if (sair) sair.addEventListener('click', async function () { await estado.sb.auth.signOut(); location.reload(); });
+    $('#form-login').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const msg = $('#login-msg'); msg.textContent = 'Entrando…';
+      const r = await estado.sb.auth.signInWithPassword({ email: $('#login-email').value.trim(), password: $('#login-senha').value });
+      if (r.error) { msg.textContent = 'E-mail ou senha incorretos. Confira e tente de novo.'; return; }
+      msg.textContent = ''; mostrarPainel(); carregarSupabase().catch(erroCarga);
+    });
+  }
+
+  function mostrarPainel() { $('#login').hidden = true; $('#app').hidden = false; }
+  function erroCarga(e) { status('Não consegui ler os dados do Supabase: ' + (e.message || e), true); }
+
+  async function iniciar() {
+    ligarEventos();
+    if (window.FT_PREVIA) {
+      estado.modo = 'previa';
+      estado.dados = window.FT_PREVIA;
+      document.body.classList.add('modo-previa');
+      mostrarPainel(); render(); return;
+    }
+    const cfg = window.FT_CONFIG || {};
+    if (!cfg.SUPABASE_URL || /SEU-PROJETO/.test(cfg.SUPABASE_URL) || /COLE-AQUI/.test(cfg.SUPABASE_ANON_KEY) || typeof supabase === 'undefined') {
+      $('#login').hidden = false;
+      $('#form-login').hidden = true;
+      $('#login-msg').textContent = 'Falta colar a chave do Supabase no arquivo index.html (procure por COLE-AQUI-A-CHAVE).';
+      return;
+    }
+    estado.sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
+    const s = await estado.sb.auth.getSession();
+    if (s.data && s.data.session) { mostrarPainel(); carregarSupabase().catch(erroCarga); }
+    else $('#login').hidden = false;
+  }
+
+  document.addEventListener('DOMContentLoaded', iniciar);
+})();
+
+</script>
+</body>
+</html>
