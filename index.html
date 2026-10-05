@@ -410,6 +410,52 @@ dialog::backdrop { background: rgb(10 14 10 / .45); }
 .listas .uso { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .lst-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px; }
 
+/* ---------- CAIXA ALTA em todo o sistema ---------- */
+body, input, select, textarea, button { text-transform: uppercase; }
+input::placeholder { text-transform: uppercase; }
+#login-email, #login-senha { text-transform: none; }
+
+/* ---------- folha de pagamento ---------- */
+.fo-fat { display: grid; line-height: 1.25; }
+.fo-fat span { font-size: 11px; letter-spacing: .06em; color: var(--ink-3); font-weight: 600; }
+.fo-fat b { font: 700 18px/1.2 var(--f-display); font-variant-numeric: tabular-nums; }
+.fo-fat small { font-size: 12px; color: var(--ink-3); }
+.pg.fo td small { display: block; font-size: 11.5px; color: var(--ink-3); }
+.pg .inp-obs { width: 14em; padding: 5px 7px !important; font-size: 12.5px; }
+#impressao { display: none; }
+
+@media print {
+  @page { size: A4; margin: 9mm; }
+  body { background: #fff !important; color: #000 !important; }
+  #app, #login, dialog, .faixa-previa, #status { display: none !important; }
+  #impressao { display: block !important; font: 9.5pt/1.3 "IBM Plex Sans", Arial, sans-serif; color: #000; }
+  .holerite-pagina { break-after: page; page-break-after: always; }
+  .holerite-pagina:last-child { break-after: auto; page-break-after: auto; }
+  .via { border: 1.2px solid #000; padding: 3mm 4mm; min-height: 118mm; display: flex; flex-direction: column; gap: 1.6mm; break-inside: avoid; }
+  .via header { display: grid; grid-template-columns: 1fr 1.3fr auto; gap: 4mm; align-items: start; border-bottom: 1.2px solid #000; padding-bottom: 2mm; }
+  .via header div { display: grid; }
+  .via header b { font-size: 12pt; }
+  .via header span { font-size: 9pt; }
+  .via-tit { text-align: center; }
+  .via-rot { font-size: 8.5pt; border: 1px solid #000; padding: 1mm 2mm; white-space: nowrap; }
+  .via-func { display: grid; grid-template-columns: 2fr 1.2fr 1.2fr; gap: 3mm; }
+  .via-func div { display: grid; border: 1px solid #000; padding: 1mm 2mm; }
+  .via-func span { font-size: 7.5pt; }
+  .via table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  .via th, .via td { border: 1px solid #000; padding: .55mm 2mm; text-align: left; }
+  .via th { font-size: 8.5pt; background: #eee !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .via .num { text-align: right; font-variant-numeric: tabular-nums; width: 26mm; }
+  .via .ref { width: 50mm; font-size: 8.5pt; }
+  .via tfoot td { font-weight: 700; }
+  .via tr.liq td { font-size: 11.5pt; }
+  .via-obs { margin: 0; font-size: 9pt; }
+  .via-decl { margin: 0; font-size: 8.5pt; }
+  .via-ass { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10mm; font-size: 8.5pt; text-align: center; }
+  .via-ass div { display: block; padding-top: 8mm; }
+  .via-ass .linha { display: block; border-top: 1px solid #000; margin-bottom: 1.5mm; }
+  .corte { text-align: center; font-size: 8pt; color: #555; margin: 2mm 0; white-space: nowrap; overflow: hidden; }
+}
+
 </style>
 </head>
 <body>
@@ -435,6 +481,7 @@ dialog::backdrop { background: rgb(10 14 10 / .45); }
     <nav>
       <a href="#indicadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Indicadores</a>
       <a href="#pagamento"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 9.5v6M18 9.5v6"/></svg>Pagamento 10%</a>
+      <a href="#folha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4M9 11h7M9 14.5h7M9 18h4"/></svg>Folha de pagamento</a>
       <a href="#escala"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M13 14h3M8 17.5h3"/></svg>Escala</a>
       <a href="#funcionarios"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16.5 14.2c2.7-.3 4.6 1.4 5.2 4.3"/></svg>Funcionários</a>
       <a href="#importar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 17v3h16v-3"/></svg>Importar planilhas</a>
@@ -507,6 +554,7 @@ dialog::backdrop { background: rgb(10 14 10 / .45); }
     </section>
 
     <section id="tela-pagamento" class="tela" hidden></section>
+    <section id="tela-folha" class="tela" hidden></section>
     <section id="tela-escala" class="tela" hidden></section>
     <section id="tela-funcionarios" class="tela" hidden></section>
     <section id="tela-importar" class="tela" hidden></section>
@@ -572,20 +620,24 @@ window.FT_CONFIG = {
     { id: 'motoboy', nome: 'Motoboy' }
   ];
   FT.nomeTipo = function (t) { const x = FT.TIPOS.find(function (y) { return y.id === t; }); return x ? x.nome : t; };
-  FT.SETORES = ['Caixa', 'Salão', 'Bar', 'Pizzaria', 'Louça', 'Estacionamento', 'Entrega'];
-  FT.nomeSetor = function (s) { return s === 'Entrega' ? 'Motoboys (entrega)' : s; };
-  FT.CARGOS = ['Atendente de caixa', 'Garçom', 'Cumim', 'Bartender', 'Pizzaiolo', 'Auxiliar de pizzaiolo', 'Auxiliar de cozinha', 'Lavador de louça', 'Manobrista', 'Motoboy', 'Gerente'];
+  // Tudo em CAIXA ALTA (pedido do Luiz): textos digitados são gravados em maiúsculas
+  FT.mai = function (s) { return String(s == null ? '' : s).trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR'); };
+  FT.SETOR_MOTO = 'ENTREGA';
+  FT.SETORES = ['CAIXA', 'SALÃO', 'BAR', 'PIZZARIA', 'LOUÇA', 'ESTACIONAMENTO', 'ENTREGA'];
+  FT.nomeSetor = function (s) { return s === FT.SETOR_MOTO ? 'MOTOBOYS (ENTREGA)' : s; };
+  FT.CARGOS = ['ATENDENTE DE CAIXA', 'GARÇOM', 'CUMIM', 'BARTENDER', 'PIZZAIOLO', 'AUXILIAR DE PIZZAIOLO', 'AUXILIAR DE COZINHA', 'LAVADOR DE LOUÇA', 'MANOBRISTA', 'MOTOBOY', 'GERENTE'];
 
-  // Setores e cargos editáveis (guardados em configuracoes). "Entrega" é fixo: é o setor dos motoboys.
+  // Setores e cargos editáveis (guardados em configuracoes). "ENTREGA" é fixo: é o setor dos motoboys.
   function normalizarSetores(lista) {
     const vistos = {}, r = [];
-    (lista || []).forEach(function (s) { s = String(s || '').trim(); if (s && s !== 'Entrega' && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
-    r.push('Entrega');
+    (lista || []).forEach(function (s) { s = FT.mai(s); if (s && s !== FT.SETOR_MOTO && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
+    r.push(FT.SETOR_MOTO);
     return r;
   }
+  FT.normalizarSetores = normalizarSetores;
   function normalizarCargos(lista) {
     const vistos = {}, r = [];
-    (lista || []).forEach(function (s) { s = String(s || '').trim(); if (s && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
+    (lista || []).forEach(function (s) { s = FT.mai(s); if (s && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
     return r.sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
   }
   FT.carregarListas = async function () {
@@ -594,19 +646,41 @@ window.FT_CONFIG = {
       const c = await FT.store.config.ler('cargos'); FT.CARGOS = normalizarCargos(c && c.length ? c : FT.CARGOS);
     } catch (e) { console.warn('Listas de setores/cargos não carregadas', e); }
   };
+  // Converte uma única vez os dados já gravados (nomes, setores, cargos, escalas) para CAIXA ALTA
+  FT.migrarMaiusculas = async function () {
+    try {
+      if (await FT.store.config.ler('migracao_maiusculas_v1')) return;
+      const funcs = await FT.store.funcionarios.listar();
+      for (const f of funcs) {
+        if (f.nome !== FT.mai(f.nome) || (f.setor || '') !== FT.mai(f.setor) || (f.cargo || '') !== FT.mai(f.cargo)) await FT.store.funcionarios.salvar(f);
+      }
+      const set = await FT.store.config.ler('setores'); if (set) await FT.store.config.salvar('setores', normalizarSetores(set));
+      const car = await FT.store.config.ler('cargos'); if (car) await FT.store.config.salvar('cargos', normalizarCargos(car));
+      const chaves = function (obj) { if (!obj) return false; let m = false; Object.keys(obj).forEach(function (k) { const K = FT.mai(k); if (K !== k) { obj[K] = obj[k]; delete obj[k]; m = true; } }); return m; };
+      const pad = await FT.store.config.ler('escala_padrao');
+      if (pad) { let m = false; Object.keys(pad).forEach(function (k) { m = chaves(pad[k].vagas) || m; }); if (m) await FT.store.config.salvar('escala_padrao', pad); }
+      const escalas = await FT.store.escala.listar('2000-01-01', '2999-12-31');
+      for (const sem of Object.keys(escalas)) {
+        const e = escalas[sem]; let m = false;
+        Object.keys(e.dias || {}).forEach(function (d) { m = chaves(e.dias[d].vagas) || m; m = chaves(e.dias[d].alocados) || m; });
+        if (m) await FT.store.escala.salvar(sem, e);
+      }
+      await FT.store.config.salvar('migracao_maiusculas_v1', true);
+    } catch (e) { console.warn('Migração para maiúsculas não concluída', e); }
+  };
   FT.salvarSetores = async function (lista) { FT.SETORES = normalizarSetores(lista); await FT.store.config.salvar('setores', FT.SETORES); };
   FT.salvarCargos = async function (lista) { FT.CARGOS = normalizarCargos(lista); await FT.store.config.salvar('cargos', FT.CARGOS); };
 
   // Quantidade padrão de pessoas por setor em cada dia (0 = domingo … 6 = sábado)
-  const qua = { Caixa: 1, Salão: 2, Bar: 1, Pizzaria: 4, Louça: 1, Estacionamento: 0, Entrega: 1 };
+  const qua = { 'CAIXA': 1, 'SALÃO': 2, 'BAR': 1, 'PIZZARIA': 4, 'LOUÇA': 1, 'ESTACIONAMENTO': 0, 'ENTREGA': 1 };
   FT.PADRAO_ESCALA = {
     1: { aberto: false, vagas: Object.assign({}, qua) },
     2: { aberto: false, vagas: Object.assign({}, qua) },
     3: { aberto: true, vagas: Object.assign({}, qua) },
     4: { aberto: true, vagas: Object.assign({}, qua) },
-    5: { aberto: true, vagas: { Caixa: 2, Salão: 5, Bar: 2, Pizzaria: 4, Louça: 2, Estacionamento: 1, Entrega: 3 } },
-    6: { aberto: true, vagas: { Caixa: 2, Salão: 6, Bar: 2, Pizzaria: 4, Louça: 2, Estacionamento: 1, Entrega: 4 } },
-    0: { aberto: true, vagas: { Caixa: 1, Salão: 2, Bar: 2, Pizzaria: 4, Louça: 1, Estacionamento: 0, Entrega: 2 } }
+    5: { aberto: true, vagas: { 'CAIXA': 2, 'SALÃO': 5, 'BAR': 2, 'PIZZARIA': 4, 'LOUÇA': 2, 'ESTACIONAMENTO': 1, 'ENTREGA': 3 } },
+    6: { aberto: true, vagas: { 'CAIXA': 2, 'SALÃO': 6, 'BAR': 2, 'PIZZARIA': 4, 'LOUÇA': 2, 'ESTACIONAMENTO': 1, 'ENTREGA': 4 } },
+    0: { aberto: true, vagas: { 'CAIXA': 1, 'SALÃO': 2, 'BAR': 2, 'PIZZARIA': 4, 'LOUÇA': 1, 'ESTACIONAMENTO': 0, 'ENTREGA': 2 } }
   };
   FT.PERCENTUAL_PADRAO = 80; // parte do 10% do dia que vai para a equipe
 
@@ -1180,7 +1254,7 @@ window.FT_CONFIG = {
       linhas.push(p.nome + ': *' + FT.moeda(r.total) + '*' + (partes.length ? ' (' + partes.join(' + ').replace(/\+ −/g, '−') + ')' : '') + (p.pago ? ' ✓ pago' : ''));
     });
     linhas.push('', 'Total: *' + FT.moeda(calc.totais.total) + '*');
-    return linhas.join('\n');
+    return linhas.join('\n').toLocaleUpperCase('pt-BR');
   };
 
   /* =================== NOMES =================== */
@@ -1276,7 +1350,7 @@ window.FT_CONFIG = {
       else { tipo = 'fixo'; diaria = 0; }
       const tudoMaiusculo = nome === nome.toUpperCase();
       const bonito = tudoMaiusculo ? nome.split(' ').map(function (w) { return w.length > 2 ? w.charAt(0) + w.slice(1).toLowerCase() : w.toLowerCase(); }).join(' ') : nome;
-      out.push({ nome: bonito, tipo: tipo, diaria: diaria, setor: tipo === 'motoboy' ? 'Entrega' : '' });
+      out.push({ nome: bonito, tipo: tipo, diaria: diaria, setor: tipo === 'motoboy' ? FT.SETOR_MOTO : '' });
     }
     return out;
   };
@@ -1328,7 +1402,101 @@ window.FT_CONFIG = {
         linhas.push(FT.nomeSetor(s) + ': ' + ps.join(', '));
       });
     });
-    return linhas.join('\n');
+    return linhas.join('\n').toLocaleUpperCase('pt-BR');
+  };
+
+  /* =================== FOLHA DE PAGAMENTO (FIXOS) =================== */
+  /* folha = { faturamentoBruto, faturamentoDe, faturamentoAte,
+   *           pessoas: [{ id, nome, cargo, setor, salario, porFora, cesta, vt, vr, descontos, obs, comissaoPct, comissao }] } */
+  C.CAMPOS_FOLHA = [
+    { id: 'salario', nome: 'Salário fixo' },
+    { id: 'porFora', nome: 'Por fora' },
+    { id: 'cesta', nome: 'Cesta básica' },
+    { id: 'vt', nome: 'Vale transporte' },
+    { id: 'vr', nome: 'Vale refeição' }
+  ];
+  // % de comissão sobre o faturamento bruto. Juliana Oliveira: 0,40% (regra combinada), salvo outro valor no cadastro.
+  C.pctComissao = function (f) {
+    if (f.comissao_pct != null && f.comissao_pct !== '') return +f.comissao_pct;
+    return FT.semAcento(f.nome).indexOf('JULIANA OLIVEIRA') >= 0 ? 0.40 : 0;
+  };
+  function pessoaFolha(f, ant) {
+    ant = ant || {};
+    return {
+      id: f.id, nome: f.nome, cargo: f.cargo || '', setor: f.setor || '',
+      salario: ant.salario != null ? ant.salario : (+f.salario || 0),
+      porFora: +ant.porFora || 0, cesta: +ant.cesta || 0, vt: +ant.vt || 0, vr: +ant.vr || 0,
+      descontos: 0, obs: '', comissaoPct: C.pctComissao(f), comissao: 0
+    };
+  }
+  C.novaFolha = function (funcionarios, anterior) {
+    const ant = {}; ((anterior && anterior.pessoas) || []).forEach(function (p) { ant[p.id] = p; });
+    return { pessoas: funcionarios.filter(function (f) { return f.ativo !== false && f.tipo === 'fixo'; }).map(function (f) { return pessoaFolha(f, ant[f.id]); }) };
+  };
+  C.sincronizarFolha = function (dados, funcionarios) {
+    const porId = {}; funcionarios.forEach(function (f) { porId[f.id] = f; });
+    const temValor = function (p) { return C.CAMPOS_FOLHA.some(function (c) { return +p[c.id]; }) || +p.descontos || +p.comissao; };
+    dados.pessoas = dados.pessoas.filter(function (p) { const f = porId[p.id]; return (f && f.ativo !== false && f.tipo === 'fixo') || temValor(p); });
+    const tem = {};
+    dados.pessoas.forEach(function (p) {
+      tem[p.id] = 1; const f = porId[p.id];
+      if (f) { p.nome = f.nome; p.cargo = f.cargo || ''; p.setor = f.setor || ''; p.comissaoPct = C.pctComissao(f); }
+    });
+    funcionarios.forEach(function (f) { if (f.ativo !== false && f.tipo === 'fixo' && !tem[f.id]) dados.pessoas.push(pessoaFolha(f)); });
+    return dados;
+  };
+  // Recalcula a comissão de cada um a partir do faturamento bruto do mês. Devolve true se algo mudou.
+  C.aplicarComissao = function (dados, faturamentoBruto) {
+    let mudou = dados.faturamentoBruto !== faturamentoBruto;
+    dados.faturamentoBruto = faturamentoBruto;
+    dados.pessoas.forEach(function (p) {
+      const v = FT.r2((faturamentoBruto || 0) * (+p.comissaoPct || 0) / 100);
+      if (v !== p.comissao) { p.comissao = v; mudou = true; }
+    });
+    return mudou;
+  };
+  C.calcularFolha = function (dados) {
+    const tot = { salario: 0, porFora: 0, cesta: 0, vt: 0, vr: 0, comissao: 0, descontos: 0, beneficios: 0, proventos: 0, total: 0 };
+    const pessoas = dados.pessoas.map(function (p) {
+      const r = { id: p.id };
+      ['salario', 'porFora', 'cesta', 'vt', 'vr', 'comissao', 'descontos'].forEach(function (k) { r[k] = FT.r2(p[k]); tot[k] += r[k]; });
+      r.beneficios = FT.r2(r.cesta + r.vt + r.vr);
+      r.proventos = FT.r2(r.salario + r.porFora + r.beneficios + r.comissao);
+      r.total = FT.r2(r.proventos - r.descontos);
+      tot.beneficios += r.beneficios; tot.proventos += r.proventos; tot.total += r.total;
+      return r;
+    });
+    Object.keys(tot).forEach(function (k) { tot[k] = FT.r2(tot[k]); });
+    return { pessoas: pessoas, totais: tot };
+  };
+
+  /* Valor por extenso (reais e centavos) para o recibo */
+  C.extenso = function (valor) {
+    const un = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+    const dz = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+    const ct = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+    function ate999(n) {
+      if (n === 0) return '';
+      if (n === 100) return 'cem';
+      const c = Math.floor(n / 100), r = n % 100, p = [];
+      if (c) p.push(ct[c]);
+      if (r) p.push(r < 20 ? un[r] : dz[Math.floor(r / 10)] + (r % 10 ? ' e ' + un[r % 10] : ''));
+      return p.join(' e ');
+    }
+    function inteiro(n) {
+      if (n === 0) return 'zero';
+      const mi = Math.floor(n / 1e6), mil = Math.floor((n % 1e6) / 1000), resto = n % 1000, p = [];
+      if (mi) p.push(ate999(mi) + (mi === 1 ? ' milhão' : ' milhões'));
+      if (mil) p.push(mil === 1 ? 'mil' : ate999(mil) + ' mil');
+      if (resto) p.push(ate999(resto));
+      if (p.length > 1 && resto && (resto < 100 || resto % 100 === 0)) return p.slice(0, -1).join(' ') + ' e ' + p[p.length - 1];
+      return p.join(' ');
+    }
+    valor = Math.round(Math.abs(+valor || 0) * 100);
+    const reais = Math.floor(valor / 100), cent = valor % 100, partes = [];
+    if (reais) partes.push(inteiro(reais) + (reais === 1 ? ' real' : (reais % 1e6 === 0 ? ' de reais' : ' reais')));
+    if (cent) partes.push(inteiro(cent) + (cent === 1 ? ' centavo' : ' centavos'));
+    return (partes.join(' e ') || 'zero reais').toLocaleUpperCase('pt-BR');
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -1340,6 +1508,11 @@ window.FT_CONFIG = {
   const FT = root.FT;
 
   function ordenarNome(a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); }
+  // campos gravados do funcionário, sempre em CAIXA ALTA
+  FT.limparFuncionario = function (f) {
+    const pct = f.comissao_pct === '' || f.comissao_pct == null ? null : +f.comissao_pct;
+    return { nome: FT.mai(f.nome), tipo: f.tipo, setor: f.setor ? FT.mai(f.setor) : null, cargo: f.cargo ? FT.mai(f.cargo) : null, salario: +f.salario || 0, diaria: +f.diaria || 0, comissao_pct: pct, ativo: f.ativo !== false };
+  };
   function clonar(x) { return x == null ? x : JSON.parse(JSON.stringify(x)); }
 
   /* ---------------- Supabase ---------------- */
@@ -1359,12 +1532,12 @@ window.FT_CONFIG = {
       funcionarios: {
         listar: async function () { return (await ok(sb.from('funcionarios').select('*'))).sort(ordenarNome); },
         salvar: async function (f) {
-          const dados = { nome: f.nome, tipo: f.tipo, setor: f.setor || null, cargo: f.cargo || null, salario: +f.salario || 0, diaria: +f.diaria || 0, ativo: f.ativo !== false, atualizado_em: new Date().toISOString() };
+          const dados = Object.assign(FT.limparFuncionario(f), { atualizado_em: new Date().toISOString() });
           if (f.id) return ok(sb.from('funcionarios').update(dados).eq('id', f.id).select().single());
           return ok(sb.from('funcionarios').insert(dados).select().single());
         },
         salvarVarios: async function (lista) {
-          return ok(sb.from('funcionarios').insert(lista.map(function (f) { return { nome: f.nome, tipo: f.tipo, setor: f.setor || null, cargo: f.cargo || null, salario: +f.salario || 0, diaria: +f.diaria || 0, ativo: true }; })).select());
+          return ok(sb.from('funcionarios').insert(lista.map(function (f) { const d = FT.limparFuncionario(f); d.ativo = true; return d; })).select());
         },
         remover: async function (id) { return ok(sb.from('funcionarios').delete().eq('id', id)); }
       },
@@ -1389,12 +1562,19 @@ window.FT_CONFIG = {
           await ok(sb.rpc('importar_mao_obra', { p_inicio: semana, p_fim: FT.somaDias(semana, 6), p_arquivo: 'Tela Pagamento 10% · semana ' + FT.rotuloSemana(semana), p_itens: FT.calc.itensMaoDeObra(dados) }));
         }
       },
+      folha: {
+        ler: async function (mes) { const d = await ok(sb.from('folhas').select('dados').eq('mes', mes).maybeSingle()); return d ? d.dados : null; },
+        salvar: async function (mes, dados) { return ok(sb.from('folhas').upsert({ mes: mes, dados: dados, total: FT.calc.calcularFolha(dados).totais.total, atualizado_em: new Date().toISOString() })); },
+        listar: async function () { const d = await ok(sb.from('folhas').select('mes,dados')); const r = {}; d.forEach(function (x) { r[x.mes] = x.dados; }); return r; }
+      },
       indicadores: {
         carregar: async function () {
+          let folhas = {};
+          try { const d = await ok(sb.from('folhas').select('mes,dados')); d.forEach(function (x) { folhas[x.mes] = x.dados; }); } catch (e) { console.warn('folhas indisponíveis', e); }
           const res = await Promise.all([buscarTudo('vw_vendas_dia_grupo'), buscarTudo('vw_pedidos_dia'), buscarTudo('vw_mao_obra_dia')]);
           const ult = await ok(sb.from('importacoes').select('criado_em').order('criado_em', { ascending: false }).limit(1));
           return {
-            vendasDia: res[0], pedidosDia: res[1], maoObraDia: res[2],
+            vendasDia: res[0], pedidosDia: res[1], maoObraDia: res[2], folhas: folhas,
             atualizadoEm: ult && ult[0] ? new Date(ult[0].criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : ''
           };
         }
@@ -1422,7 +1602,7 @@ window.FT_CONFIG = {
   FT.criarStoreMemoria = function (inicial) {
     const db = {
       funcionarios: clonar(inicial.funcionarios || []),
-      config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {},
+      config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {}, folhas: {},
       ind: clonar(inicial.indicadores || { vendasDia: [], pedidosDia: [], maoObraDia: [] })
     };
     let seq = 1000;
@@ -1436,12 +1616,12 @@ window.FT_CONFIG = {
       funcionarios: {
         listar: function () { return espera(db.funcionarios.slice().sort(ordenarNome)); },
         salvar: function (f) {
-          f = clonar(f);
+          f = Object.assign(clonar(f), FT.limparFuncionario(f));
           if (f.id) { const i = db.funcionarios.findIndex(function (x) { return x.id === f.id; }); db.funcionarios[i] = f; }
           else { f.id = 'p' + (seq++); db.funcionarios.push(f); }
           return espera(f);
         },
-        salvarVarios: function (lista) { const r = lista.map(function (f) { f = clonar(f); f.id = 'p' + (seq++); f.ativo = true; db.funcionarios.push(f); return f; }); return espera(r); },
+        salvarVarios: function (lista) { const r = lista.map(function (f) { f = Object.assign(clonar(f), FT.limparFuncionario(f)); f.id = 'p' + (seq++); f.ativo = true; db.funcionarios.push(f); return f; }); return espera(r); },
         remover: function (id) { db.funcionarios = db.funcionarios.filter(function (x) { return x.id !== id; }); return espera(null); }
       },
       config: {
@@ -1457,7 +1637,12 @@ window.FT_CONFIG = {
         ler: function (s) { return espera(db.pagamentos[s] || null); },
         salvar: function (s, d) { db.pagamentos[s] = clonar(d); substituirMO(s, FT.somaDias(s, 6), FT.calc.itensMaoDeObra(d)); return espera(null); }
       },
-      indicadores: { carregar: function () { return espera(db.ind); } },
+      folha: {
+        ler: function (m) { return espera(db.folhas[m] || null); },
+        salvar: function (m, d) { db.folhas[m] = clonar(d); return espera(null); },
+        listar: function () { return espera(db.folhas); }
+      },
+      indicadores: { carregar: function () { return espera(Object.assign({}, db.ind, { folhas: db.folhas })); } },
       importar: function (a) {
         const fora = function (r) { return r.data < a.inicio || r.data > a.fim; };
         if (a.tipo === 'vendas') {
@@ -1525,14 +1710,23 @@ window.FT_CONFIG = {
       L.push({ rot: c.nome, v: function (m) { return m.temVendas ? m.canal[c.id] : null; }, sub: function (m) { return m.temVendas && m.canalPedidos[c.id] ? fInt.format(m.canalPedidos[c.id]) + ' pedidos' : ''; } });
     });
 
-    L.push({ secao: 'Mão de obra · planilha de diárias e 10%' });
+    L.push({ secao: 'Mão de obra variável · lançada no Pagamento 10%' });
     const mo = function (f) { return function (m) { return m.mo.temDados ? f(m.mo) : null; }; };
     L.push({ rot: 'Diárias de freelancers', v: mo(function (o) { return o.diariaEquipe; }), mo: true });
     L.push({ rot: 'Diárias de motoboys', v: mo(function (o) { return o.diariaMoto; }), mo: true });
-    L.push({ rot: '10% pago à equipe', v: mo(function (o) { return o.dezEquipe; }), mo: true });
+    L.push({ rot: 'Rateio do 10% pago à equipe', v: mo(function (o) { return o.dezEquipe; }), mo: true });
     L.push({ rot: 'Entregas pagas aos motoboys', v: mo(function (o) { return o.entregaMoto; }), mo: true });
-    L.push({ rot: 'Custo total de mão de obra', v: mo(function (o) { return o.total; }), mo: true, forte: true });
-    L.push({ rot: '% sobre o faturamento líquido', dica: 'Calculado só sobre os dias que têm planilha de diárias', v: mo(function (o) { return o.pctFaturamento; }), tipo: 'pct', mo: true });
+    L.push({ rot: 'Custo variável (diárias, 10% e entregas)', v: mo(function (o) { return o.total; }), mo: true, forte: true });
+    L.push({ rot: '% sobre o faturamento líquido', dica: 'Calculado só sobre os dias que têm lançamento no Pagamento 10%', v: mo(function (o) { return o.pctFaturamento; }), tipo: 'pct', mo: true });
+
+    L.push({ secao: 'Folha dos fixos · mensal · tela Folha de pagamento' });
+    const fo = function (f) { return function (m) { return m.chave && m.folha ? f(m.folha, m) : null; }; };
+    L.push({ rot: 'Salários e por fora', v: fo(function (t) { return t.salario + t.porFora; }), mensal: true });
+    L.push({ rot: 'Benefícios (cesta, VT, VR)', v: fo(function (t) { return t.beneficios; }), mensal: true });
+    L.push({ rot: 'Comissão', v: fo(function (t) { return t.comissao; }), mensal: true });
+    L.push({ rot: 'Total da folha', v: fo(function (t) { return t.proventos; }), mensal: true, forte: true });
+    L.push({ rot: 'Custo total com pessoal', dica: 'Folha dos fixos + diárias, 10% e entregas do mês', v: fo(function (t, m) { return t.proventos + (m.mo.temDados ? m.mo.total : 0); }), mensal: true, forte: true });
+    L.push({ rot: '% do pessoal sobre o faturamento líquido', v: fo(function (t, m) { return m.liquido ? (t.proventos + (m.mo.temDados ? m.mo.total : 0)) / m.liquido : null; }), mensal: true, tipo: 'pct' });
     return L;
   }
 
@@ -1541,7 +1735,9 @@ window.FT_CONFIG = {
     let cls = 'num' + (destaque ? ' col-mes' : '') + (l.forte ? ' forte' : '');
     let txt;
     if (v == null) {
-      if (l.mo && m.temVendas) { txt = '<span class="vazio">sem planilha</span>'; }
+      if (l.mensal && !m.chave) txt = '<span class="vazio">mensal</span>';
+      else if (l.mensal) txt = '<span class="vazio">não lançada</span>';
+      else if (l.mo && m.temVendas) { txt = '<span class="vazio">sem lançamento</span>'; }
       else txt = '<span class="vazio">—</span>';
     } else {
       txt = (l.neg && v ? '− ' : '') + fmt(v, l.tipo);
@@ -1596,7 +1792,7 @@ window.FT_CONFIG = {
 
   function kpis(m, p) {
     const pv = p.temVendas, pn = p.nomeCurto;
-    const moNota = m.mo.temDados && !m.temVendas ? 'as vendas deste mês ainda não foram importadas' : m.mo.temDados ? (m.mo.completo ? 'mês completo' : m.semanasComMO + ' de ' + m.semanasComVenda + ' semanas com planilha') : 'nenhuma planilha de diárias no mês';
+    const moNota = m.mo.temDados && !m.temVendas ? 'as vendas deste mês ainda não foram importadas' : m.mo.temDados ? (m.mo.completo ? 'mês completo' : m.semanasComMO + ' de ' + m.semanasComVenda + ' semanas lançadas') : 'nada lançado no Pagamento 10%';
     const pMo = p.mo.temDados && p.mo.completo && m.mo.completo;
     const tiles = [
       { t: 'Faturamento bruto', v: fmt(m.bruto), d: delta(m.bruto, pv ? p.bruto : null, false, pn), destaque: true },
@@ -1695,8 +1891,10 @@ window.FT_CONFIG = {
       const comVendas = meses.filter(function (k) { return ind.mes(k).temVendas; });
       estado.mesSel = (comVendas.length ? comVendas : meses)[(comVendas.length ? comVendas : meses).length - 1];
     }
-    const m = ind.mes(estado.mesSel);
-    const p = ind.mes(mesAnterior(estado.mesSel));
+    const folhas = estado.dados.folhas || {};
+    const comFolha = function (o) { o.folha = folhas[o.chave] ? FT.calc.calcularFolha(folhas[o.chave]).totais : null; return o; };
+    const m = comFolha(ind.mes(estado.mesSel));
+    const p = comFolha(ind.mes(mesAnterior(estado.mesSel)));
 
     $('#meses').innerHTML = meses.map(function (k) {
       return '<button type="button" class="chip-mes" aria-pressed="' + (k === estado.mesSel) + '" data-mes="' + k + '">' + esc(I.nomeMes(k)) + '</button>';
@@ -1717,7 +1915,7 @@ window.FT_CONFIG = {
 
     // comparativo mensal: até 6 meses terminando no selecionado
     const ate = meses.filter(function (k) { return k <= estado.mesSel; }).slice(-6);
-    const objs = ate.map(function (k) { return ind.mes(k); });
+    const objs = ate.map(function (k) { return comFolha(ind.mes(k)); });
     // mostra sempre o mês anterior, mesmo vazio, para deixar claro o que falta importar
     if (ate.indexOf(p.chave) < 0) objs.splice(objs.length - 1, 0, p);
     const colsMes = objs.map(function (o) { return { titulo: o.nome, sub: !o.temVendas ? 'sem dados' : (o.fim < hojeISO() ? 'mês fechado' : 'em andamento'), m: o }; });
@@ -1736,7 +1934,7 @@ window.FT_CONFIG = {
     const cobM = estado.dados.maoObraDia.map(function (r) { return r.data; }).sort();
     $('#cobertura').innerHTML =
       '<span><b>Vendas:</b> ' + (cobV.length ? dataBR(cobV[0]) + ' a ' + dataBR(cobV[cobV.length - 1]) : 'nenhuma') + '</span>' +
-      '<span><b>Diárias e 10%:</b> ' + (cobM.length ? semanasCobertas(cobM) : 'nenhuma planilha') + '</span>' +
+      '<span><b>Pagamento 10%:</b> ' + (cobM.length ? semanasCobertas(cobM) : 'nada lançado') + '</span>' +
       (estado.dados.atualizadoEm ? '<span><b>Atualizado em:</b> ' + esc(estado.dados.atualizadoEm) + '</span>' : '');
 
     ligarTooltip(m);
@@ -1822,7 +2020,7 @@ window.FT_CONFIG = {
 
   function montar() {
     $('#tela-importar').innerHTML =
-      '<div class="cab-tela"><div><h1>Importar planilhas</h1><p>Relatório de pedidos de venda do sistema e, se quiser, a planilha semanal de diárias. O painel reconhece cada arquivo sozinho.</p></div></div>' +
+      '<div class="cab-tela"><div><h1>Importar planilhas</h1><p>Relatório de pedidos de venda do sistema. Diárias, 10% e entregas são lançados na tela Pagamento 10%.</p></div></div>' +
       '<div class="painel imp-painel">' +
       '<label id="imp-zona" for="imp-arquivos"><b>Escolher arquivos</b><span>ou arraste para cá · .xls e .xlsx · pode enviar vários de uma vez</span>' +
       '<input id="imp-arquivos" type="file" accept=".xls,.xlsx" multiple></label>' +
@@ -1832,7 +2030,7 @@ window.FT_CONFIG = {
       '<div class="painel nota"><h3>Como funciona</h3><ul>' +
       '<li>Cada arquivo substitui só os dias que estão dentro dele. Os outros períodos continuam salvos.</li>' +
       '<li>Pode subir só a semana ou o mês novo. Enviar o mesmo período de novo não duplica nada.</li>' +
-      '<li>As diárias e o 10% também são lançados pela tela <a href="#pagamento">Pagamento 10%</a>. Ao salvar uma semana lá, ela substitui a planilha da mesma semana.</li></ul></div>';
+      '<li>Diárias, rateio do 10% e taxas de entrega vêm da tela <a href="#pagamento">Pagamento 10%</a>, e a folha dos fixos da tela <a href="#folha">Folha de pagamento</a>.</li></ul></div>';
     const zona = $('#imp-zona');
     $('#imp-arquivos').addEventListener('change', function (e) { if (e.target.files.length) ler(Array.from(e.target.files)); });
     zona.addEventListener('dragover', function (e) { e.preventDefault(); zona.classList.add('sobre'); });
@@ -1851,7 +2049,10 @@ window.FT_CONFIG = {
     for (const f of files) {
       if (/fluxo/i.test(f.name)) { achados.push({ tipo: 'erro', arquivo: f.name, aba: '', mensagem: 'O fluxo de caixa não alimenta este painel. Envie o relatório de pedidos de venda ou a planilha de diárias.' }); continue; }
       try {
-        const r = P.lerArquivo(f.name, await FT.lerAbas(f));
+        const r = P.lerArquivo(f.name, await FT.lerAbas(f)).map(function (x) {
+          // as diárias e o 10% agora são lançados só na tela Pagamento 10%
+          return x.tipo === 'mao_obra' ? { tipo: 'erro', arquivo: f.name, aba: x.aba, mensagem: 'Planilha de diárias e 10% não é mais importada. Lance os valores na tela Pagamento 10%: eles alimentam os indicadores sozinhos.' } : x;
+        });
         if (!r.length) achados.push({ tipo: 'erro', arquivo: f.name, aba: '', mensagem: 'Não reconheci este arquivo. Ele precisa ser o relatório de pedidos de venda ou a planilha de diárias e 10%.' });
         achados.push.apply(achados, r);
       } catch (e) {
@@ -1974,6 +2175,7 @@ window.FT_CONFIG = {
       '<label for="ff-cargo-novo" id="ff-cargo-novo-l" hidden>Nome do novo cargo<input id="ff-cargo-novo" placeholder="ex.: Sommelier" autocomplete="off"></label></div></div>' +
       '<div class="grade2"><label for="ff-salario">Salário mensal (R$)<input id="ff-salario" inputmode="decimal" placeholder="0,00"></label>' +
       '<label for="ff-diaria">Diária (R$)<input id="ff-diaria" inputmode="decimal" placeholder="0,00"></label></div>' +
+      '<div class="grade2"><label for="ff-comissao">Comissão sobre o faturamento bruto (%)<input id="ff-comissao" inputmode="decimal" placeholder="sem comissão"></label><span></span></div>' +
       '<p class="dica" id="ff-dica"></p>' +
       '<label class="check"><input id="ff-ativo" type="checkbox" checked> Ativo (aparece na escala e no pagamento)</label>' +
       '<p class="erro-form" id="ff-erro" role="alert"></p>' +
@@ -1994,7 +2196,7 @@ window.FT_CONFIG = {
     const t = (FT.$('input[name="ff-tipo"]:checked') || {}).value;
     const dica = { fixo: 'Fixo: entra no rateio do 10% nos dias marcados. Diária normalmente fica em zero.', freelancer: 'Freelancer: recebe a diária em cada dia trabalhado + a parte do 10%.', motoboy: 'Motoboy: recebe a diária + as taxas de entrega. Não entra no rateio do 10%.' };
     $('#ff-dica').textContent = dica[t] || '';
-    if (t === 'motoboy') { $('#ff-setor').value = 'Entrega'; $('#ff-setor-novo-l').hidden = true; }
+    if (t === 'motoboy') { $('#ff-setor').value = FT.SETOR_MOTO; $('#ff-setor-novo-l').hidden = true; }
   }
   function abrirForm(f) {
     editando = f; confirmarExclusao = false;
@@ -2004,6 +2206,8 @@ window.FT_CONFIG = {
     encherSelects(f ? f.setor || '' : '', f ? f.cargo || '' : '');
     $('#ff-salario').value = f && +f.salario ? FT.num2(+f.salario) : '';
     $('#ff-diaria').value = f && +f.diaria ? FT.num2(+f.diaria) : '';
+    const pc = f ? FT.calc.pctComissao(f) : 0;
+    $('#ff-comissao').value = pc ? FT.num2(pc) : '';
     $('#ff-ativo').checked = f ? f.ativo !== false : true;
     $('#ff-erro').textContent = '';
     $('#ff-excluir').hidden = !f; $('#ff-excluir').textContent = 'Excluir';
@@ -2013,27 +2217,27 @@ window.FT_CONFIG = {
   }
   async function salvarForm(e) {
     e.preventDefault();
-    const nome = $('#ff-nome').value.trim().replace(/\s+/g, ' ');
+    const nome = FT.mai($('#ff-nome').value);
     const tipo = (FT.$('input[name="ff-tipo"]:checked') || {}).value;
     let setor = $('#ff-setor').value, cargo = $('#ff-cargo').value;
     if (!nome) { $('#ff-erro').textContent = 'Escreva o nome do funcionário.'; return; }
     if (!tipo) { $('#ff-erro').textContent = 'Escolha se é fixo, freelancer ou motoboy.'; return; }
     if (!setor) { $('#ff-erro').textContent = 'Escolha o setor. É ele que define onde a pessoa aparece na escala.'; return; }
     if (setor === '__novo') {
-      setor = $('#ff-setor-novo').value.trim().replace(/\s+/g, ' ');
+      setor = FT.mai($('#ff-setor-novo').value);
       if (!setor) { $('#ff-erro').textContent = 'Escreva o nome do novo setor.'; return; }
       const ja = FT.SETORES.find(function (x) { return FT.semAcento(x) === FT.semAcento(setor); });
       if (ja) setor = ja; else { try { await FT.salvarSetores(FT.SETORES.concat([setor])); } catch (err) { $('#ff-erro').textContent = 'Não foi possível criar o setor: ' + FT.textoErro(err); return; } }
     }
     if (cargo === '__novo') {
-      cargo = $('#ff-cargo-novo').value.trim().replace(/\s+/g, ' ');
+      cargo = FT.mai($('#ff-cargo-novo').value);
       if (!cargo) { $('#ff-erro').textContent = 'Escreva o nome do novo cargo.'; return; }
       const ja = FT.CARGOS.find(function (x) { return FT.semAcento(x) === FT.semAcento(cargo); });
       if (ja) cargo = ja; else { try { await FT.salvarCargos(FT.CARGOS.concat([cargo])); } catch (err) { $('#ff-erro').textContent = 'Não foi possível criar o cargo: ' + FT.textoErro(err); return; } }
     }
     const repetido = cache.find(function (f) { return FT.semAcento(f.nome) === FT.semAcento(nome) && (!editando || f.id !== editando.id); });
     if (repetido) { $('#ff-erro').textContent = 'Já existe um funcionário com esse nome.'; return; }
-    const f = Object.assign({}, editando || {}, { nome: nome, tipo: tipo, setor: setor, cargo: cargo, salario: FT.lerValor($('#ff-salario').value), diaria: FT.lerValor($('#ff-diaria').value), ativo: $('#ff-ativo').checked });
+    const f = Object.assign({}, editando || {}, { nome: nome, tipo: tipo, setor: setor, cargo: cargo, salario: FT.lerValor($('#ff-salario').value), diaria: FT.lerValor($('#ff-diaria').value), comissao_pct: $('#ff-comissao').value.trim() ? FT.lerValor($('#ff-comissao').value) : null, ativo: $('#ff-ativo').checked });
     const b = $('#ff-salvar'); b.disabled = true; b.textContent = 'Salvando…';
     try {
       await FT.store.funcionarios.salvar(f);
@@ -2111,7 +2315,7 @@ window.FT_CONFIG = {
         '<button type="button" class="btn btn-p btn-perigo" data-acao="excluir">Excluir</button></li>';
     };
     $('#lst-setores').innerHTML = FT.SETORES.map(function (s) {
-      if (s === 'Entrega') return '<li class="travado"><span>Motoboys (entrega)</span><span class="uso">' + usoDe('setor', 'Entrega') + ' pessoas · setor fixo</span></li>';
+      if (s === FT.SETOR_MOTO) return '<li class="travado"><span>Motoboys (entrega)</span><span class="uso">' + usoDe('setor', FT.SETOR_MOTO) + ' pessoas · setor fixo</span></li>';
       return item('setor', s);
     }).join('');
     $('#lst-cargos').innerHTML = FT.CARGOS.length ? FT.CARGOS.map(function (c) { return item('cargo', c); }).join('') : '<li class="travado">Nenhum cargo cadastrado.</li>';
@@ -2122,7 +2326,7 @@ window.FT_CONFIG = {
 
   async function adicionar(tipo) {
     const inp = $(tipo === 'setor' ? '#lst-setor-novo' : '#lst-cargo-novo');
-    const nome = inp.value.trim().replace(/\s+/g, ' ');
+    const nome = FT.mai(inp.value);
     $('#lst-erro').textContent = ''; $('#lst-ok').textContent = '';
     if (!nome) { $('#lst-erro').textContent = 'Escreva o nome antes de adicionar.'; return; }
     if (existe(tipo, nome)) { $('#lst-erro').textContent = 'Já existe "' + nome + '".'; return; }
@@ -2136,7 +2340,7 @@ window.FT_CONFIG = {
   }
 
   async function renomear(tipo, antigo, novo) {
-    novo = String(novo || '').trim().replace(/\s+/g, ' ');
+    novo = FT.mai(novo);
     $('#lst-erro').textContent = ''; $('#lst-ok').textContent = '';
     if (!novo) { $('#lst-erro').textContent = 'O nome não pode ficar vazio.'; return; }
     if (novo === antigo) return;
@@ -2671,7 +2875,7 @@ window.FT_CONFIG = {
 
   function opcoes(setor, sel, ativos, nomePorId) {
     const doSetor = ativos.filter(function (f) { return f.setor === setor; });
-    const outros = ativos.filter(function (f) { return f.setor !== setor && (setor === 'Entrega' || f.tipo !== 'motoboy'); });
+    const outros = ativos.filter(function (f) { return f.setor !== setor && (setor === FT.SETOR_MOTO || f.tipo !== 'motoboy'); });
     let h = '<option value="">— vago —</option>';
     if (doSetor.length) h += '<optgroup label="' + esc(FT.nomeSetor(setor)) + '">' + doSetor.map(function (f) { return '<option value="' + esc(f.id) + '"' + (f.id === sel ? ' selected' : '') + '>' + esc(f.nome) + '</option>'; }).join('') + '</optgroup>';
     if (outros.length) h += '<optgroup label="Outros setores">' + outros.map(function (f) { return '<option value="' + esc(f.id) + '"' + (f.id === sel ? ' selected' : '') + '>' + esc(f.nome) + (f.setor ? ' (' + esc(f.setor) + ')' : '') + '</option>'; }).join('') + '</optgroup>';
@@ -2810,12 +3014,209 @@ window.FT_CONFIG = {
   };
 })();
 
+/* Forneria Toscana — tela Folha de pagamento (funcionários fixos) e holerite para impressão */
+(function () {
+  'use strict';
+  const FT = window.FT, C = FT.calc;
+  const $ = FT.$, esc = FT.esc;
+  const CAMPOS = ['salario', 'porFora', 'cesta', 'vt', 'vr', 'descontos'];
+
+  const st = { mes: null, dados: null, salvo: true, existe: false, salvando: false, erro: null, vendas: null, fat: null, comPorFora: true };
+
+  function mesPadrao() { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return FT.iso(d).slice(0, 7); }
+  function somaMes(chave, n) { const p = chave.split('-').map(Number); return FT.iso(new Date(p[0], p[1] - 1 + n, 1, 12)).slice(0, 7); }
+  function nomeMes(chave) { const p = chave.split('-'); return FT.MESES[+p[1] - 1].toLocaleUpperCase('pt-BR') + '/' + p[0]; }
+  function ultimoDia(chave) { const p = chave.split('-').map(Number); return FT.iso(new Date(p[0], p[1], 0, 12)); }
+
+  function montar() {
+    $('#tela-folha').innerHTML =
+      '<div class="cab-tela"><div><h1>Folha de pagamento</h1><p>Valores mensais dos funcionários fixos. A comissão é calculada sozinha sobre o faturamento bruto do mês importado.</p></div>' +
+      '<div class="acoes-linha"><span class="pilula" id="fo-estado"></span></div></div>' +
+      '<div class="barra">' +
+      '<div class="nav-semana"><button type="button" class="btn-icone" id="fo-ant" aria-label="Mês anterior">‹</button>' +
+      '<div class="nav-semana-t"><span>Mês de referência</span><b id="fo-rotulo"></b></div>' +
+      '<button type="button" class="btn-icone" id="fo-prox" aria-label="Próximo mês">›</button></div>' +
+      '<div class="fo-fat" id="fo-fat"></div>' +
+      '<div class="acoes-linha"><label class="check"><input type="checkbox" id="fo-porfora" checked> Mostrar "por fora" no holerite</label>' +
+      '<button type="button" class="btn" id="fo-imprimir-todos">Imprimir todos os holerites</button></div></div>' +
+      '<div id="fo-msg" class="msg" hidden></div>' +
+      '<div class="kpis kpis-5" id="fo-kpis"></div>' +
+      '<div class="rolagem"><table class="pg fo" id="fo-tabela"></table></div>';
+
+    $('#fo-ant').addEventListener('click', function () { irPara(somaMes(st.mes, -1)); });
+    $('#fo-prox').addEventListener('click', function () { irPara(somaMes(st.mes, 1)); });
+    $('#fo-porfora').addEventListener('change', function (e) { st.comPorFora = e.target.checked; });
+    $('#fo-imprimir-todos').addEventListener('click', function () { imprimir(st.dados.pessoas.map(function (p) { return p.id; })); });
+    $('#fo-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
+    const tab = $('#fo-tabela');
+    tab.addEventListener('input', function (e) {
+      const el = e.target, p = pessoa(el.dataset.p); if (!p) return;
+      if (el.dataset.campo === 'obs') p.obs = el.value; else p[el.dataset.campo] = el.value.trim() ? FT.lerValor(el.value) : 0;
+      mudou();
+    });
+    tab.addEventListener('change', function (e) {
+      const el = e.target, p = pessoa(el.dataset.p); if (!p) return;
+      if (el.dataset.campo === 'obs') { p.obs = FT.mai(el.value); el.value = p.obs; mudou(); }
+      else { const v = +p[el.dataset.campo] || 0; el.value = v ? FT.num2(v) : ''; }
+    });
+    tab.addEventListener('click', function (e) { const b = e.target.closest('[data-holerite]'); if (b) imprimir([b.dataset.holerite]); });
+  }
+  function pessoa(id) { return id && st.dados.pessoas.find(function (p) { return String(p.id) === id; }); }
+
+  /* ---------- faturamento bruto do mês (relatório de vendas importado) ---------- */
+  function faturamentoDoMes(chave) {
+    const ini = chave + '-01', fim = ultimoDia(chave);
+    let bruto = 0; const dias = [];
+    (st.vendas || []).forEach(function (r) { if (r.data >= ini && r.data <= fim) { bruto += +r.bruto; dias.push(r.data); } });
+    dias.sort();
+    return { bruto: FT.r2(bruto), de: dias[0] || null, ate: dias[dias.length - 1] || null, fim: fim };
+  }
+
+  async function irPara(mes) {
+    if (!st.salvo && st.dados) await salvarAgora();
+    st.mes = mes;
+    $('#fo-rotulo').textContent = nomeMes(mes);
+    $('#fo-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
+    try {
+      const funcs = await FT.obterFuncionarios(true);
+      const salvo = await FT.store.folha.ler(mes);
+      st.existe = !!salvo;
+      st.dados = salvo ? C.sincronizarFolha(salvo, funcs) : C.novaFolha(funcs, await FT.store.folha.ler(somaMes(mes, -1)));
+      st.fat = faturamentoDoMes(mes);
+      const mudouComissao = C.aplicarComissao(st.dados, st.fat.bruto);
+      st.dados.faturamentoDe = st.fat.de; st.dados.faturamentoAte = st.fat.ate;
+      st.salvo = true; st.erro = null;
+      desenhar(); estadoSalvo();
+      // comissão muda quando entra um relatório de vendas novo: grava sozinha se a folha já existe
+      if (st.existe && mudouComissao) { st.salvo = false; salvarDepois(); }
+      if (!st.dados.pessoas.length) mostrarMsg('Nenhum funcionário <b>fixo</b> ativo no cadastro. Cadastre em <a href="#funcionarios">Funcionários</a> com o tipo "Fixo".');
+      else $('#fo-msg').hidden = true;
+    } catch (e) { FT.aviso('Não consegui abrir a folha: ' + FT.textoErro(e), true); }
+  }
+
+  function mudou() { st.salvo = false; st.erro = null; estadoSalvo(); atualizar(); salvarDepois(); }
+  const salvarDepois = FT.debounce(function () { salvarAgora(); }, 1200);
+  async function salvarAgora() {
+    if (st.salvo || st.salvando) return;
+    st.salvando = true; estadoSalvo();
+    const mes = st.mes, dados = JSON.parse(JSON.stringify(st.dados));
+    try { await FT.store.folha.salvar(mes, dados); if (mes === st.mes) { st.salvo = true; st.existe = true; } }
+    catch (e) { st.erro = FT.textoErro(e); console.error(e); }
+    st.salvando = false; estadoSalvo();
+    if (!st.salvo && !st.erro) salvarDepois();
+  }
+  function estadoSalvo() {
+    const el = $('#fo-estado');
+    if (st.erro) { el.className = 'pilula erro'; el.textContent = 'Não salvou: ' + st.erro + ' · clique para tentar de novo'; return; }
+    if (st.salvando) { el.className = 'pilula'; el.textContent = 'Salvando…'; return; }
+    if (!st.salvo) { el.className = 'pilula'; el.textContent = 'Alterações não salvas'; return; }
+    el.className = st.existe ? 'pilula ok' : 'pilula'; el.textContent = st.existe ? '✓ Salvo' : 'Mês novo · valores copiados do mês anterior';
+  }
+  window.addEventListener('beforeunload', function (e) { if (st.dados && !st.salvo) { e.preventDefault(); e.returnValue = ''; } });
+
+  /* ---------- tabela ---------- */
+  function desenhar() {
+    const f = st.fat;
+    const completo = f.ate === f.fim || (f.ate && f.ate >= FT.somaDias(f.fim, -1));
+    $('#fo-fat').innerHTML = '<span>Faturamento bruto do mês</span><b>' + FT.moeda(f.bruto) + '</b>' +
+      (f.de ? '<small>' + (completo ? 'Vendas de ' + FT.ddmm(f.de) + ' a ' + FT.ddmm(f.ate) : '<span class="chip-parcial">parcial</span> vendas importadas só até ' + FT.ddmm(f.ate)) + '</small>' : '<small><span class="chip-parcial">sem vendas</span> importe o relatório do mês</small>');
+    const temComissao = st.dados.pessoas.some(function (p) { return +p.comissaoPct; });
+    let h = '<thead><tr><th class="col-nome">Funcionário</th>' +
+      C.CAMPOS_FOLHA.map(function (c) { return '<th class="num">' + esc(c.nome) + '</th>'; }).join('') +
+      (temComissao ? '<th class="num">Comissão</th>' : '') +
+      '<th class="num">Descontos</th><th class="num col-total">Total a pagar</th><th>Observação</th><th></th></tr></thead><tbody>';
+    st.dados.pessoas.slice().sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); }).forEach(function (p) {
+      const id = esc(p.id);
+      h += '<tr><th class="col-nome" scope="row"><b>' + esc(p.nome) + '</b><small>' + esc([p.cargo, p.setor ? FT.nomeSetor(p.setor) : ''].filter(Boolean).join(' · ') || 'Fixo') + '</small></th>';
+      C.CAMPOS_FOLHA.forEach(function (c) { h += '<td class="num">' + inp(p, c.id, c.nome) + '</td>'; });
+      if (temComissao) h += '<td class="num">' + (+p.comissaoPct ? '<b id="fo-com-' + id + '">' + FT.moeda(p.comissao) + '</b><small>' + FT.num2(p.comissaoPct) + '% do bruto</small>' : '—') + '</td>';
+      h += '<td class="num">' + inp(p, 'descontos', 'Descontos') + '</td><td class="num col-total" id="fo-tot-' + id + '"></td>' +
+        '<td><input class="val inp-obs" data-p="' + id + '" data-campo="obs" id="fo-obs-' + id + '" value="' + esc(p.obs || '') + '" placeholder="ex.: adiantamento dia 15" aria-label="Observação de ' + esc(p.nome) + '"></td>' +
+        '<td><button type="button" class="btn btn-sec btn-p" data-holerite="' + id + '">Holerite</button></td></tr>';
+    });
+    if (!st.dados.pessoas.length) h += '<tr><td colspan="12" class="vazio-lista">Sem funcionários fixos.</td></tr>';
+    h += '</tbody><tfoot><tr><th class="col-nome">Total do mês</th>' + C.CAMPOS_FOLHA.map(function (c) { return '<td class="num" id="fo-f-' + c.id + '"></td>'; }).join('') +
+      (temComissao ? '<td class="num" id="fo-f-comissao"></td>' : '') + '<td class="num" id="fo-f-descontos"></td><td class="num col-total" id="fo-f-total"></td><td></td><td></td></tr></tfoot>';
+    $('#fo-tabela').innerHTML = h;
+    atualizar();
+  }
+  function inp(p, campo, rot) {
+    const v = +p[campo] || 0;
+    return '<input class="val inp-dinheiro" data-p="' + esc(p.id) + '" data-campo="' + campo + '" id="fo-' + campo + '-' + esc(p.id) + '" inputmode="decimal" placeholder="0,00" value="' + (v ? FT.num2(v) : '') + '" aria-label="' + esc(rot) + ' de ' + esc(p.nome) + '">';
+  }
+  function txt(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+  function atualizar() {
+    const c = C.calcularFolha(st.dados), t = c.totais;
+    c.pessoas.forEach(function (r) { txt('fo-tot-' + r.id, FT.moeda(r.total)); });
+    C.CAMPOS_FOLHA.forEach(function (k) { txt('fo-f-' + k.id, t[k.id] ? FT.num2(t[k.id]) : '—'); });
+    txt('fo-f-comissao', t.comissao ? FT.num2(t.comissao) : '—'); txt('fo-f-descontos', t.descontos ? FT.num2(t.descontos) : '—'); txt('fo-f-total', FT.moeda(t.total));
+    $('#fo-kpis').innerHTML = [
+      { t: 'Total da folha', v: FT.moeda(t.total), s: st.dados.pessoas.length + ' funcionários fixos', d: true },
+      { t: 'Salários', v: FT.moeda(t.salario), s: 'Salário fixo' },
+      { t: 'Por fora', v: FT.moeda(t.porFora), s: 'Pagamentos por fora' },
+      { t: 'Benefícios', v: FT.moeda(t.beneficios), s: 'Cesta, VT e VR' },
+      { t: 'Comissão', v: FT.moeda(t.comissao), s: 'Sobre ' + FT.moeda(st.fat.bruto) + ' de faturamento bruto' }
+    ].map(function (k) { return '<article class="kpi' + (k.d ? ' kpi-destaque' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p><p class="kpi-s">' + esc(k.s) + '</p></article>'; }).join('');
+  }
+
+  /* ---------- holerite (recibo) para imprimir e assinar ---------- */
+  function linhaH(desc, ref, prov, desc_) {
+    return '<tr><td>' + esc(desc) + '</td><td class="ref">' + esc(ref || '') + '</td><td class="num">' + (prov ? FT.num2(prov) : '') + '</td><td class="num">' + (desc_ ? FT.num2(desc_) : '') + '</td></tr>';
+  }
+  function via(p, r, rotuloVia) {
+    let linhas = '';
+    if (r.salario) linhas += linhaH('SALÁRIO', '', r.salario);
+    if (r.porFora && st.comPorFora) linhas += linhaH('POR FORA', '', r.porFora);
+    if (r.cesta) linhas += linhaH('CESTA BÁSICA', '', r.cesta);
+    if (r.vt) linhas += linhaH('VALE TRANSPORTE', '', r.vt);
+    if (r.vr) linhas += linhaH('VALE REFEIÇÃO', '', r.vr);
+    if (r.comissao) linhas += linhaH('COMISSÃO', FT.num2(p.comissaoPct) + '% S/ ' + FT.moeda(st.fat.bruto), r.comissao);
+    if (r.descontos) linhas += linhaH('DESCONTOS / ADIANTAMENTOS', '', 0, r.descontos);
+    const prov = FT.r2(r.proventos - (st.comPorFora ? 0 : r.porFora));
+    const liq = FT.r2(prov - r.descontos);
+    return '<section class="via"><header><div><b>FORNERIA TOSCANA</b><span>GUARAREMA/SP</span></div><div class="via-tit"><b>RECIBO DE PAGAMENTO</b><span>REFERÊNCIA: ' + nomeMes(st.mes) + '</span></div><div class="via-rot">' + rotuloVia + '</div></header>' +
+      '<div class="via-func"><div><span>FUNCIONÁRIO</span><b>' + esc(p.nome) + '</b></div><div><span>CARGO</span><b>' + esc(p.cargo || '—') + '</b></div><div><span>SETOR</span><b>' + esc(p.setor ? FT.nomeSetor(p.setor) : '—') + '</b></div></div>' +
+      '<table><thead><tr><th>DESCRIÇÃO</th><th class="ref">REFERÊNCIA</th><th class="num">PROVENTOS</th><th class="num">DESCONTOS</th></tr></thead><tbody>' + linhas + '</tbody>' +
+      '<tfoot><tr><td colspan="2">TOTAIS</td><td class="num">' + FT.num2(prov) + '</td><td class="num">' + FT.num2(r.descontos) + '</td></tr>' +
+      '<tr class="liq"><td colspan="3">LÍQUIDO A RECEBER</td><td class="num">' + FT.moeda(liq) + '</td></tr></tfoot></table>' +
+      (p.obs ? '<p class="via-obs">OBS.: ' + esc(p.obs) + '</p>' : '') +
+      '<p class="via-decl">DECLARO TER RECEBIDO DE FORNERIA TOSCANA A IMPORTÂNCIA LÍQUIDA DE <b>' + FT.moeda(liq) + '</b> (' + C.extenso(liq) + '), REFERENTE AOS VALORES ACIMA DISCRIMINADOS, DO MÊS DE ' + nomeMes(st.mes) + '.</p>' +
+      '<div class="via-ass"><div><span class="linha"></span>LOCAL E DATA: GUARAREMA, ____/____/______</div><div><span class="linha"></span>ASSINATURA DO FUNCIONÁRIO</div></div></section>';
+  }
+  function imprimir(ids) {
+    if (!ids.length) return;
+    if (!st.salvo) salvarAgora();
+    const calc = C.calcularFolha(st.dados), porId = {};
+    calc.pessoas.forEach(function (r) { porId[r.id] = r; });
+    const pessoas = st.dados.pessoas.filter(function (p) { return ids.indexOf(String(p.id)) >= 0; }).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });
+    let area = document.getElementById('impressao');
+    if (!area) { area = document.createElement('div'); area.id = 'impressao'; document.body.appendChild(area); }
+    area.innerHTML = pessoas.map(function (p) {
+      const r = porId[p.id];
+      return '<div class="holerite-pagina">' + via(p, r, '1ª VIA · EMPRESA') + '<div class="corte">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>' + via(p, r, '2ª VIA · FUNCIONÁRIO') + '</div>';
+    }).join('');
+    setTimeout(function () { window.print(); }, 50);
+  }
+
+  function mostrarMsg(html) { const m = $('#fo-msg'); m.hidden = false; m.className = 'msg'; m.innerHTML = html; }
+
+  let montado = false;
+  FT.telas.folha = {
+    abrir: async function () {
+      if (!montado) { montado = true; montar(); }
+      try { const d = await FT.store.indicadores.carregar(); st.vendas = d.vendasDia; } catch (e) { st.vendas = []; }
+      await irPara(st.mes || mesPadrao());
+    },
+    sair: function () { if (!st.salvo) salvarAgora(); }
+  };
+})();
+
 /* Forneria Toscana — login, menu lateral e navegação entre telas */
 (function () {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['indicadores', 'pagamento', 'escala', 'funcionarios', 'importar'];
+  const TELAS = ['indicadores', 'pagamento', 'folha', 'escala', 'funcionarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
@@ -2836,6 +3237,7 @@ window.FT_CONFIG = {
   async function mostrarApp(email) {
     $('#login').hidden = true; $('#app').hidden = false;
     if (email) $('#usuario').textContent = email;
+    await FT.migrarMaiusculas();
     await FT.carregarListas();
     abrirTela();
   }
