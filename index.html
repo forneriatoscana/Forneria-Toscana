@@ -601,6 +601,12 @@ table.fx { border-collapse: separate; border-spacing: 0; font-size: 12.5px; font
   .fx .fx-rot { min-width: 160px; max-width: 170px; }
 }
 #dlg-dia .lista td:nth-child(1), #dlg-dia .lista td:nth-child(3) { white-space: normal; min-width: 140px; }
+.chip-dif { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--aviso-bg); color: var(--ruim); border-radius: 4px; padding: 1px 5px; }
+.dd-conc-res { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0; font-size: 13px; }
+.dd-conc-tot { color: var(--ink-2); }
+.conc-ent { color: var(--bom); font-size: 11px; font-weight: 700; }
+#dlg-dia .lista tr.conc-falta td { background: var(--aviso-bg); }
+#dlg-dia .lista .tag { white-space: normal; }
 
 </style>
 </head>
@@ -1155,6 +1161,58 @@ window.FT_CONFIG = {
     return { tipo: 'extrato', itens: itens, inicio: itens[0].data, fim: itens[itens.length - 1].data };
   }
 
+
+  /* ---------------- Extrato do banco (SICREDI: Data | Descrição | Documento | Valor (R$) | Saldo (R$)) ---------------- */
+  function acharCabecalhoBanco(linhas) {
+    for (let i = 0; i < Math.min(linhas.length, 40); i++) {
+      const r = (linhas[i] || []).map(semAcento);
+      if (r[0] === 'DATA' && r.indexOf('DESCRICAO') >= 0 && r.some(function (x) { return /^VALOR/.test(x); }) && r.some(function (x) { return /^SALDO/.test(x); })) return i;
+    }
+    return -1;
+  }
+  function pareceBanco(linhas) { return acharCabecalhoBanco(linhas) >= 0; }
+  function lerExtratoBanco(linhas) {
+    const h = acharCabecalhoBanco(linhas);
+    const cab = linhas[h].map(semAcento);
+    const cDesc = cab.indexOf('DESCRICAO'), cDoc = cab.indexOf('DOCUMENTO');
+    const cVal = cab.findIndex(function (x) { return /^VALOR/.test(x); }), cSaldo = cab.findIndex(function (x) { return /^SALDO/.test(x); });
+    const num = function (v) { if (typeof v === 'number') return v; const t = String(v == null ? '' : v).trim(); return /^-?\d+(\.\d+)?$/.test(t) ? parseFloat(t) : numero(t); };
+    const r2 = function (v) { return Math.round(v * 100) / 100; };
+    let inicio = null, fim = null, saldoAnterior = null;
+    for (let i = 0; i < h; i++) {
+      const t = String((linhas[i] || [])[0] || '');
+      const m = t.match(/(\d{2}\/\d{2}\/\d{4})\s*a\s*(\d{2}\/\d{2}\/\d{4})/);
+      if (m) { inicio = lerData(m[1]).data; fim = lerData(m[2]).data; }
+    }
+    const movs = [];
+    for (let i = h + 1; i < linhas.length; i++) {
+      const r = linhas[i] || [];
+      if (r.every(function (x) { return x == null || String(x).trim() === ''; })) { if (movs.length || saldoAnterior != null) break; else continue; }
+      const desc = String(r[cDesc] == null ? '' : r[cDesc]).trim();
+      if (/^SALDO ANTERIOR/.test(semAcento(desc))) { saldoAnterior = r2(num(r[cSaldo])); continue; }
+      const d = lerData(r[0]);
+      if (!d) { if (movs.length) break; else continue; }
+      if (r[cVal] == null || r[cVal] === '') continue;
+      movs.push({ data: d.data, descricao: desc.toUpperCase(), documento: cDoc >= 0 ? String(r[cDoc] == null ? '' : r[cDoc]).trim() : '', valor: r2(num(r[cVal])), saldo: r[cSaldo] == null || r[cSaldo] === '' ? null : r2(num(r[cSaldo])), ordem: movs.length + 1 });
+    }
+    if (!movs.length && saldoAnterior == null) throw new Error('O extrato não tem lançamentos.');
+    const datas = movs.map(function (x) { return x.data; }).sort();
+    inicio = inicio || datas[0]; fim = fim || datas[datas.length - 1];
+    // resumo por dia (o período inteiro, inclusive dias sem movimento)
+    const dias = [];
+    let saldo = saldoAnterior, k = 0;
+    for (let d = inicio; d <= fim; d = somaDias(d, 1)) {
+      let ent = 0, sai = 0;
+      while (k < movs.length && movs[k].data <= d) {
+        const m = movs[k++]; if (m.data < d) continue;
+        if (m.valor > 0) ent += m.valor; else sai += m.valor;
+        if (m.saldo != null) saldo = m.saldo; else if (saldo != null) saldo = r2(saldo + m.valor);
+      }
+      dias.push({ data: d, entrada_extrato: r2(ent), saida_extrato: r2(sai), saldo_extrato: saldo });
+    }
+    return { tipo: 'banco', conta: 'SICREDI', itens: movs, dias: dias, saldoAnterior: saldoAnterior, inicio: inicio, fim: fim };
+  }
+
   /* Lê todas as abas de um arquivo e devolve o que foi reconhecido.
    * abas: [{nome, linhas}] */
   function lerArquivo(nomeArquivo, abas) {
@@ -1170,6 +1228,8 @@ window.FT_CONFIG = {
       try {
         if (pareceContas(aba.linhas)) {
           const r = lerContas(aba.linhas); r.aba = aba.nome; r.arquivo = nomeArquivo; achados.push(r);
+        } else if (pareceBanco(aba.linhas)) {
+          const r = lerExtratoBanco(aba.linhas); r.aba = aba.nome; r.arquivo = nomeArquivo; achados.push(r);
         } else if (pareceVendas(aba.linhas)) {
           const r = lerVendas(aba.linhas); r.aba = aba.nome; r.arquivo = nomeArquivo; achados.push(r);
         } else if (pareceMaoDeObra(aba.linhas)) {
@@ -1217,7 +1277,7 @@ window.FT_CONFIG = {
   const api = {
     semAcento: semAcento, numero: numero, lerData: lerData, somaDias: somaDias,
     lerVendas: lerVendas, lerMaoDeObra: lerMaoDeObra, lerArquivo: lerArquivo,
-    lerContas: lerContas, lerExtratoFluxo: lerExtratoFluxo, pareceContas: pareceContas,
+    lerContas: lerContas, lerExtratoBanco: lerExtratoBanco, pareceBanco: pareceBanco, lerExtratoFluxo: lerExtratoFluxo, pareceContas: pareceContas,
     pareceVendas: pareceVendas, pareceMaoDeObra: pareceMaoDeObra,
     agregarVendas: agregarVendas, agregarMaoDeObra: agregarMaoDeObra
   };
@@ -1917,13 +1977,13 @@ window.FT_CONFIG = {
       const dif = saldoExt != null && saldoDia != null && !(ini && ini.data === d) ? FT.r2(saldoExt - saldoDia) : null;
       if (dif != null) { if (Math.abs(dif) < 0.01) tot.diasConciliados++; else tot.diasComDif++; }
       lista.push({ data: d, previsto: FT.r2(x.previsto), previstoConta: x.previstoConta, extrato: temExtrato ? +dia.entrada_extrato : null, entrada: FT.r2(entrada), entradaPrevista: !temExtrato,
-        saidas: FT.r2(x.saidas), grupo: x.grupo, op: x.op, saldoAnterior: base == null ? null : FT.r2(base), saldo: saldoDia, saldoExtrato: saldoExt, dif: dif, obs: dia.obs || '' });
-      tot.previsto += x.previsto; tot.entrada += entrada; tot.saidas += x.saidas; if (temExtrato) tot.extrato += +dia.entrada_extrato;
+        saidas: FT.r2(x.saidas), saidaExtrato: dia.saida_extrato != null && dia.saida_extrato !== '' ? +dia.saida_extrato : null, grupo: x.grupo, op: x.op, saldoAnterior: base == null ? null : FT.r2(base), saldo: saldoDia, saldoExtrato: saldoExt, dif: dif, obs: dia.obs || '' });
+      tot.previsto += x.previsto; tot.entrada += entrada; if (dia.saida_extrato != null && dia.saida_extrato !== '') { tot.saidaExtrato = (tot.saidaExtrato || 0) + +dia.saida_extrato; } tot.saidas += x.saidas; if (temExtrato) tot.extrato += +dia.entrada_extrato;
       Object.keys(x.previstoConta).forEach(function (k) { tot.previstoConta[k] = (tot.previstoConta[k] || 0) + x.previstoConta[k]; });
       Object.keys(x.grupo).forEach(function (k) { tot.grupo[k] = (tot.grupo[k] || 0) + x.grupo[k]; });
       Object.keys(x.op).forEach(function (k) { tot.op[k] = (tot.op[k] || 0) + x.op[k]; });
     }
-    ['previsto', 'entrada', 'saidas', 'extrato'].forEach(function (k) { tot[k] = FT.r2(tot[k]); });
+    ['previsto', 'entrada', 'saidas', 'extrato', 'saidaExtrato'].forEach(function (k) { tot[k] = FT.r2(tot[k]); });
     tot.resultado = FT.r2(tot.entrada + tot.saidas);
     const ultimoDia = lista[lista.length - 1];
     tot.saldoFinal = ultimoDia ? (ultimoDia.saldoExtrato != null ? ultimoDia.saldoExtrato : ultimoDia.saldo) : null;
@@ -1940,7 +2000,43 @@ window.FT_CONFIG = {
       if (vistos[g]) return;
       grupos.push({ grupo: g, ops: Object.keys(tot.op).filter(function (k) { return k.split('|')[0] === g; }).map(function (k) { return k.split('|')[1]; }) });
     });
-    return { dias: lista, totais: tot, grupos: grupos, abertura: abertura };
+    return { dias: lista, totais: tot, grupos: grupos, abertura: abertura, aberturaExtrato: abertura != null && (extratoDe(FT.somaDias(primeiro, -1)) != null || ini.data === FT.somaDias(primeiro, -1)) };
+  };
+
+  /* Conciliação de um dia: casa as saídas do extrato do banco com as contas a pagar do sistema.
+   * lancs: contas do dia (fluxo_lancamentos) · manuais: lançamentos manuais do dia · movs: movimentos do extrato do dia
+   * 1º valor exato; 2º valor quase igual (até R$ 1,00 ou 1%) com parte do nome igual na descrição do banco.
+   * As compras no cartão de crédito SICREDI do dia viram uma linha só (a fatura). */
+  C.conciliarDia = function (lancs, manuais, movs) {
+    const sis = [];
+    let fatura = null;
+    lancs.filter(function (l) { return l.tipo === 'pagar'; }).forEach(function (l) {
+      const conta = FT.semAcento(l.conta);
+      if (conta === 'SICREDI') sis.push({ nome: l.nome, operacao: l.operacao, descricao: l.descricao, valor: +l.valor, situacao: l.situacao, par: null });
+      else if (/CARTAO/.test(conta)) {
+        if (!fatura) { fatura = { nome: 'FATURA CARTÃO SICREDI', operacao: 'COMPRAS NO CARTÃO DE CRÉDITO', descricao: '', valor: 0, qtd: 0, fatura: true, par: null }; sis.push(fatura); }
+        fatura.valor = FT.r2(fatura.valor + +l.valor); fatura.qtd++; fatura.descricao = fatura.qtd + ' COMPRA(S) COM VENCIMENTO NO DIA';
+      }
+    });
+    manuais.filter(function (m) { return m.tipo === 'pagar'; }).forEach(function (m) { sis.push({ nome: 'LANÇAMENTO MANUAL', operacao: m.operacao, descricao: m.descricao || '', valor: +m.valor, manual: true, par: null }); });
+    const banco = movs.map(function (m) { return { data: m.data, descricao: m.descricao, documento: m.documento, valor: +m.valor, saldo: m.saldo, par: null }; });
+    const debitos = banco.filter(function (m) { return m.valor < 0; });
+    const palavras = function (nome) { return FT.semAcento(nome).split(/[^A-Z0-9]+/).filter(function (w) { return w.length >= 4 && ['LTDA', 'COMERCIO', 'ALIMENTOS', 'ATACADISTA', 'SERVICOS', 'DISTRIBUIDORA'].indexOf(w) < 0; }); };
+    const nomeBate = function (s, m) { const d = FT.semAcento(m.descricao); return (s.fatura && /FATURA/.test(d)) || palavras(s.nome).some(function (w) { return d.indexOf(w) >= 0; }); };
+    sis.forEach(function (s) { const m = debitos.find(function (b) { return !b.par && Math.abs(b.valor - s.valor) < 0.005; }); if (m) { m.par = s; s.par = m; } });
+    sis.forEach(function (s) {
+      if (s.par) return;
+      const tol = Math.max(1, Math.abs(s.valor) * 0.01);
+      const m = debitos.find(function (b) { return !b.par && Math.abs(b.valor - s.valor) <= tol && nomeBate(s, b); });
+      if (m) { m.par = s; s.par = m; }
+    });
+    const soma = function (l) { return FT.r2(l.reduce(function (t, x) { return t + x.valor; }, 0)); };
+    return {
+      sistema: sis, banco: banco,
+      semPar: { banco: debitos.filter(function (m) { return !m.par; }), sistema: sis.filter(function (x) { return !x.par; }) },
+      totais: { entradasBanco: soma(banco.filter(function (m) { return m.valor > 0; })), saidasBanco: soma(debitos), saidasSistema: soma(sis),
+        bancoSemPar: soma(debitos.filter(function (m) { return !m.par; })), sistemaSemPar: soma(sis.filter(function (x) { return !x.par; })) }
+    };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -2047,7 +2143,7 @@ window.FT_CONFIG = {
           const man = await ok(sb.from('fluxo_manuais').select('*').gte('data', de).lte('data', ate));
           man.forEach(function (m) { resumo.push({ data: m.data, tipo: m.tipo, grupo: m.grupo, operacao: m.operacao, conta: 'MANUAL', total: m.valor }); });
           const dias = {};
-          (await ok(sb.from('fluxo_dias').select('data,entrada_extrato,saldo_extrato,obs').eq('conta', 'SICREDI').gte('data', FT.somaDias(de, -1)).lte('data', ate))).forEach(function (x) { dias[x.data] = x; });
+          (await ok(sb.from('fluxo_dias').select('data,entrada_extrato,saida_extrato,saldo_extrato,obs').eq('conta', 'SICREDI').gte('data', FT.somaDias(de, -1)).lte('data', ate))).forEach(function (x) { dias[x.data] = x; });
           return { resumo: resumo, dias: dias };
         },
         saldoInicial: async function () {
@@ -2060,7 +2156,9 @@ window.FT_CONFIG = {
         doDia: async function (d) {
           const l = await ok(sb.from('fluxo_lancamentos').select('id,nome,tipo,conta,operacao,grupo,descricao,valor,situacao').eq('data_vencimento', d).order('valor'));
           const m = await ok(sb.from('fluxo_manuais').select('*').eq('data', d));
-          return { lancamentos: l, manuais: m };
+          let e = [];
+          try { e = await ok(sb.from('fluxo_extrato').select('data,ordem,descricao,documento,valor,saldo').eq('conta', 'SICREDI').eq('data', d).order('ordem')); } catch (x) { console.warn('extrato indisponível', x); }
+          return { lancamentos: l, manuais: m, extrato: e };
         },
         vencidos: async function (hoje) {
           return ok(sb.from('fluxo_lancamentos').select('id,nome,tipo,conta,operacao,grupo,descricao,valor,data_vencimento,situacao').neq('situacao', 'PAGO').lt('data_vencimento', hoje).order('data_vencimento'));
@@ -2095,6 +2193,11 @@ window.FT_CONFIG = {
           for (let i = 0; i < linhas.length; i += 500) { if (progresso) progresso(Math.min(i + 500, linhas.length), linhas.length); await ok(sb.from('fluxo_dias').upsert(linhas.slice(i, i + 500))); }
           return;
         }
+        if (a.tipo === 'banco') {
+          if (progresso) progresso(a.itens.length, a.itens.length);
+          await ok(sb.rpc('importar_extrato', { p_conta: a.conta || 'SICREDI', p_inicio: a.inicio, p_fim: a.fim, p_arquivo: a.arquivo + ' / ' + a.aba, p_saldo_anterior: a.saldoAnterior, p_itens: a.itens, p_dias: a.dias }));
+          return;
+        }
         if (a.tipo === 'contas') {
           for (let i = 0; i < a.itens.length; i += 800) {
             const parte = a.itens.slice(i, i + 800);
@@ -2127,7 +2230,7 @@ window.FT_CONFIG = {
       funcionarios: clonar(inicial.funcionarios || []),
       config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {}, folhas: {},
       acessos: clonar(inicial.acessos || []), pontos: clonar(inicial.pontos || []),
-      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), fluxoMan: [],
+      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
       pontoConfig: { id: 1, lat: -23.4028019, lng: -46.0428557, raio_m: 100, precisao_max_m: 100 },
       ind: clonar(inicial.indicadores || { vendasDia: [], pedidosDia: [], maoObraDia: [] })
     };
@@ -2206,7 +2309,7 @@ window.FT_CONFIG = {
           return espera(ds.length ? { data: ds[0], valor: db.fluxoDias[ds[0]].saldo_extrato, automatico: true } : null);
         },
         salvarSaldoInicial: function (v) { db.config.fluxo_saldo_inicial = clonar(v); return espera(null); },
-        doDia: function (d) { return espera({ lancamentos: db.fluxoLanc.filter(function (x) { return x.data_vencimento === d; }).sort(function (a, b) { return a.valor - b.valor; }), manuais: db.fluxoMan.filter(function (m) { return m.data === d; }) }); },
+        doDia: function (d) { return espera({ lancamentos: db.fluxoLanc.filter(function (x) { return x.data_vencimento === d; }).sort(function (a, b) { return a.valor - b.valor; }), manuais: db.fluxoMan.filter(function (m) { return m.data === d; }), extrato: db.fluxoExt.filter(function (m) { return m.data === d; }) }); },
         vencidos: function (hoje) { return espera(db.fluxoLanc.filter(function (x) { return x.situacao !== 'PAGO' && x.data_vencimento < hoje; }).sort(function (a, b) { return a.data_vencimento < b.data_vencimento ? -1 : 1; })); },
         salvarDia: function (d, c) { db.fluxoDias[d] = Object.assign({ data: d }, db.fluxoDias[d] || {}, c); return espera(null); },
         addManual: function (m) { db.fluxoMan.push(Object.assign({ id: 'm' + (seq++) }, m)); return espera(null); },
@@ -2220,6 +2323,12 @@ window.FT_CONFIG = {
       indicadores: { carregar: function () { return espera(Object.assign({}, db.ind, { folhas: db.folhas })); } },
       importar: function (a) {
         if (a.tipo === 'extrato') { a.itens.forEach(function (x) { db.fluxoDias[x.data] = Object.assign({}, x); }); return espera(null); }
+        if (a.tipo === 'banco') {
+          db.fluxoExt = db.fluxoExt.filter(function (m) { return m.data < a.inicio || m.data > a.fim; }).concat(clonar(a.itens));
+          a.dias.forEach(function (x) { db.fluxoDias[x.data] = Object.assign({}, db.fluxoDias[x.data] || {}, x); });
+          if (a.saldoAnterior != null) { const d0 = FT.somaDias(a.inicio, -1); db.fluxoDias[d0] = Object.assign({ data: d0 }, db.fluxoDias[d0] || {}, { saldo_extrato: a.saldoAnterior }); }
+          return espera(null);
+        }
         if (a.tipo === 'contas') {
           db.fluxoLanc = db.fluxoLanc.filter(function (x) { return x.data_vencimento < a.inicio || x.data_vencimento > a.fim; })
             .concat(a.itens.map(function (x, i) { return Object.assign({ id: 'l' + (seq++) }, x); }));
@@ -2646,11 +2755,12 @@ window.FT_CONFIG = {
       const desc = a.tipo === 'vendas'
         ? 'Pedidos de venda · ' + fInt.format(a.itens.length) + ' itens · ' + fInt.format(new Set(a.itens.map(function (x) { return x.pedido_id; })).size) + ' pedidos'
         : a.tipo === 'contas' ? 'Contas a pagar e receber (fluxo de caixa) · ' + fInt.format(a.itens.length) + ' lançamentos · vencimentos'
+        : a.tipo === 'banco' ? 'Extrato do banco SICREDI · ' + fInt.format(a.itens.length) + ' movimentos' + (a.dias.length ? ' · saldo final ' + FT.moeda(a.dias[a.dias.length - 1].saldo_extrato) : '')
         : a.tipo === 'extrato' ? 'Histórico do fluxo de caixa · entradas e saldos do extrato de ' + fInt.format(a.itens.length) + ' dias'
         : 'Diárias e 10% · ' + fInt.format(a.itens.length) + ' lançamentos · ' + fInt.format(new Set(a.itens.map(function (x) { return x.colaborador; })).size) + ' colaboradores';
       return '<li><label><input type="checkbox" id="imp-' + i + '" data-i="' + i + '"' + (antigo ? '' : ' checked') + '>' +
         '<span><b>' + esc(desc) + '</b><span>' + esc(a.arquivo) + ' · aba "' + esc(a.aba) + '" · período ' + FT.ddmmaaaa(a.inicio) + ' a ' + FT.ddmmaaaa(a.fim) + '</span>' +
-        (antigo ? '<span class="imp-alerta">Período antigo, desmarcado. Marque se quiser importar.</span>' : '<span class="imp-ok">' + (a.tipo === 'extrato' ? 'Grava a entrada e o saldo do extrato de cada dia (conciliação).' : 'Substitui o que já existe nesse período.') + '</span>') + '</span></label></li>';
+        (antigo ? '<span class="imp-alerta">Período antigo, desmarcado. Marque se quiser importar.</span>' : '<span class="imp-ok">' + (a.tipo === 'banco' ? 'Grava os movimentos e concilia com as contas, dia a dia.' : a.tipo === 'extrato' ? 'Grava a entrada e o saldo do extrato de cada dia (conciliação).' : 'Substitui o que já existe nesse período.') + '</span>') + '</span></label></li>';
     }).join('');
     atualizarBotao();
   }
@@ -2671,7 +2781,7 @@ window.FT_CONFIG = {
     };
     let falhas = 0;
     for (const a of sel) {
-      const nome = { vendas: 'Vendas', contas: 'Contas a pagar e receber', extrato: 'Histórico do extrato' }[a.tipo] || 'Diárias e 10%';
+      const nome = { vendas: 'Vendas', contas: 'Contas a pagar e receber', extrato: 'Histórico do extrato', banco: 'Extrato do banco' }[a.tipo] || 'Diárias e 10%';
       try {
         await FT.store.importar(a, function (feito, total) { marcar(a, 'Enviando… ' + fInt.format(feito) + ' de ' + fInt.format(total) + ' linhas', 'andamento'); });
         marcar(a, '✓ ' + nome + ' salvo: ' + fInt.format(a.itens.length) + ' linhas de ' + FT.ddmmaaaa(a.inicio) + ' a ' + FT.ddmmaaaa(a.fim), 'ok');
@@ -4032,7 +4142,9 @@ window.FT_CONFIG = {
       '<p class="dd-dif" id="dd-dif" role="status"></p><p class="erro-form" id="dd-erro"></p>' +
       '<div class="dlg-acoes"><button class="btn btn-sec" type="button" id="dd-ant">‹ Dia anterior</button><button class="btn btn-sec" type="button" id="dd-prox">Próximo dia ›</button><span class="espaco"></span>' +
       '<button class="btn btn-sec" type="button" id="dd-fechar">Fechar</button><button class="btn" type="submit" id="dd-salvar">Salvar conferência</button></div></form></div>' +
-      '<h3 class="h3-dia">Saídas do dia</h3><div class="rolagem"><table class="lista" id="dd-saidas"></table></div>' +
+      '<div id="dd-conc-bloco" hidden><h3 class="h3-dia">Conciliação com o extrato do banco</h3><p class="dd-conc-res" id="dd-conc-res"></p>' +
+      '<div class="rolagem"><table class="lista" id="dd-banco"></table></div></div>' +
+      '<h3 class="h3-dia">Saídas do dia (sistema)</h3><div class="rolagem"><table class="lista" id="dd-saidas"></table></div>' +
       '<h3 class="h3-dia">Recebimentos previstos (sistema)</h3><div class="rolagem"><table class="lista" id="dd-receb"></table></div>' +
       '<h3 class="h3-dia">Lançamentos manuais do dia</h3><div class="rolagem"><table class="lista" id="dd-man"></table></div>' +
       '<form class="dd-man-add" id="dd-man-form" novalidate><select id="dm-tipo" aria-label="Tipo"><option value="pagar">Saída</option><option value="receber">Entrada</option></select>' +
@@ -4047,6 +4159,14 @@ window.FT_CONFIG = {
     ['dd-entrada', 'dd-saldo'].forEach(function (id) { $('#' + id).addEventListener('input', previaDia); });
     $('#dm-grupo').addEventListener('change', encherOps);
     $('#dd-man-form').addEventListener('submit', addManual);
+    $('#dd-banco').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-ajuste]'); if (!b) return;
+      const m = st.semParBanco[+b.dataset.ajuste]; if (!m) return;
+      $('#dm-tipo').value = 'pagar'; $('#dm-op').value = 'AJUSTE'; $('#dm-desc').value = m.descricao; $('#dm-valor').value = FT.num2(Math.abs(m.valor));
+      $('#dm-grupo').value = /PEDAGIO/.test(m.descricao) ? 'VEICULOS' : /TARIFA|CESTA|IOF|JUROS/.test(m.descricao) ? 'BANCARIO' : /PIX/.test(m.descricao) ? 'FOLHA DE PAGAMENTO' : $('#dm-grupo').value;
+      encherOps(); $('#dm-op').focus();
+      $('#dm-op').scrollIntoView({ block: 'center' });
+    });
     $('#dd-man').addEventListener('click', function (e) { const b = e.target.closest('[data-remover]'); if (b) removerManual(b.dataset.remover); });
     $('#dm-grupo').innerHTML = C.ORDEM_FLUXO.map(function (g) { return '<option>' + esc(g[0]) + '</option>'; }).join('') + '<option>OUTROS</option>';
     encherOps();
@@ -4086,8 +4206,8 @@ window.FT_CONFIG = {
     $('#fx-msg').hidden = temDados;
     $('#fx-msg').innerHTML = 'Nenhum lançamento neste mês. Importe o relatório <b>Contas a receber e pagar</b> do sistema em <a href="#importar">Importar planilhas</a>.';
     $('#fx-kpis').innerHTML = [
-      { t: 'Saldo no início do mês', v: f.abertura != null ? FT.moeda(f.abertura) : '—', s: f.abertura != null ? 'Extrato do último dia do mês anterior' : 'Informe o saldo inicial' },
-      { t: 'Entradas', v: FT.moeda(t.entrada), s: 'Extrato ' + FT.moeda(t.extrato) + ' · previsto no resto' },
+      { t: 'Saldo no início do mês', v: f.abertura != null ? FT.moeda(f.abertura) : '—', s: f.abertura == null ? 'Informe o saldo inicial' : (f.aberturaExtrato ? 'Extrato do último dia do mês anterior' : 'Calculado pelo sistema') },
+      { t: 'Entradas', v: FT.moeda(t.entrada), s: t.extrato ? 'Extrato ' + FT.moeda(t.extrato) + ' · previsto no resto' : 'Previsto pelo relatório de contas a receber' },
       { t: 'Saídas', v: FT.moeda(t.saidas), s: 'Contas a pagar com vencimento no mês', neg: true },
       { t: 'Saldo no fim do mês', v: t.saldoFinal != null ? FT.moeda(t.saldoFinal) : '—', s: 'Resultado do mês ' + FT.moeda(t.resultado), d: true },
       { t: 'Conciliação', v: t.diasConciliados + ' dias ok', s: t.diasComDif ? t.diasComDif + ' dia(s) com diferença' : 'Nenhuma diferença', alerta: t.diasComDif > 0 }
@@ -4126,6 +4246,7 @@ window.FT_CONFIG = {
     linha('TOTAL DE ENTRADA', null, t.entrada, 'fx-total', function (d) { return cel(d.entrada, d.entradaPrevista && d.entrada ? 'prev' : ''); });
 
     secao('SAÍDAS');
+    if (t.saidaExtrato != null) linha('Saída no extrato (banco)', function (d) { return d.saidaExtrato; }, t.saidaExtrato, 'fx-ext');
     f.grupos.forEach(function (g) {
       const tg = t.grupo[g.grupo] || 0;
       linha('<button type="button" class="fx-grp" data-grupo="' + esc(g.grupo) + '"' + (g.ops.length ? '' : ' disabled') + '>' + (g.ops.length ? seta(g.grupo) : '<span class="seta-g"></span>') + esc(g.grupo) + '</button>', function (d) { return d.grupo[g.grupo]; }, tg, 'fx-g' + (tg ? '' : ' vazio'));
@@ -4158,6 +4279,7 @@ window.FT_CONFIG = {
     $('#dd-erro').textContent = ''; $('#dm-erro').textContent = '';
     previaDia();
     if (!$('#dlg-dia').open) $('#dlg-dia').showModal();
+    $('#dd-conc-bloco').hidden = true;
     $('#dd-saidas').innerHTML = $('#dd-receb').innerHTML = $('#dd-man').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
     try {
       const x = await FT.store.fluxo.doDia(d); if (st.dia !== d) return;
@@ -4168,11 +4290,38 @@ window.FT_CONFIG = {
           : '<tbody><tr><td class="vazio-lista">' + vazio + '</td></tr></tbody>';
       };
       $('#dd-saidas').innerHTML = linhas(x.lancamentos.filter(function (r) { return r.tipo === 'pagar'; }), 'Nenhuma conta a pagar neste dia.');
+      desenharConciliacao(x);
       $('#dd-receb').innerHTML = linhas(x.lancamentos.filter(function (r) { return r.tipo === 'receber'; }), 'Nenhum recebimento previsto neste dia.');
       $('#dd-man').innerHTML = x.manuais.length ? '<thead><tr><th>Tipo</th><th>Grupo</th><th>Operação</th><th>Descrição</th><th class="num">Valor</th><th></th></tr></thead><tbody>' +
         x.manuais.map(function (m) { return '<tr><td>' + (m.tipo === 'pagar' ? 'SAÍDA' : 'ENTRADA') + '</td><td>' + esc(m.grupo) + '</td><td>' + esc(m.operacao) + '</td><td>' + esc(m.descricao || '') + '</td><td class="num' + (m.valor < 0 ? ' neg' : '') + '">' + FT.num2(+m.valor) + '</td><td><button type="button" class="link" data-remover="' + esc(m.id) + '">Remover</button></td></tr>'; }).join('') + '</tbody>'
         : '<tbody><tr><td class="vazio-lista">Nenhum. Use para projeções, ajustes ou transferências que não estão no sistema.</td></tr></tbody>';
     } catch (e) { $('#dd-erro').textContent = 'Não consegui carregar os lançamentos do dia: ' + FT.textoErro(e); }
+  }
+  function desenharConciliacao(x) {
+    const movs = x.extrato || [];
+    if (!movs.length) return;
+    const c = C.conciliarDia(x.lancamentos, x.manuais, movs), t = c.totais;
+    const ok = c.sistema.filter(function (s) { return s.par; }).length;
+    $('#dd-conc-bloco').hidden = false;
+    $('#dd-conc-res').innerHTML = '<span class="chip-ok">' + ok + ' saída(s) conferida(s)</span> ' +
+      (c.semPar.banco.length ? '<span class="chip-dif">' + c.semPar.banco.length + ' só no banco · ' + FT.moeda(t.bancoSemPar) + '</span> ' : '') +
+      (c.semPar.sistema.length ? '<span class="chip-parcial">' + c.semPar.sistema.length + ' só no sistema · ' + FT.moeda(t.sistemaSemPar) + '</span> ' : '') +
+      '<span class="dd-conc-tot">Banco: entradas ' + FT.moeda(t.entradasBanco) + ' · saídas ' + FT.moeda(t.saidasBanco) + ' · sistema: saídas ' + FT.moeda(t.saidasSistema) + '</span>';
+    st.semParBanco = c.semPar.banco;
+    $('#dd-banco').innerHTML = '<thead><tr><th>Extrato do banco</th><th>Documento</th><th class="num">Valor</th><th class="num">Saldo</th><th>Conferência</th></tr></thead><tbody>' +
+      c.semPar.banco.concat(c.banco.filter(function (m) { return m.valor < 0 && m.par; }), c.banco.filter(function (m) { return m.valor >= 0; })).map(function (m) {
+        let conf;
+        if (m.valor > 0) conf = '<span class="conc-ent">ENTRADA</span>';
+        else if (m.par) conf = '<span class="tag tag-ok">✓ ' + esc(m.par.nome) + (Math.abs(m.par.valor - m.valor) >= 0.005 ? ' (' + FT.num2(m.par.valor) + ')' : '') + '</span>';
+        else conf = '<span class="chip-dif">FALTA NO SISTEMA</span> <button type="button" class="link" data-ajuste="' + c.semPar.banco.indexOf(m) + '">lançar ajuste</button>';
+        return '<tr class="' + (m.valor < 0 && !m.par ? 'conc-falta' : '') + '"><td>' + esc(m.descricao) + '</td><td>' + esc(m.documento || '') + '</td><td class="num' + (m.valor < 0 ? ' neg' : '') + '">' + FT.num2(m.valor) + '</td><td class="num">' + (m.saldo != null ? FT.num2(+m.saldo) : '') + '</td><td>' + conf + '</td></tr>';
+      }).join('') + '</tbody>';
+    // saídas do sistema com o resultado da conferência
+    $('#dd-saidas').innerHTML = c.sistema.length ? '<thead><tr><th>Nome</th><th>Operação</th><th>Descrição</th><th>Situação no sistema</th><th class="num">Valor</th><th>No banco</th></tr></thead><tbody>' +
+      c.sistema.map(function (s) {
+        return '<tr class="' + (s.par ? '' : 'conc-falta') + '"><td>' + esc(s.nome) + '</td><td>' + esc(s.operacao) + '</td><td>' + esc(s.descricao) + '</td><td>' + (s.manual ? 'MANUAL' : s.fatura ? '' : esc(s.situacao || '')) + '</td><td class="num neg">' + FT.num2(s.valor) + '</td><td>' +
+          (s.par ? '<span class="tag tag-ok">✓ SAIU NO BANCO</span>' : '<span class="chip-parcial">NÃO SAIU NO BANCO</span>') + '</td></tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="vazio-lista">Nenhuma conta a pagar neste dia.</td></tr></tbody>';
   }
   function trocarDia(n) {
     const d = FT.somaDias(st.dia, n);
