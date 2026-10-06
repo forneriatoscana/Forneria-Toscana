@@ -456,6 +456,23 @@ input::placeholder { text-transform: uppercase; }
   .corte { text-align: center; font-size: 8pt; color: #555; margin: 2mm 0; white-space: nowrap; overflow: hidden; }
 }
 
+/* ---------- ponto e usuários ---------- */
+.link-func { text-align: center; font-size: 13.5px; font-weight: 600; }
+.link-ponto { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.link-ponto code { display: inline-block; margin-top: 6px; padding: 6px 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; font-size: 13px; text-transform: none; overflow-wrap: anywhere; }
+.tag-ok { background: var(--ok-bg); border-color: transparent; color: var(--bom); }
+.lista.pt td small, .lista.pt td .motivo { display: block; font-size: 11.5px; color: var(--ink-3); }
+.lista.pt .orig { color: var(--aviso-ink); }
+.lista.pt tr.novo-dia td { border-top: 2px solid var(--line); }
+.lista.pt td { vertical-align: top; }
+.agora h3 { margin-bottom: 8px; }
+.grade-local { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.grade-local label { display: grid; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.pg td.col-dia.ponto { position: relative; }
+.pg td.col-dia.ponto::after { content: "●"; position: absolute; top: 2px; right: 4px; font-size: 9px; color: #e0782f; }
+@media (max-width: 700px) { .grade-local { grid-template-columns: 1fr 1fr; } }
+.lista.pt .prec { font-size: 11px; color: var(--ink-3); }
+
 </style>
 </head>
 <body>
@@ -468,6 +485,7 @@ input::placeholder { text-transform: uppercase; }
     <label for="login-senha">Senha<input id="login-senha" type="password" required autocomplete="current-password"></label>
     <button class="btn" type="submit">Entrar</button>
     <p id="login-msg" role="status"></p>
+    <a class="link-func" href="ponto.html">Sou funcionário: bater ponto →</a>
   </form>
 </section>
 
@@ -483,7 +501,9 @@ input::placeholder { text-transform: uppercase; }
       <a href="#pagamento"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 9.5v6M18 9.5v6"/></svg>Pagamento 10%</a>
       <a href="#folha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4M9 11h7M9 14.5h7M9 18h4"/></svg>Folha de pagamento</a>
       <a href="#escala"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M13 14h3M8 17.5h3"/></svg>Escala</a>
+      <a href="#ponto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>Ponto eletrônico</a>
       <a href="#funcionarios"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16.5 14.2c2.7-.3 4.6 1.4 5.2 4.3"/></svg>Funcionários</a>
+      <a href="#usuarios"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>Usuários do ponto</a>
       <a href="#importar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 17v3h16v-3"/></svg>Importar planilhas</a>
     </nav>
     <div class="menu-pe">
@@ -493,7 +513,7 @@ input::placeholder { text-transform: uppercase; }
   </aside>
 
   <div class="principal">
-    <div class="faixa-previa">Prévia: os dados de setembro são reais, mas nada do que você mudar aqui fica salvo. O site oficial grava no Supabase.</div>
+    <div class="faixa-previa">Prévia: as vendas de setembro são reais; os pontos batidos são exemplos. Nada do que você mudar aqui fica salvo. O site oficial grava no Supabase.</div>
     <p id="status" role="status" hidden></p>
 
     <!-- INDICADORES -->
@@ -556,7 +576,9 @@ input::placeholder { text-transform: uppercase; }
     <section id="tela-pagamento" class="tela" hidden></section>
     <section id="tela-folha" class="tela" hidden></section>
     <section id="tela-escala" class="tela" hidden></section>
+    <section id="tela-ponto" class="tela" hidden></section>
     <section id="tela-funcionarios" class="tela" hidden></section>
+    <section id="tela-usuarios" class="tela" hidden></section>
     <section id="tela-importar" class="tela" hidden></section>
   </div>
 </div>
@@ -608,6 +630,31 @@ window.FT_CONFIG = {
   FT.ddmm = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1]; };
   FT.ddmmaaaa = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
   FT.rotuloSemana = function (seg) { return FT.ddmm(seg) + ' a ' + FT.ddmmaaaa(FT.somaDias(seg, 6)); };
+
+  /* ---------- horário de Brasília (ponto) ---------- */
+  FT.TZ = 'America/Sao_Paulo';
+  const fmtDataSP = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const fmtHoraSP = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+  FT.dataSP = function (ts) { return fmtDataSP.format(new Date(ts)); };          // 'aaaa-mm-dd'
+  FT.horaSP = function (ts) { return ts ? fmtHoraSP.format(new Date(ts)) : ''; }; // 'hh:mm'
+  FT.localSP = function (ts) { return ts ? FT.dataSP(ts) + 'T' + FT.horaSP(ts) : ''; }; // para <input type="datetime-local">
+  FT.tsDeLocal = function (v) { return v ? new Date(v + ':00-03:00').toISOString() : null; }; // Brasília não tem horário de verão
+  FT.duracao = function (a, b) {
+    if (!a || !b) return '';
+    const min = Math.max(0, Math.round((new Date(b) - new Date(a)) / 60000));
+    return Math.floor(min / 60) + 'h' + String(min % 60).padStart(2, '0');
+  };
+  FT.cpfNumeros = function (c) { return String(c || '').replace(/\D/g, ''); };
+  FT.formatarCPF = function (c) { c = FT.cpfNumeros(c).slice(0, 11); return c.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); };
+  FT.cpfValido = function (c) {
+    c = FT.cpfNumeros(c);
+    if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+    for (let t = 9; t < 11; t++) {
+      let s = 0; for (let i = 0; i < t; i++) s += +c[i] * (t + 1 - i);
+      if (((s * 10) % 11) % 10 !== +c[t]) return false;
+    }
+    return true;
+  };
 
   FT.semAcento = function (s) {
     return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim().replace(/\s+/g, ' ');
@@ -1562,6 +1609,36 @@ window.FT_CONFIG = {
           await ok(sb.rpc('importar_mao_obra', { p_inicio: semana, p_fim: FT.somaDias(semana, 6), p_arquivo: 'Tela Pagamento 10% · semana ' + FT.rotuloSemana(semana), p_itens: FT.calc.itensMaoDeObra(dados) }));
         }
       },
+      acessos: {
+        listar: async function () { return ok(sb.from('usuarios_ponto').select('funcionario_id,cpf,ativo,atualizado_em')); },
+        definir: async function (fid, cpf, senha) {
+          const r = await ok(sb.rpc('definir_acesso_ponto', { p_funcionario: fid, p_cpf: cpf, p_senha: senha || null }));
+          if (!r || !r.ok) throw new Error((r && r.erro) || 'não foi possível salvar o acesso');
+        },
+        ativar: async function (fid, ativo) { return ok(sb.from('usuarios_ponto').update({ ativo: ativo, atualizado_em: new Date().toISOString() }).eq('funcionario_id', fid)); },
+        remover: async function (fid) { return ok(sb.from('usuarios_ponto').delete().eq('funcionario_id', fid)); }
+      },
+      ponto: {
+        listar: async function (de, ate) {
+          return ok(sb.from('registros_ponto').select('id,funcionario_id,entrada,saida,entrada_distancia,saida_distancia,entrada_precisao,saida_precisao,origem,ajustado,motivo_ajuste,entrada_original,saida_original,anulado')
+            .gte('entrada', de + 'T00:00:00-03:00').lt('entrada', FT.somaDias(ate, 1) + 'T00:00:00-03:00').order('entrada', { ascending: true }));
+        },
+        abertos: async function () {
+          return ok(sb.from('registros_ponto').select('id,funcionario_id,entrada').is('saida', null).eq('anulado', false)
+            .gte('entrada', new Date(Date.now() - 20 * 3600e3).toISOString()).order('entrada', { ascending: true }));
+        },
+        ajustar: async function (reg, novo) {
+          return ok(sb.from('registros_ponto').update({
+            entrada: novo.entrada, saida: novo.saida, anulado: !!novo.anulado, ajustado: true, motivo_ajuste: novo.motivo,
+            entrada_original: reg.entrada_original || reg.entrada, saida_original: reg.ajustado ? reg.saida_original : reg.saida
+          }).eq('id', reg.id));
+        },
+        lancar: async function (fid, entrada, saida, motivo) {
+          return ok(sb.from('registros_ponto').insert({ funcionario_id: fid, entrada: entrada, saida: saida, origem: 'manual', ajustado: true, motivo_ajuste: motivo }));
+        },
+        lerConfig: async function () { return ok(sb.from('ponto_config').select('*').eq('id', 1).maybeSingle()); },
+        salvarConfig: async function (c) { return ok(sb.from('ponto_config').upsert({ id: 1, lat: c.lat, lng: c.lng, raio_m: c.raio_m, precisao_max_m: c.precisao_max_m, atualizado_em: new Date().toISOString() })); }
+      },
       folha: {
         ler: async function (mes) { const d = await ok(sb.from('folhas').select('dados').eq('mes', mes).maybeSingle()); return d ? d.dados : null; },
         salvar: async function (mes, dados) { return ok(sb.from('folhas').upsert({ mes: mes, dados: dados, total: FT.calc.calcularFolha(dados).totais.total, atualizado_em: new Date().toISOString() })); },
@@ -1603,6 +1680,8 @@ window.FT_CONFIG = {
     const db = {
       funcionarios: clonar(inicial.funcionarios || []),
       config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {}, folhas: {},
+      acessos: clonar(inicial.acessos || []), pontos: clonar(inicial.pontos || []),
+      pontoConfig: { id: 1, lat: -23.4028019, lng: -46.0428557, raio_m: 100, precisao_max_m: 100 },
       ind: clonar(inicial.indicadores || { vendasDia: [], pedidosDia: [], maoObraDia: [] })
     };
     let seq = 1000;
@@ -1636,6 +1715,33 @@ window.FT_CONFIG = {
       pagamento: {
         ler: function (s) { return espera(db.pagamentos[s] || null); },
         salvar: function (s, d) { db.pagamentos[s] = clonar(d); substituirMO(s, FT.somaDias(s, 6), FT.calc.itensMaoDeObra(d)); return espera(null); }
+      },
+      acessos: {
+        listar: function () { return espera(db.acessos.map(function (a) { return { funcionario_id: a.funcionario_id, cpf: a.cpf, ativo: a.ativo, atualizado_em: a.atualizado_em }; })); },
+        definir: function (fid, cpf, senha) {
+          cpf = FT.cpfNumeros(cpf);
+          const outro = db.acessos.find(function (a) { return a.cpf === cpf && a.funcionario_id !== fid; });
+          if (outro) return Promise.reject(new Error('Este CPF já é o acesso de outra pessoa'));
+          let a = db.acessos.find(function (x) { return x.funcionario_id === fid; });
+          if (!a) { if (!senha) return Promise.reject(new Error('Defina uma senha')); a = { funcionario_id: fid }; db.acessos.push(a); }
+          a.cpf = cpf; if (senha) a.senha = senha; a.ativo = true; a.atualizado_em = new Date().toISOString();
+          return espera(null);
+        },
+        ativar: function (fid, ativo) { db.acessos.forEach(function (a) { if (a.funcionario_id === fid) a.ativo = ativo; }); return espera(null); },
+        remover: function (fid) { db.acessos = db.acessos.filter(function (a) { return a.funcionario_id !== fid; }); return espera(null); }
+      },
+      ponto: {
+        listar: function (de, ate) { return espera(db.pontos.filter(function (r) { const d = FT.dataSP(r.entrada); return d >= de && d <= ate; }).sort(function (a, b) { return new Date(a.entrada) - new Date(b.entrada); })); },
+        abertos: function () { const lim = Date.now() - 20 * 3600e3; return espera(db.pontos.filter(function (r) { return !r.saida && !r.anulado && new Date(r.entrada) > lim; })); },
+        ajustar: function (reg, novo) {
+          const r = db.pontos.find(function (x) { return x.id === reg.id; });
+          r.entrada_original = r.entrada_original || r.entrada; if (!r.ajustado) r.saida_original = r.saida;
+          Object.assign(r, { entrada: novo.entrada, saida: novo.saida, anulado: !!novo.anulado, ajustado: true, motivo_ajuste: novo.motivo });
+          return espera(null);
+        },
+        lancar: function (fid, entrada, saida, motivo) { db.pontos.push({ id: 'r' + (seq++), funcionario_id: fid, entrada: entrada, saida: saida, origem: 'manual', ajustado: true, motivo_ajuste: motivo, anulado: false }); return espera(null); },
+        lerConfig: function () { return espera(db.pontoConfig); },
+        salvarConfig: function (c) { db.pontoConfig = Object.assign({}, db.pontoConfig, c); return espera(null); }
       },
       folha: {
         ler: function (m) { return espera(db.folhas[m] || null); },
@@ -2470,7 +2576,7 @@ window.FT_CONFIG = {
   const FT = window.FT, C = FT.calc;
   const $ = FT.$, esc = FT.esc;
 
-  const st = { semana: null, dados: null, salvo: true, existe: false, salvando: false, erro: null, vendasDia: null, confirmarEscala: false };
+  const st = { pontoDias: {}, semana: null, dados: null, salvo: true, existe: false, salvando: false, erro: null, vendasDia: null, confirmarEscala: false };
 
   function semanaPadrao() {
     const hoje = FT.hoje(), dow = FT.diaSemana(hoje);
@@ -2557,9 +2663,37 @@ window.FT_CONFIG = {
         $('#pg-msg').innerHTML = 'Nenhum funcionário cadastrado ainda. Cadastre a equipe em <a href="#funcionarios">Funcionários</a> para começar.';
       } else $('#pg-msg').hidden = true;
       st.salvo = true; st.erro = null;
+      const marcadosPonto = await aplicarPonto(semana);
       $('#pg-pct').value = FT.num2(st.dados.percentual).replace(',00', '');
       desenharTudo(); estadoSalvo();
+      if (marcadosPonto) {
+        mudou();
+        mostrarMsg('<b>' + marcadosPonto + (marcadosPonto === 1 ? ' dia marcado' : ' dias marcados') + ' pelo ponto eletrônico.</b> Os dias com ● vieram do ponto. Confira e preencha o 10% de cada dia.');
+      }
     } catch (e) { FT.aviso('Não consegui abrir a semana: ' + FT.textoErro(e), true); }
+  }
+
+  /* ---------- ponto eletrônico → dias trabalhados ---------- */
+  // Cada entrada batida no ponto marca o dia da pessoa (uma vez só: se você desmarcar, fica desmarcado).
+  async function aplicarPonto(semana) {
+    st.pontoDias = {};
+    let regs;
+    try { regs = await FT.store.ponto.listar(semana, FT.somaDias(semana, 6)); } catch (e) { return 0; } // ponto ainda não instalado
+    const dados = st.dados; dados.pontoAplicado = dados.pontoAplicado || {};
+    let n = 0;
+    regs.forEach(function (r) {
+      if (r.anulado) return;
+      const d = FT.dataSP(r.entrada), k = r.funcionario_id + '|' + d;
+      st.pontoDias[k] = true;
+      if (dados.pontoAplicado[k] || !dados.dias[d]) return;
+      const p = dados.pessoas.find(function (x) { return String(x.id) === String(r.funcionario_id); });
+      if (!p) return;
+      dados.pontoAplicado[k] = true;
+      dados.dias[d].aberto = true;
+      p.dias[d] = p.dias[d] || { t: false, entrega: 0 };
+      if (!p.dias[d].t) { p.dias[d].t = true; n++; }
+    });
+    return n;
   }
 
   /* ---------- salvar (automático) ---------- */
@@ -2635,7 +2769,7 @@ window.FT_CONFIG = {
         '<td class="num"><input class="val inp-dinheiro" data-p="' + esc(p.id) + '" data-campo="diaria" id="pg-d-' + esc(p.id) + '" inputmode="decimal" value="' + (+p.diaria ? FT.num2(+p.diaria) : '') + '" placeholder="0,00" aria-label="Diária de ' + esc(p.nome) + '"></td>';
       dias.forEach(function (d) {
         const x = p.dias[d] || {};
-        r += '<td class="col-dia' + (x.t ? ' marcado' : '') + '"><input type="checkbox" class="t" data-p="' + esc(p.id) + '" data-dia="' + d + '" id="pg-t-' + esc(p.id) + '-' + d + '"' + (x.t ? ' checked' : '') + ' aria-label="' + esc(p.nome) + ' trabalhou ' + FT.ddmm(d) + '">' +
+        r += '<td class="col-dia' + (x.t ? ' marcado' : '') + (st.pontoDias[p.id + '|' + d] ? ' ponto" title="Entrada registrada no ponto eletrônico' : '') + '"><input type="checkbox" class="t" data-p="' + esc(p.id) + '" data-dia="' + d + '" id="pg-t-' + esc(p.id) + '-' + d + '"' + (x.t ? ' checked' : '') + ' aria-label="' + esc(p.nome) + ' trabalhou ' + FT.ddmm(d) + '">' +
           (moto ? '<input class="val inp-entrega" data-p="' + esc(p.id) + '" data-dia="' + d + '" data-campo="entrega" id="pg-e-' + esc(p.id) + '-' + d + '" inputmode="decimal" placeholder="entregas" value="' + (+x.entrega ? FT.num2(+x.entrega) : '') + '" aria-label="Taxas de entrega de ' + esc(p.nome) + ' em ' + FT.ddmm(d) + '">' : '') + '</td>';
       });
       r += '<td class="num" id="pg-n-' + esc(p.id) + '"></td><td class="num" id="pg-dr-' + esc(p.id) + '"></td><td class="num" id="pg-r-' + esc(p.id) + '"></td><td class="num" id="pg-en-' + esc(p.id) + '"></td>';
@@ -3211,12 +3345,327 @@ window.FT_CONFIG = {
   };
 })();
 
+/* Forneria Toscana — tela Usuários do ponto (acesso por CPF e senha) */
+(function () {
+  'use strict';
+  const FT = window.FT;
+  const $ = FT.$, esc = FT.esc;
+  let funcs = [], acessos = {}, editando = null, filtro = '';
+
+  FT.linkPonto = function () {
+    const base = location.href.split('#')[0].replace(/[^/]*$/, '');
+    return base + 'ponto.html';
+  };
+
+  function montar() {
+    $('#tela-usuarios').innerHTML =
+      '<div class="cab-tela"><div><h1>Usuários do ponto</h1><p>Cada funcionário entra no ponto com o próprio CPF e uma senha. Ele só consegue bater ponto: não vê vendas, salários nem as outras telas.</p></div></div>' +
+      '<div class="painel link-ponto"><div><h3>Endereço do ponto para os funcionários</h3><p class="sub">Mande este link para a equipe salvar na tela inicial do celular.</p>' +
+      '<code id="us-link"></code></div><button type="button" class="btn" id="us-copiar">Copiar link</button></div>' +
+      '<div class="filtros"><input id="us-busca" type="search" placeholder="Buscar funcionário" aria-label="Buscar funcionário"><div class="contagem" id="us-contagem"></div></div>' +
+      '<div class="rolagem"><table class="lista" id="us-tabela"></table></div>';
+    $('#us-link').textContent = FT.linkPonto();
+    $('#us-copiar').addEventListener('click', function (e) { FT.copiar(FT.linkPonto(), e.currentTarget); });
+    $('#us-busca').addEventListener('input', function (e) { filtro = e.target.value; desenhar(); });
+    $('#us-tabela').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-acao]'); if (!b) return;
+      const f = funcs.find(function (x) { return x.id === b.dataset.id; });
+      if (b.dataset.acao === 'definir') abrir(f);
+      if (b.dataset.acao === 'ativar') alternar(f, true);
+      if (b.dataset.acao === 'desativar') alternar(f, false);
+    });
+
+    const dlg = document.createElement('dialog');
+    dlg.id = 'dlg-acesso'; dlg.setAttribute('aria-labelledby', 'h-acesso');
+    dlg.innerHTML = '<form class="dlg form" id="form-acesso" novalidate><h2 id="h-acesso">Acesso ao ponto</h2><p id="ac-nome"></p>' +
+      '<label for="ac-cpf">CPF (usuário)<input id="ac-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"></label>' +
+      '<div class="grade2"><label for="ac-senha">Senha<input id="ac-senha" type="password" autocomplete="new-password"></label>' +
+      '<label for="ac-senha2">Repita a senha<input id="ac-senha2" type="password" autocomplete="new-password"></label></div>' +
+      '<p class="dica" id="ac-dica">A senha precisa ter pelo menos 4 caracteres. Combine com o funcionário e peça para ele não compartilhar.</p>' +
+      '<p class="erro-form" id="ac-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><button class="btn btn-sec" type="button" id="ac-cancelar">Cancelar</button><button class="btn" type="submit" id="ac-salvar">Salvar acesso</button></div></form>';
+    document.body.appendChild(dlg);
+    $('#ac-cancelar').addEventListener('click', function () { dlg.close(); });
+    $('#ac-cpf').addEventListener('input', function (e) { e.target.value = FT.formatarCPF(e.target.value); });
+    $('#form-acesso').addEventListener('submit', salvar);
+  }
+
+  function abrir(f) {
+    editando = f;
+    const a = acessos[f.id];
+    $('#h-acesso').textContent = a ? 'Trocar CPF ou senha' : 'Criar acesso ao ponto';
+    $('#ac-nome').textContent = f.nome + ' · ' + FT.nomeTipo(f.tipo).toUpperCase() + (f.setor ? ' · ' + FT.nomeSetor(f.setor) : '');
+    $('#ac-cpf').value = a ? FT.formatarCPF(a.cpf) : '';
+    $('#ac-senha').value = ''; $('#ac-senha2').value = '';
+    $('#ac-dica').textContent = a ? 'Deixe a senha em branco para manter a senha atual.' : 'A senha precisa ter pelo menos 4 caracteres. Combine com o funcionário e peça para ele não compartilhar.';
+    $('#ac-erro').textContent = '';
+    $('#dlg-acesso').showModal();
+    $('#ac-cpf').focus();
+  }
+
+  async function salvar(e) {
+    e.preventDefault();
+    const cpf = FT.cpfNumeros($('#ac-cpf').value), s1 = $('#ac-senha').value, s2 = $('#ac-senha2').value;
+    const err = $('#ac-erro');
+    if (!FT.cpfValido(cpf)) { err.textContent = 'CPF inválido. Confira os números.'; return; }
+    if (!acessos[editando.id] && !s1) { err.textContent = 'Defina uma senha.'; return; }
+    if (s1 && s1.length < 4) { err.textContent = 'A senha precisa ter pelo menos 4 caracteres.'; return; }
+    if (s1 !== s2) { err.textContent = 'As duas senhas não são iguais.'; return; }
+    const b = $('#ac-salvar'); b.disabled = true; b.textContent = 'Salvando…';
+    try {
+      await FT.store.acessos.definir(editando.id, cpf, s1 || null);
+      $('#dlg-acesso').close();
+      FT.aviso('Acesso de ' + editando.nome + ' salvo. Usuário: CPF ' + FT.formatarCPF(cpf) + '.');
+      await carregar();
+    } catch (x) { err.textContent = 'Não foi possível salvar: ' + FT.textoErro(x); }
+    finally { b.disabled = false; b.textContent = 'Salvar acesso'; }
+  }
+
+  async function alternar(f, ativo) {
+    try { await FT.store.acessos.ativar(f.id, ativo); FT.aviso(f.nome + (ativo ? ': acesso reativado.' : ': acesso desativado. Ele não consegue mais bater ponto.')); await carregar(); }
+    catch (x) { FT.aviso('Não foi possível alterar: ' + FT.textoErro(x), true); }
+  }
+
+  function desenhar() {
+    const q = FT.semAcento(filtro);
+    const lista = funcs.filter(function (f) { return (f.ativo !== false || acessos[f.id]) && (!q || FT.semAcento(f.nome).indexOf(q) >= 0); });
+    const com = funcs.filter(function (f) { return acessos[f.id] && acessos[f.id].ativo; }).length;
+    const sem = funcs.filter(function (f) { return f.ativo !== false && !acessos[f.id]; }).length;
+    $('#us-contagem').innerHTML = '<span><b>' + com + '</b> com acesso</span>' + (sem ? '<span class="chip-parcial">' + sem + ' sem acesso</span>' : '');
+    if (!funcs.length) { $('#us-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Cadastre os funcionários primeiro na tela <a href="#funcionarios">Funcionários</a>.</td></tr></tbody>'; return; }
+    $('#us-tabela').innerHTML = '<thead><tr><th>Funcionário</th><th>Tipo</th><th>Setor</th><th>Usuário (CPF)</th><th>Situação</th><th></th></tr></thead><tbody>' +
+      lista.map(function (f) {
+        const a = acessos[f.id];
+        const sit = !a ? '<span class="tag">Sem acesso</span>' : a.ativo ? '<span class="tag tag-ok">Ativo</span>' : '<span class="tag tag-motoboy">Desativado</span>';
+        const acoes = !a ? '<button type="button" class="btn btn-p" data-acao="definir" data-id="' + esc(f.id) + '">Criar acesso</button>'
+          : '<button type="button" class="btn btn-sec btn-p" data-acao="definir" data-id="' + esc(f.id) + '">Trocar senha</button> ' +
+            (a.ativo ? '<button type="button" class="btn btn-p btn-perigo" data-acao="desativar" data-id="' + esc(f.id) + '">Desativar</button>'
+                     : '<button type="button" class="btn btn-sec btn-p" data-acao="ativar" data-id="' + esc(f.id) + '">Reativar</button>');
+        return '<tr class="' + (f.ativo === false ? 'inativo' : '') + '"><td><b>' + esc(f.nome) + '</b></td><td><span class="tag tag-' + f.tipo + '">' + FT.nomeTipo(f.tipo) + '</span></td>' +
+          '<td>' + esc(f.setor ? FT.nomeSetor(f.setor) : '—') + '</td><td>' + (a ? esc(FT.formatarCPF(a.cpf)) : '—') + '</td><td>' + sit + '</td><td class="num">' + acoes + '</td></tr>';
+      }).join('') + '</tbody>';
+  }
+
+  async function carregar() {
+    funcs = await FT.obterFuncionarios(true);
+    acessos = {}; (await FT.store.acessos.listar()).forEach(function (a) { acessos[a.funcionario_id] = a; });
+    desenhar();
+  }
+
+  let montado = false;
+  FT.telas.usuarios = {
+    abrir: async function () {
+      if (!montado) { montado = true; montar(); }
+      try { await carregar(); } catch (e) { FT.aviso('Não consegui carregar os usuários: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 4 (ponto) foi rodado no Supabase.', true); }
+    }
+  };
+})();
+
+/* Forneria Toscana — tela Ponto eletrônico (acompanhamento e ajustes) */
+(function () {
+  'use strict';
+  const FT = window.FT;
+  const $ = FT.$, esc = FT.esc;
+  const st = { semana: null, regs: [], funcs: [], porId: {}, ajustando: null };
+
+  function montar() {
+    $('#tela-ponto').innerHTML =
+      '<div class="cab-tela"><div><h1>Ponto eletrônico</h1><p>Entradas e saídas batidas pelo celular na Forneria. As entradas marcam o dia trabalhado no Pagamento 10% automaticamente.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-copiar-link">Copiar link do ponto</button><button type="button" class="btn" id="pt-manual">Lançar ponto manual</button></div></div>' +
+      '<div class="painel agora"><h3>Trabalhando agora</h3><div id="pt-agora" class="es-pessoas"></div></div>' +
+      '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="pt-ant" aria-label="Semana anterior">‹</button>' +
+      '<div class="nav-semana-t"><span>Semana</span><b id="pt-rotulo"></b></div>' +
+      '<button type="button" class="btn-icone" id="pt-prox" aria-label="Próxima semana">›</button>' +
+      '<button type="button" class="btn btn-sec btn-p" id="pt-atual">Esta semana</button></div>' +
+      '<div class="es-resumo" id="pt-resumo"></div></div>' +
+      '<div class="rolagem"><table class="lista pt" id="pt-tabela"></table></div>' +
+      '<h2 class="h2-sec">Horas por pessoa na semana</h2><div class="rolagem"><table class="lista" id="pt-horas"></table></div>' +
+      '<div class="painel local-ponto"><h3>Local da Forneria</h3><p class="sub">O ponto só é aceito dentro deste raio. O GPS do celular costuma errar de 5 a 30 metros, por isso o raio não pode ser zero.</p>' +
+      '<div class="grade-local"><label for="pt-lat">Latitude<input id="pt-lat" inputmode="decimal"></label><label for="pt-lng">Longitude<input id="pt-lng" inputmode="decimal"></label>' +
+      '<label for="pt-raio">Raio aceito (metros)<input id="pt-raio" type="number" min="20" max="1000"></label><label for="pt-prec">Precisão mínima do GPS (metros)<input id="pt-prec" type="number" min="10" max="1000"></label></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-aqui">Usar a localização deste aparelho</button><a class="btn btn-sec" id="pt-mapa" target="_blank" rel="noopener">Ver no mapa</a><button type="button" class="btn" id="pt-salvar-local">Salvar local</button></div>' +
+      '<p class="dica" id="pt-local-msg"></p></div>';
+
+    $('#pt-ant').addEventListener('click', function () { irPara(FT.somaDias(st.semana, -7)); });
+    $('#pt-prox').addEventListener('click', function () { irPara(FT.somaDias(st.semana, 7)); });
+    $('#pt-atual').addEventListener('click', function () { irPara(FT.segunda(FT.hoje())); });
+    $('#pt-copiar-link').addEventListener('click', function (e) { FT.copiar(FT.linkPonto(), e.currentTarget); });
+    $('#pt-manual').addEventListener('click', function () { abrirAjuste(null); });
+    $('#pt-tabela').addEventListener('click', function (e) { const b = e.target.closest('[data-ajustar]'); if (b) abrirAjuste(st.regs.find(function (r) { return r.id === b.dataset.ajustar; })); });
+    $('#pt-aqui').addEventListener('click', usarAqui);
+    $('#pt-salvar-local').addEventListener('click', salvarLocal);
+    ['pt-lat', 'pt-lng'].forEach(function (id) { $('#' + id).addEventListener('input', atualizarMapa); });
+
+    const dlg = document.createElement('dialog');
+    dlg.id = 'dlg-ponto'; dlg.setAttribute('aria-labelledby', 'h-ponto');
+    dlg.innerHTML = '<form class="dlg form" id="form-ponto" novalidate><h2 id="h-ponto">Ajustar ponto</h2><p id="ap-info"></p>' +
+      '<label for="ap-func" id="ap-func-l">Funcionário<select id="ap-func"></select></label>' +
+      '<div class="grade2"><label for="ap-entrada">Entrada<input id="ap-entrada" type="datetime-local"></label><label for="ap-saida">Saída<input id="ap-saida" type="datetime-local"></label></div>' +
+      '<label for="ap-motivo">Motivo do ajuste (obrigatório)<input id="ap-motivo" placeholder="ex.: esqueceu de bater a saída" autocomplete="off"></label>' +
+      '<label class="check" id="ap-anular-l"><input type="checkbox" id="ap-anular"> Anular este registro (não conta como dia trabalhado)</label>' +
+      '<p class="erro-form" id="ap-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><button class="btn btn-sec" type="button" id="ap-cancelar">Cancelar</button><button class="btn" type="submit" id="ap-salvar">Salvar</button></div></form>';
+    document.body.appendChild(dlg);
+    $('#ap-cancelar').addEventListener('click', function () { dlg.close(); });
+    $('#form-ponto').addEventListener('submit', salvarAjuste);
+  }
+
+  /* ---------- semana ---------- */
+  async function irPara(semana) {
+    st.semana = semana;
+    $('#pt-rotulo').textContent = FT.rotuloSemana(semana);
+    $('#pt-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
+    try {
+      st.funcs = await FT.obterFuncionarios(true);
+      st.porId = {}; st.funcs.forEach(function (f) { st.porId[f.id] = f; });
+      st.regs = await FT.store.ponto.listar(semana, FT.somaDias(semana, 6));
+      desenhar();
+      const ab = await FT.store.ponto.abertos();
+      $('#pt-agora').innerHTML = ab.length ? ab.map(function (r) {
+        return '<span class="pessoa-chip"><b>' + esc(nome(r.funcionario_id)) + '</b>desde ' + FT.horaSP(r.entrada) + '<small>' + FT.ddmm(FT.dataSP(r.entrada)) + '</small></span>';
+      }).join('') : '<p class="vazio-bloco">Ninguém com entrada aberta agora.</p>';
+    } catch (e) { FT.aviso('Não consegui carregar o ponto: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 4 (ponto) foi rodado no Supabase.', true); }
+  }
+  function nome(id) { return st.porId[id] ? st.porId[id].nome : 'REMOVIDO DO CADASTRO'; }
+
+  function situacao(r) {
+    const chips = [];
+    if (r.anulado) chips.push('<span class="tag tag-motoboy">Anulado</span>');
+    else if (!r.saida) chips.push(Date.now() - new Date(r.entrada) > 20 * 3600e3 ? '<span class="chip-parcial">sem saída</span>' : '<span class="tag tag-ok">No turno</span>');
+    if (r.origem === 'manual') chips.push('<span class="tag">Manual</span>');
+    else if (r.ajustado) chips.push('<span class="tag">Ajustado</span>');
+    return chips.join(' ');
+  }
+  function local(d, p) { return d == null ? '—' : Math.round(d) + ' m' + (p ? ' <span class="prec">±' + Math.round(p) + '</span>' : ''); }
+  function difere(a, b) { return a && b && new Date(a).getTime() !== new Date(b).getTime(); }
+
+  function desenhar() {
+    const regs = st.regs;
+    const validos = regs.filter(function (r) { return !r.anulado; });
+    const pessoasDias = {}; validos.forEach(function (r) { pessoasDias[r.funcionario_id + '|' + FT.dataSP(r.entrada)] = 1; });
+    $('#pt-resumo').innerHTML = '<span><b>' + validos.length + '</b> turnos</span><span><b>' + Object.keys(pessoasDias).length + '</b> dias-pessoa</span>' +
+      (validos.filter(function (r) { return !r.saida && Date.now() - new Date(r.entrada) > 20 * 3600e3; }).length ? '<span class="chip-parcial">' + validos.filter(function (r) { return !r.saida && Date.now() - new Date(r.entrada) > 20 * 3600e3; }).length + ' sem saída</span>' : '');
+    if (!regs.length) {
+      $('#pt-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Nenhum ponto batido nesta semana.</td></tr></tbody>';
+    } else {
+      let h = '<thead><tr><th>Dia</th><th>Funcionário</th><th>Entrada</th><th>Saída</th><th class="num">Horas</th><th>Distância (entrada / saída)</th><th>Situação</th><th></th></tr></thead><tbody>';
+      let diaAnt = '';
+      regs.forEach(function (r) {
+        const d = FT.dataSP(r.entrada);
+        const novoDia = d !== diaAnt; diaAnt = d;
+        h += '<tr class="' + (r.anulado ? 'inativo' : '') + (novoDia ? ' novo-dia' : '') + '"><td>' + (novoDia ? '<b>' + FT.DIAS_CURTOS[FT.diaSemana(d)] + ' ' + FT.ddmm(d) + '</b>' : '') + '</td>' +
+          '<td><b>' + esc(nome(r.funcionario_id)) + '</b>' + (r.motivo_ajuste ? '<small class="motivo">' + esc(r.motivo_ajuste) + '</small>' : '') + '</td>' +
+          '<td>' + FT.horaSP(r.entrada) + (difere(r.entrada_original, r.entrada) ? '<small class="orig">era ' + FT.horaSP(r.entrada_original) + '</small>' : '') + '</td>' +
+          '<td>' + (r.saida ? FT.horaSP(r.saida) + (FT.dataSP(r.saida) !== d ? ' <small>(' + FT.ddmm(FT.dataSP(r.saida)) + ')</small>' : '') : '—') + (difere(r.saida_original, r.saida) ? '<small class="orig">era ' + FT.horaSP(r.saida_original) + '</small>' : '') + '</td>' +
+          '<td class="num">' + (FT.duracao(r.entrada, r.saida) || '—') + '</td>' +
+          '<td>' + local(r.entrada_distancia, r.entrada_precisao) + ' / ' + local(r.saida_distancia, r.saida_precisao) + '</td>' +
+          '<td>' + situacao(r) + '</td><td class="num"><button type="button" class="link" data-ajustar="' + esc(r.id) + '">Ajustar</button></td></tr>';
+      });
+      $('#pt-tabela').innerHTML = h + '</tbody>';
+    }
+    // horas por pessoa
+    const tot = {};
+    validos.forEach(function (r) {
+      const t = tot[r.funcionario_id] = tot[r.funcionario_id] || { dias: {}, min: 0, abertos: 0 };
+      t.dias[FT.dataSP(r.entrada)] = 1;
+      if (r.saida) t.min += Math.max(0, (new Date(r.saida) - new Date(r.entrada)) / 60000); else t.abertos++;
+    });
+    const ids = Object.keys(tot).sort(function (a, b) { return nome(a).localeCompare(nome(b), 'pt-BR'); });
+    $('#pt-horas').innerHTML = ids.length ? '<thead><tr><th>Funcionário</th><th class="num">Dias</th><th class="num">Horas trabalhadas</th><th>Observação</th></tr></thead><tbody>' +
+      ids.map(function (id) {
+        const t = tot[id], m = Math.round(t.min);
+        return '<tr><td><b>' + esc(nome(id)) + '</b></td><td class="num">' + Object.keys(t.dias).length + '</td><td class="num">' + Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') + '</td><td>' + (t.abertos ? t.abertos + ' turno(s) sem saída não somados' : '') + '</td></tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="vazio-lista">Sem horas nesta semana.</td></tr></tbody>';
+  }
+
+  /* ---------- ajuste / lançamento manual ---------- */
+  function abrirAjuste(r) {
+    st.ajustando = r;
+    $('#h-ponto').textContent = r ? 'Ajustar ponto' : 'Lançar ponto manual';
+    $('#ap-info').textContent = r ? nome(r.funcionario_id) + (r.origem === 'app' ? ' · batido pelo celular' : ' · lançado manualmente') : 'Use quando alguém não conseguiu bater o ponto pelo celular.';
+    $('#ap-func-l').hidden = !!r; $('#ap-anular-l').hidden = !r;
+    if (!r) {
+      $('#ap-func').innerHTML = '<option value="">Selecione</option>' + st.funcs.filter(function (f) { return f.ativo !== false; })
+        .map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.nome) + '</option>'; }).join('');
+    }
+    const hoje = FT.hoje();
+    $('#ap-entrada').value = r ? FT.localSP(r.entrada) : hoje + 'T18:00';
+    $('#ap-saida').value = r ? FT.localSP(r.saida) : '';
+    $('#ap-motivo').value = ''; $('#ap-anular').checked = r ? !!r.anulado : false; $('#ap-erro').textContent = '';
+    $('#dlg-ponto').showModal();
+  }
+  async function salvarAjuste(e) {
+    e.preventDefault();
+    const r = st.ajustando, err = $('#ap-erro');
+    const entrada = FT.tsDeLocal($('#ap-entrada').value), saida = FT.tsDeLocal($('#ap-saida').value);
+    const motivo = FT.mai($('#ap-motivo').value);
+    if (!r && !$('#ap-func').value) { err.textContent = 'Escolha o funcionário.'; return; }
+    if (!entrada) { err.textContent = 'Informe a data e a hora de entrada.'; return; }
+    if (saida && saida <= entrada) { err.textContent = 'A saída precisa ser depois da entrada.'; return; }
+    if (saida && new Date(saida) - new Date(entrada) > 20 * 3600e3) { err.textContent = 'Turno com mais de 20 horas. Confira as datas.'; return; }
+    if (!motivo) { err.textContent = 'Escreva o motivo. Todo ajuste de ponto fica registrado.'; return; }
+    const b = $('#ap-salvar'); b.disabled = true;
+    try {
+      if (r) await FT.store.ponto.ajustar(r, { entrada: entrada, saida: saida, motivo: motivo, anulado: $('#ap-anular').checked });
+      else await FT.store.ponto.lancar($('#ap-func').value, entrada, saida, motivo);
+      $('#dlg-ponto').close();
+      FT.aviso(r ? 'Ponto ajustado.' : 'Ponto lançado.');
+      await irPara(st.semana);
+    } catch (x) { err.textContent = 'Não foi possível salvar: ' + FT.textoErro(x); }
+    finally { b.disabled = false; }
+  }
+
+  /* ---------- local da Forneria ---------- */
+  function atualizarMapa() {
+    const lat = FT.lerValor($('#pt-lat').value.replace(',', '.')), lng = FT.lerValor($('#pt-lng').value.replace(',', '.'));
+    $('#pt-mapa').href = 'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng;
+  }
+  async function carregarLocal() {
+    try {
+      const c = await FT.store.ponto.lerConfig();
+      if (!c) return;
+      $('#pt-lat').value = c.lat; $('#pt-lng').value = c.lng; $('#pt-raio').value = c.raio_m; $('#pt-prec').value = c.precisao_max_m;
+      atualizarMapa();
+    } catch (e) { /* aviso já mostrado */ }
+  }
+  function usarAqui() {
+    const msg = $('#pt-local-msg');
+    if (!navigator.geolocation) { msg.textContent = 'Este aparelho não informa localização.'; return; }
+    msg.textContent = 'Buscando a localização… (use o celular dentro da Forneria)';
+    navigator.geolocation.getCurrentPosition(function (p) {
+      $('#pt-lat').value = p.coords.latitude.toFixed(7); $('#pt-lng').value = p.coords.longitude.toFixed(7);
+      atualizarMapa();
+      msg.textContent = 'Localização capturada com precisão de ' + Math.round(p.coords.accuracy) + ' m. Confira no mapa e clique em Salvar local.';
+    }, function (e) { msg.textContent = 'Não consegui a localização: ' + (e.code === 1 ? 'permissão negada.' : 'GPS indisponível.'); }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+  }
+  async function salvarLocal() {
+    const c = {
+      lat: parseFloat(String($('#pt-lat').value).replace(',', '.')), lng: parseFloat(String($('#pt-lng').value).replace(',', '.')),
+      raio_m: parseInt($('#pt-raio').value, 10), precisao_max_m: parseInt($('#pt-prec').value, 10)
+    };
+    const msg = $('#pt-local-msg');
+    if (!isFinite(c.lat) || !isFinite(c.lng) || Math.abs(c.lat) > 90 || Math.abs(c.lng) > 180) { msg.textContent = 'Latitude ou longitude inválida.'; return; }
+    if (!(c.raio_m >= 20 && c.raio_m <= 1000)) { msg.textContent = 'O raio deve ficar entre 20 e 1000 metros.'; return; }
+    if (!(c.precisao_max_m >= 10 && c.precisao_max_m <= 1000)) { msg.textContent = 'A precisão deve ficar entre 10 e 1000 metros.'; return; }
+    try { await FT.store.ponto.salvarConfig(c); msg.textContent = 'Local salvo. Vale para as próximas batidas de ponto.'; }
+    catch (e) { msg.textContent = 'Não foi possível salvar: ' + FT.textoErro(e); }
+  }
+
+  let montado = false;
+  FT.telas.ponto = {
+    abrir: async function () {
+      if (!montado) { montado = true; montar(); carregarLocal(); }
+      await irPara(st.semana || FT.segunda(FT.hoje()));
+    }
+  };
+})();
+
 /* Forneria Toscana — login, menu lateral e navegação entre telas */
 (function () {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['indicadores', 'pagamento', 'folha', 'escala', 'funcionarios', 'importar'];
+  const TELAS = ['indicadores', 'pagamento', 'folha', 'escala', 'ponto', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
