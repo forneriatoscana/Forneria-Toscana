@@ -527,6 +527,13 @@ details.local-ponto[open] summary { margin-bottom: 8px; }
   .esp-ass { margin-top: 10mm; display: grid; grid-template-columns: 1fr 1fr; gap: 12mm; text-align: center; font-size: 8pt; }
   .esp-ass .linha { display: block; border-top: 1px solid #000; margin-bottom: 1.5mm; }
 }
+.senha-padrao { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; }
+.senha-padrao > div:first-child { flex: 1 1 340px; }
+.sp-campos { display: flex; gap: 8px; flex-wrap: wrap; }
+#us-padrao { text-transform: none; width: 14em; }
+.senha-padrao .dica { flex-basis: 100%; margin: 0; }
+#us-tabela td:last-child { white-space: normal; text-align: right; width: 1%; min-width: 16em; }
+#us-tabela td:last-child .btn { margin: 2px 0; }
 
 </style>
 </head>
@@ -1759,7 +1766,7 @@ window.FT_CONFIG = {
         }
       },
       acessos: {
-        listar: async function () { return ok(sb.from('usuarios_ponto').select('funcionario_id,cpf,ativo,atualizado_em')); },
+        listar: async function () { return ok(sb.from('usuarios_ponto').select('funcionario_id,cpf,ativo,trocar_senha,atualizado_em')); },
         definir: async function (fid, cpf, senha) {
           const r = await ok(sb.rpc('definir_acesso_ponto', { p_funcionario: fid, p_cpf: cpf, p_senha: senha || null }));
           if (!r || !r.ok) throw new Error((r && r.erro) || 'não foi possível salvar o acesso');
@@ -1866,14 +1873,14 @@ window.FT_CONFIG = {
         salvar: function (s, d) { db.pagamentos[s] = clonar(d); substituirMO(s, FT.somaDias(s, 6), FT.calc.itensMaoDeObra(d)); return espera(null); }
       },
       acessos: {
-        listar: function () { return espera(db.acessos.map(function (a) { return { funcionario_id: a.funcionario_id, cpf: a.cpf, ativo: a.ativo, atualizado_em: a.atualizado_em }; })); },
+        listar: function () { return espera(db.acessos.map(function (a) { return { funcionario_id: a.funcionario_id, cpf: a.cpf, ativo: a.ativo, trocar_senha: a.trocar_senha, atualizado_em: a.atualizado_em }; })); },
         definir: function (fid, cpf, senha) {
           cpf = FT.cpfNumeros(cpf);
           const outro = db.acessos.find(function (a) { return a.cpf === cpf && a.funcionario_id !== fid; });
           if (outro) return Promise.reject(new Error('Este CPF já é o acesso de outra pessoa'));
           let a = db.acessos.find(function (x) { return x.funcionario_id === fid; });
           if (!a) { if (!senha) return Promise.reject(new Error('Defina uma senha')); a = { funcionario_id: fid }; db.acessos.push(a); }
-          a.cpf = cpf; if (senha) a.senha = senha; a.ativo = true; a.atualizado_em = new Date().toISOString();
+          a.cpf = cpf; if (senha) { a.senha = senha; a.trocar_senha = true; } a.ativo = true; a.atualizado_em = new Date().toISOString();
           return espera(null);
         },
         ativar: function (fid, ativo) { db.acessos.forEach(function (a) { if (a.funcionario_id === fid) a.ativo = ativo; }); return espera(null); },
@@ -3499,7 +3506,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT;
   const $ = FT.$, esc = FT.esc;
-  let funcs = [], acessos = {}, editando = null, filtro = '';
+  let funcs = [], acessos = {}, editando = null, filtro = '', senhaPadrao = '', confirmarReset = null;
 
   FT.linkPonto = function () {
     const base = location.href.split('#')[0].replace(/[^/]*$/, '');
@@ -3511,15 +3518,19 @@ window.FT_CONFIG = {
       '<div class="cab-tela"><div><h1>Usuários do ponto</h1><p>Cada funcionário entra no ponto com o próprio CPF e uma senha. Ele só consegue bater ponto: não vê vendas, salários nem as outras telas.</p></div></div>' +
       '<div class="painel link-ponto"><div><h3>Endereço do ponto para os funcionários</h3><p class="sub">Mande este link para a equipe salvar na tela inicial do celular.</p>' +
       '<code id="us-link"></code></div><button type="button" class="btn" id="us-copiar">Copiar link</button></div>' +
+      '<div class="painel senha-padrao"><div><h3>Senha padrão (provisória)</h3><p class="sub">Usada para criar os acessos e para resetar a senha de quem esquecer. No primeiro acesso o funcionário é obrigado a trocar por uma senha só dele.</p></div>' +
+      '<div class="sp-campos"><input id="us-padrao" type="text" autocomplete="off" placeholder="ex.: forneria2026" aria-label="Senha padrão"><button type="button" class="btn" id="us-padrao-salvar">Salvar senha padrão</button></div><p class="dica" id="us-padrao-msg"></p></div>' +
       '<div class="filtros"><input id="us-busca" type="search" placeholder="Buscar funcionário" aria-label="Buscar funcionário"><div class="contagem" id="us-contagem"></div></div>' +
       '<div class="rolagem"><table class="lista" id="us-tabela"></table></div>';
     $('#us-link').textContent = FT.linkPonto();
     $('#us-copiar').addEventListener('click', function (e) { FT.copiar(FT.linkPonto(), e.currentTarget); });
+    $('#us-padrao-salvar').addEventListener('click', salvarPadrao);
     $('#us-busca').addEventListener('input', function (e) { filtro = e.target.value; desenhar(); });
     $('#us-tabela').addEventListener('click', function (e) {
       const b = e.target.closest('[data-acao]'); if (!b) return;
       const f = funcs.find(function (x) { return x.id === b.dataset.id; });
       if (b.dataset.acao === 'definir') abrir(f);
+      if (b.dataset.acao === 'resetar') resetar(f, b);
       if (b.dataset.acao === 'ativar') alternar(f, true);
       if (b.dataset.acao === 'desativar') alternar(f, false);
     });
@@ -3528,7 +3539,8 @@ window.FT_CONFIG = {
     dlg.id = 'dlg-acesso'; dlg.setAttribute('aria-labelledby', 'h-acesso');
     dlg.innerHTML = '<form class="dlg form" id="form-acesso" novalidate><h2 id="h-acesso">Acesso ao ponto</h2><p id="ac-nome"></p>' +
       '<label for="ac-cpf">CPF (usuário)<input id="ac-cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"></label>' +
-      '<div class="grade2"><label for="ac-senha">Senha<input id="ac-senha" type="password" autocomplete="new-password"></label>' +
+      '<label class="check" id="ac-usar-padrao-l"><input type="checkbox" id="ac-usar-padrao" checked> Usar a senha padrão (o funcionário troca no primeiro acesso)</label>' +
+      '<div class="grade2" id="ac-senhas"><label for="ac-senha">Senha provisória<input id="ac-senha" type="password" autocomplete="new-password"></label>' +
       '<label for="ac-senha2">Repita a senha<input id="ac-senha2" type="password" autocomplete="new-password"></label></div>' +
       '<p class="dica" id="ac-dica">A senha precisa ter pelo menos 4 caracteres. Combine com o funcionário e peça para ele não compartilhar.</p>' +
       '<p class="erro-form" id="ac-erro" role="alert"></p>' +
@@ -3537,6 +3549,7 @@ window.FT_CONFIG = {
     $('#ac-cancelar').addEventListener('click', function () { dlg.close(); });
     $('#ac-cpf').addEventListener('input', function (e) { e.target.value = FT.formatarCPF(e.target.value); });
     $('#form-acesso').addEventListener('submit', salvar);
+    $('#ac-usar-padrao').addEventListener('change', function (e) { $('#ac-senhas').hidden = e.target.checked; });
   }
 
   function abrir(f) {
@@ -3546,7 +3559,10 @@ window.FT_CONFIG = {
     $('#ac-nome').textContent = f.nome + ' · ' + FT.nomeTipo(f.tipo).toUpperCase() + (f.setor ? ' · ' + FT.nomeSetor(f.setor) : '');
     $('#ac-cpf').value = a ? FT.formatarCPF(a.cpf) : '';
     $('#ac-senha').value = ''; $('#ac-senha2').value = '';
-    $('#ac-dica').textContent = a ? 'Deixe a senha em branco para manter a senha atual.' : 'A senha precisa ter pelo menos 4 caracteres. Combine com o funcionário e peça para ele não compartilhar.';
+    $('#ac-usar-padrao-l').hidden = !!a;
+    $('#ac-usar-padrao').checked = !a && !!senhaPadrao; $('#ac-senhas').hidden = !a && !!senhaPadrao;
+    $('#ac-dica').textContent = a ? 'Deixe a senha em branco para manter a atual. Uma senha nova digitada aqui é provisória: o funcionário troca no próximo acesso. Para voltar à senha padrão use "Resetar senha".'
+      : (senhaPadrao ? 'O funcionário entra com o CPF e a senha padrão e cria a senha dele no primeiro acesso.' : 'Defina a senha padrão no quadro acima para não precisar digitar aqui. O funcionário troca no primeiro acesso.');
     $('#ac-erro').textContent = '';
     $('#dlg-acesso').showModal();
     $('#ac-cpf').focus();
@@ -3554,7 +3570,9 @@ window.FT_CONFIG = {
 
   async function salvar(e) {
     e.preventDefault();
-    const cpf = FT.cpfNumeros($('#ac-cpf').value), s1 = $('#ac-senha').value, s2 = $('#ac-senha2').value;
+    const usarPadrao = !acessos[editando.id] && $('#ac-usar-padrao').checked;
+    if (usarPadrao && !senhaPadrao) { $('#ac-erro').textContent = 'Defina a senha padrão no quadro da tela antes, ou desmarque a opção e digite uma senha.'; return; }
+    const cpf = FT.cpfNumeros($('#ac-cpf').value), s1 = usarPadrao ? senhaPadrao : $('#ac-senha').value, s2 = usarPadrao ? senhaPadrao : $('#ac-senha2').value;
     const err = $('#ac-erro');
     if (!FT.cpfValido(cpf)) { err.textContent = 'CPF inválido. Confira os números.'; return; }
     if (!acessos[editando.id] && !s1) { err.textContent = 'Defina uma senha.'; return; }
@@ -3564,10 +3582,31 @@ window.FT_CONFIG = {
     try {
       await FT.store.acessos.definir(editando.id, cpf, s1 || null);
       $('#dlg-acesso').close();
-      FT.aviso('Acesso de ' + editando.nome + ' salvo. Usuário: CPF ' + FT.formatarCPF(cpf) + '.');
+      FT.aviso('Acesso de ' + editando.nome + ' salvo. Usuário: CPF ' + FT.formatarCPF(cpf) + (s1 ? ' · senha provisória: ele troca no primeiro acesso.' : '.'));
       await carregar();
     } catch (x) { err.textContent = 'Não foi possível salvar: ' + FT.textoErro(x); }
     finally { b.disabled = false; b.textContent = 'Salvar acesso'; }
+  }
+
+  async function salvarPadrao() {
+    const v = $('#us-padrao').value.trim(), m = $('#us-padrao-msg');
+    if (v.length < 4) { m.textContent = 'A senha padrão precisa ter pelo menos 4 caracteres.'; return; }
+    try { await FT.store.config.salvar('ponto_senha_padrao', v); senhaPadrao = v; m.textContent = 'Senha padrão salva. Ela vale para novos acessos e para os resets.'; }
+    catch (e) { m.textContent = 'Não foi possível salvar: ' + FT.textoErro(e); }
+  }
+  async function resetar(f, botao) {
+    if (!senhaPadrao) { FT.aviso('Defina a senha padrão no quadro do topo da tela antes de resetar.', true); return; }
+    if (confirmarReset !== f.id) {
+      confirmarReset = f.id; botao.textContent = 'Confirmar reset';
+      setTimeout(function () { if (confirmarReset === f.id) { confirmarReset = null; botao.textContent = 'Resetar senha'; } }, 5000);
+      return;
+    }
+    confirmarReset = null;
+    try {
+      await FT.store.acessos.definir(f.id, acessos[f.id].cpf, senhaPadrao);
+      FT.aviso('Senha de ' + f.nome + ' voltou para a senha padrão. Ele vai criar uma senha nova no próximo acesso.');
+      await carregar();
+    } catch (e) { FT.aviso('Não foi possível resetar: ' + FT.textoErro(e), true); }
   }
 
   async function alternar(f, ativo) {
@@ -3585,9 +3624,11 @@ window.FT_CONFIG = {
     $('#us-tabela').innerHTML = '<thead><tr><th>Funcionário</th><th>Tipo</th><th>Setor</th><th>Usuário (CPF)</th><th>Situação</th><th></th></tr></thead><tbody>' +
       lista.map(function (f) {
         const a = acessos[f.id];
-        const sit = !a ? '<span class="tag">Sem acesso</span>' : a.ativo ? '<span class="tag tag-ok">Ativo</span>' : '<span class="tag tag-motoboy">Desativado</span>';
+        const sit = !a ? '<span class="tag">Sem acesso</span>' : !a.ativo ? '<span class="tag tag-motoboy">Desativado</span>'
+          : a.trocar_senha ? '<span class="chip-parcial">aguardando 1º acesso</span>' : '<span class="tag tag-ok">Ativo</span>';
         const acoes = !a ? '<button type="button" class="btn btn-p" data-acao="definir" data-id="' + esc(f.id) + '">Criar acesso</button>'
-          : '<button type="button" class="btn btn-sec btn-p" data-acao="definir" data-id="' + esc(f.id) + '">Trocar senha</button> ' +
+          : '<button type="button" class="btn btn-sec btn-p" data-acao="resetar" data-id="' + esc(f.id) + '">Resetar senha</button> ' +
+            '<button type="button" class="btn btn-sec btn-p" data-acao="definir" data-id="' + esc(f.id) + '">Trocar CPF</button> ' +
             (a.ativo ? '<button type="button" class="btn btn-p btn-perigo" data-acao="desativar" data-id="' + esc(f.id) + '">Desativar</button>'
                      : '<button type="button" class="btn btn-sec btn-p" data-acao="ativar" data-id="' + esc(f.id) + '">Reativar</button>');
         return '<tr class="' + (f.ativo === false ? 'inativo' : '') + '"><td><b>' + esc(f.nome) + '</b></td><td><span class="tag tag-' + f.tipo + '">' + FT.nomeTipo(f.tipo) + '</span></td>' +
@@ -3598,6 +3639,8 @@ window.FT_CONFIG = {
   async function carregar() {
     funcs = await FT.obterFuncionarios(true);
     acessos = {}; (await FT.store.acessos.listar()).forEach(function (a) { acessos[a.funcionario_id] = a; });
+    try { senhaPadrao = (await FT.store.config.ler('ponto_senha_padrao')) || ''; } catch (e) { senhaPadrao = ''; }
+    if (document.activeElement !== $('#us-padrao')) $('#us-padrao').value = senhaPadrao;
     desenhar();
   }
 
