@@ -38,7 +38,7 @@ h1 { font: 700 22px/1.2 var(--f-display); margin: 0; }
 label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); letter-spacing: .04em; }
 input { font: 600 20px var(--f-body); padding: 13px 14px; border: 1.5px solid var(--linha); border-radius: 12px; background: var(--cartao); color: var(--ink); width: 100%; letter-spacing: .04em; }
 input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-#senha { text-transform: none; }
+#senha, #nova1, #nova2 { text-transform: none; }
 .btn { font: 700 17px var(--f-body); letter-spacing: .04em; text-transform: uppercase; border: 0; border-radius: 14px; padding: 18px 16px; cursor: pointer; width: 100%; background: var(--accent); color: #fff; }
 .btn:disabled { opacity: .55; cursor: wait; }
 .btn-saida { background: var(--brasa); }
@@ -77,6 +77,17 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
       <span>A localização do celular precisa estar ligada. O ponto só é aceito dentro da Forneria.</span></div>
     <p class="msg-ponto" id="msg-login" role="status" hidden></p>
     <button class="btn" id="btn-entrar" type="submit">Bater ponto de entrada</button>
+  </form>
+
+  <!-- 1b. PRIMEIRO ACESSO = CRIAR SENHA NOVA -->
+  <form class="cartao" id="tela-troca" novalidate hidden>
+    <div class="estado"><span class="nome" id="troca-nome"></span><span class="tit">Primeiro acesso: crie a sua senha</span></div>
+    <p class="sub">A senha que você usou é provisória. Crie uma senha só sua, com pelo menos 4 caracteres, e não conte para ninguém.</p>
+    <label for="nova1">Senha nova<input id="nova1" type="password" autocomplete="new-password"></label>
+    <label for="nova2">Repita a senha nova<input id="nova2" type="password" autocomplete="new-password"></label>
+    <p class="msg-ponto" id="msg-troca" role="status" hidden></p>
+    <button class="btn" id="btn-troca" type="submit">Salvar senha e bater ponto</button>
+    <button class="btn btn-sec" id="btn-troca-voltar" type="button">Voltar</button>
   </form>
 
   <!-- 2. EM TURNO = BOTÃO DE SAÍDA -->
@@ -271,7 +282,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT, $ = FT.$;
   const CHAVE = 'ft_ponto_turno';
-  let sb = null, confirmarSaida = false;
+  let sb = null, confirmarSaida = false, pendente = null;
 
   const ERROS = {
     CPF_OU_SENHA: 'CPF ou senha incorretos. Confira e tente de novo.',
@@ -280,13 +291,15 @@ window.FT_CONFIG = {
     SEM_LOCALIZACAO: 'Não recebi a sua localização. Ative a localização do celular e tente de novo.',
     PRECISAO_BAIXA: 'O sinal do GPS está fraco. Ative a "localização precisa", saia de perto de paredes grossas e tente de novo.',
     FORA_DO_LOCAL: 'Você não está na Forneria Toscana. O ponto só pode ser batido no local de trabalho.',
-    TURNO_NAO_ENCONTRADO: 'Não encontrei a sua entrada. Entre de novo com CPF e senha.'
+    TURNO_NAO_ENCONTRADO: 'Não encontrei a sua entrada. Entre de novo com CPF e senha.',
+    SENHA_CURTA: 'A senha nova precisa ter pelo menos 4 caracteres.',
+    SENHA_IGUAL: 'A senha nova precisa ser diferente da senha provisória.'
   };
 
   function lerTurno() { try { return JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { return null; } }
   function gravarTurno(t) { try { if (t) localStorage.setItem(CHAVE, JSON.stringify(t)); else localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento */ } }
 
-  function mostrar(id) { ['tela-login', 'tela-turno', 'tela-fim'].forEach(function (t) { $('#' + t).hidden = t !== id; }); }
+  function mostrar(id) { ['tela-login', 'tela-troca', 'tela-turno', 'tela-fim'].forEach(function (t) { $('#' + t).hidden = t !== id; }); }
   function msg(id, texto, tipo) { const el = $(id); el.textContent = texto || ''; el.className = 'msg-ponto' + (tipo ? ' ' + tipo : ''); el.hidden = !texto; }
   function dataHora(ts) { return FT.ddmmaaaa(FT.dataSP(ts)) + ' às ' + FT.horaSP(ts); }
 
@@ -340,11 +353,48 @@ window.FT_CONFIG = {
       msg('#msg-login', 'Registrando…', 'info');
       const r = await rpc('ponto_entrar', { p_cpf: cpf, p_senha: senha, p_lat: pos.coords.latitude, p_lng: pos.coords.longitude, p_precisao: pos.coords.accuracy });
       if (!r.ok) { msg('#msg-login', textoErro(r), 'erro'); return; }
+      if (r.estado === 'trocar_senha') {
+        // primeiro acesso (ou senha resetada): cria a senha nova antes de bater o ponto
+        pendente = { cpf: cpf, senha: senha, pos: pos, em: Date.now() };
+        $('#troca-nome').textContent = 'OLÁ, ' + String(r.nome).split(' ')[0] + '!';
+        $('#nova1').value = ''; $('#nova2').value = ''; msg('#msg-troca', '');
+        $('#senha').value = ''; msg('#msg-login', '');
+        mostrar('tela-troca'); $('#nova1').focus();
+        return;
+      }
       gravarTurno({ token: r.token, nome: r.nome, entrada: r.entrada });
       $('#senha').value = '';
       mostrarTurno(r.nome, r.entrada, r.estado === 'entrada');
     } catch (x) {
       msg('#msg-login', x && x.code !== undefined ? erroGPS(x) : 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro');
+    } finally { b.disabled = false; }
+  }
+
+  /* ---------- PRIMEIRO ACESSO: TROCA DE SENHA ---------- */
+  async function trocarSenha(e) {
+    e.preventDefault();
+    if (!pendente) { mostrar('tela-login'); return; }
+    const n1 = $('#nova1').value, n2 = $('#nova2').value;
+    if (n1.length < 4) { msg('#msg-troca', ERROS.SENHA_CURTA, 'erro'); return; }
+    if (n1 !== n2) { msg('#msg-troca', 'As duas senhas não são iguais. Digite de novo.', 'erro'); return; }
+    if (n1 === pendente.senha) { msg('#msg-troca', ERROS.SENHA_IGUAL, 'erro'); return; }
+    const b = $('#btn-troca'); b.disabled = true;
+    try {
+      msg('#msg-troca', 'Salvando a sua senha…', 'info');
+      const t = await rpc('ponto_trocar_senha', { p_cpf: pendente.cpf, p_senha_atual: pendente.senha, p_senha_nova: n1 });
+      if (!t.ok) { msg('#msg-troca', textoErro(t), 'erro'); return; }
+      // agora bate o ponto com a senha nova (reaproveita a localização se for recente)
+      let pos = pendente.pos;
+      if (Date.now() - pendente.em > 120000) { msg('#msg-troca', 'Senha salva. Pegando a sua localização…', 'info'); pos = await obterLocal(); }
+      msg('#msg-troca', 'Senha salva. Registrando a entrada…', 'ok');
+      const r = await rpc('ponto_entrar', { p_cpf: pendente.cpf, p_senha: n1, p_lat: pos.coords.latitude, p_lng: pos.coords.longitude, p_precisao: pos.coords.accuracy });
+      pendente = null;
+      if (!r.ok) { mostrar('tela-login'); msg('#msg-login', 'Senha nova salva. ' + textoErro(r), 'erro'); return; }
+      gravarTurno({ token: r.token, nome: r.nome, entrada: r.entrada });
+      mostrarTurno(r.nome, r.entrada, r.estado === 'entrada');
+      msg('#msg-turno', 'Senha nova salva. Use ela das próximas vezes. ' + (r.estado === 'entrada' ? 'Na hora de ir embora, abra este link de novo e toque em "Registrar saída".' : ''), 'ok');
+    } catch (x) {
+      msg('#msg-troca', x && x.code !== undefined ? erroGPS(x) : 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro');
     } finally { b.disabled = false; }
   }
 
@@ -399,6 +449,8 @@ window.FT_CONFIG = {
     $('#cpf').addEventListener('input', function (e) { e.target.value = FT.formatarCPF(e.target.value); });
     $('#tela-login').addEventListener('submit', entrar);
     $('#btn-saida').addEventListener('click', sair);
+    $('#tela-troca').addEventListener('submit', trocarSenha);
+    $('#btn-troca-voltar').addEventListener('click', function () { pendente = null; mostrar('tela-login'); });
     $('#btn-outra').addEventListener('click', function () { gravarTurno(null); msg('#msg-login', ''); mostrar('tela-login'); });
     $('#btn-concluir').addEventListener('click', function () { msg('#msg-login', ''); mostrar('tela-login'); });
 
