@@ -598,6 +598,7 @@ table.fx { border-collapse: separate; border-spacing: 0; font-size: 12.5px; font
 .conta-dia .neg { color: var(--ruim); }
 .conta-dia .tot { border-top: 1px solid var(--line); padding-top: 6px; }
 .dd-form { display: grid; gap: 10px; }
+.dd-aceitar { display: flex !important; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
 .dd-dif { margin: 0; font-size: 14px; color: var(--ink-2); }
 .dd-dif.dif { color: var(--ruim); font-weight: 600; }
 .h3-dia { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); margin: 8px 0 0; }
@@ -2010,10 +2011,13 @@ window.FT_CONFIG = {
         base = saldo; saldo += entrada + x.saidas; saldoDia = FT.r2(saldo);
       } else if (ini && ini.data === d) { saldo = +ini.valor; saldoDia = FT.r2(saldo); }
       const saldoExt = extratoDe(d);
-      const dif = saldoExt != null && saldoDia != null && !(ini && ini.data === d) ? FT.r2(saldoExt - saldoDia) : null;
+      let dif = saldoExt != null && saldoDia != null && !(ini && ini.data === d) ? FT.r2(saldoExt - saldoDia) : null;
+      // diferença aceita pelo usuário: o dia conta como conciliado
+      let difAceita = null;
+      if (dif != null && Math.abs(dif) >= 0.01 && dia.conciliado_manual) { difAceita = dif; dif = 0; }
       if (dif != null) { if (Math.abs(dif) < 0.01) tot.diasConciliados++; else tot.diasComDif++; }
       lista.push({ data: d, previsto: FT.r2(x.previsto), previstoConta: x.previstoConta, extrato: temExtrato ? +dia.entrada_extrato : null, entrada: FT.r2(entrada), entradaPrevista: !temExtrato,
-        saidas: FT.r2(x.saidas), saidaExtrato: dia.saida_extrato != null && dia.saida_extrato !== '' ? +dia.saida_extrato : null, grupo: x.grupo, op: x.op, saldoAnterior: base == null ? null : FT.r2(base), saldo: saldoDia, saldoExtrato: saldoExt, dif: dif, obs: dia.obs || '' });
+        saidas: FT.r2(x.saidas), saidaExtrato: dia.saida_extrato != null && dia.saida_extrato !== '' ? +dia.saida_extrato : null, grupo: x.grupo, op: x.op, saldoAnterior: base == null ? null : FT.r2(base), saldo: saldoDia, saldoExtrato: saldoExt, dif: dif, difAceita: difAceita, aceito: !!dia.conciliado_manual, obs: dia.obs || '' });
       tot.previsto += x.previsto; tot.entrada += entrada; if (dia.saida_extrato != null && dia.saida_extrato !== '') { tot.saidaExtrato = (tot.saidaExtrato || 0) + +dia.saida_extrato; } tot.saidas += x.saidas; if (temExtrato) tot.extrato += +dia.entrada_extrato;
       Object.keys(x.previstoConta).forEach(function (k) { tot.previstoConta[k] = (tot.previstoConta[k] || 0) + x.previstoConta[k]; });
       Object.keys(x.grupo).forEach(function (k) { tot.grupo[k] = (tot.grupo[k] || 0) + x.grupo[k]; });
@@ -2179,7 +2183,7 @@ window.FT_CONFIG = {
           const man = await ok(sb.from('fluxo_manuais').select('*').gte('data', de).lte('data', ate));
           man.forEach(function (m) { resumo.push({ data: m.data, tipo: m.tipo, grupo: m.grupo, operacao: m.operacao, conta: 'MANUAL', total: m.valor }); });
           const dias = {};
-          (await ok(sb.from('fluxo_dias').select('data,entrada_extrato,saida_extrato,saldo_extrato,obs').eq('conta', 'SICREDI').gte('data', FT.somaDias(de, -1)).lte('data', ate))).forEach(function (x) { dias[x.data] = x; });
+          (await ok(sb.from('fluxo_dias').select('data,entrada_extrato,saida_extrato,saldo_extrato,obs,conciliado_manual').eq('conta', 'SICREDI').gte('data', FT.somaDias(de, -1)).lte('data', ate))).forEach(function (x) { dias[x.data] = x; });
           return { resumo: resumo, dias: dias };
         },
         saldoInicial: async function () {
@@ -4175,6 +4179,7 @@ window.FT_CONFIG = {
       '<label for="dd-entrada">Entradas no extrato do dia (R$)<input id="dd-entrada" inputmode="decimal" placeholder="em branco = usar o previsto"></label>' +
       '<label for="dd-saldo">Saldo no extrato no fim do dia (R$)<input id="dd-saldo" inputmode="decimal" placeholder="0,00"></label></div>' +
       '<label for="dd-obs">Observação<input id="dd-obs" autocomplete="off" placeholder="ex.: tarifa não lançada, PIX de cliente"></label>' +
+      '<label class="dd-aceitar"><input type="checkbox" id="dd-aceitar"> Aceitar a diferença deste dia (considerar conciliado)</label>' +
       '<p class="dd-dif" id="dd-dif" role="status"></p><p class="erro-form" id="dd-erro"></p>' +
       '<div class="dlg-acoes"><button class="btn btn-sec" type="button" id="dd-ant">‹ Dia anterior</button><button class="btn btn-sec" type="button" id="dd-prox">Próximo dia ›</button><span class="espaco"></span>' +
       '<button class="btn btn-sec" type="button" id="dd-fechar">Fechar</button><button class="btn" type="submit" id="dd-salvar">Salvar conferência</button></div></form></div>' +
@@ -4192,7 +4197,7 @@ window.FT_CONFIG = {
     $('#dd-ant').addEventListener('click', function () { trocarDia(-1); });
     $('#dd-prox').addEventListener('click', function () { trocarDia(1); });
     $('#dd-form').addEventListener('submit', salvarDia);
-    ['dd-entrada', 'dd-saldo'].forEach(function (id) { $('#' + id).addEventListener('input', previaDia); });
+    ['dd-entrada', 'dd-saldo', 'dd-aceitar'].forEach(function (id) { $('#' + id).addEventListener('input', previaDia); });
     $('#dm-grupo').addEventListener('change', encherOps);
     $('#dd-man-form').addEventListener('submit', addManual);
     $('#dd-banco').addEventListener('click', function (e) {
@@ -4298,6 +4303,7 @@ window.FT_CONFIG = {
     linha('Saldo no extrato', function (d) { return d.saldoExtrato; }, undefined, 'fx-ext');
     linha('Diferença (conciliação)', null, undefined, 'fx-dif', function (d) {
       if (d.dif == null) return '<td class="num"></td>';
+      if (d.difAceita != null) return '<td class="num ok" title="Diferença de ' + FT.num2(d.difAceita) + ' aceita">✓*</td>';
       return Math.abs(d.dif) < 0.01 ? '<td class="num ok">✓</td>' : '<td class="num dif">' + FT.num2(d.dif) + '</td>';
     });
     $('#fx-tabela').innerHTML = cab + h + '</tbody>';
@@ -4312,6 +4318,7 @@ window.FT_CONFIG = {
     $('#dd-entrada').value = dia.extrato != null ? FT.num2(dia.extrato) : '';
     $('#dd-saldo').value = dia.saldoExtrato != null ? FT.num2(dia.saldoExtrato) : '';
     $('#dd-obs').value = dia.obs || '';
+    $('#dd-aceitar').checked = !!dia.aceito;
     $('#dd-erro').textContent = ''; $('#dm-erro').textContent = '';
     previaDia();
     if (!$('#dlg-dia').open) $('#dlg-dia').showModal();
@@ -4378,12 +4385,13 @@ window.FT_CONFIG = {
     if (!sTxt || esperado == null) { el.className = 'dd-dif'; el.textContent = esperado == null ? 'Informe o saldo inicial do banco para calcular o saldo esperado.' : 'Digite o saldo do extrato para conciliar.'; return; }
     const dif = FT.r2(FT.lerValor(sTxt) - esperado);
     if (Math.abs(dif) < 0.01) { el.className = 'dd-dif ok'; el.textContent = '✓ Conciliado: o extrato bate com o esperado.'; }
+    else if ($('#dd-aceitar').checked) { el.className = 'dd-dif ok'; el.textContent = '✓ Conciliado: diferença de ' + FT.moeda(dif) + ' aceita.'; }
     else { el.className = 'dd-dif dif'; el.textContent = 'Diferença de ' + FT.moeda(dif) + (dif > 0 ? ' a mais' : ' a menos') + ' no banco. Procure um lançamento que falta no sistema ou lance um ajuste manual abaixo.'; }
   }
   async function salvarDia(e) {
     e.preventDefault();
     const eTxt = $('#dd-entrada').value.trim(), sTxt = $('#dd-saldo').value.trim();
-    const campos = { entrada_extrato: eTxt ? FT.lerValor(eTxt) : null, saldo_extrato: sTxt ? FT.lerValor(sTxt) : null, obs: FT.mai($('#dd-obs').value) || null };
+    const campos = { entrada_extrato: eTxt ? FT.lerValor(eTxt) : null, saldo_extrato: sTxt ? FT.lerValor(sTxt) : null, obs: FT.mai($('#dd-obs').value) || null, conciliado_manual: $('#dd-aceitar').checked };
     const b = $('#dd-salvar'); b.disabled = true;
     try {
       await FT.store.fluxo.salvarDia(st.dia, campos);
