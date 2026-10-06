@@ -657,6 +657,25 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
   .vp-imp .vp-tot, .vp-imp tfoot td, .vp-imp th { background: #eee !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
+/* ---------- Envio de holerites ---------- */
+.fo-acoes div { display: flex; gap: 6px; }
+.fo-env { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.chip-cinza { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--surface-2); color: var(--ink-3); border-radius: 4px; padding: 1px 5px; }
+#dlg-envio { width: min(600px, calc(100vw - 24px)); }
+.env-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.env-item > div:first-child { display: grid; gap: 2px; }
+.env-item span { font-size: 13px; color: var(--ink-2); }
+.env-bts { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.env-aviso { color: var(--aviso-ink) !important; font-weight: 600; }
+.env-aviso:empty { display: none; }
+#dlg-contab { width: min(760px, calc(100vw - 24px)); }
+.ct-res { display: flex; gap: 6px; flex-wrap: wrap; margin: 0; }
+.ct-rol { max-height: 50vh; overflow: auto; }
+.ct-rol select { max-width: 280px; }
+.ct-conf td { background: var(--aviso-bg); }
+.ct-nota { margin-left: 6px; color: var(--aviso-ink); font-weight: 700; font-size: 11px; }
+.ct-falta { font-size: 13px; color: var(--ink-2); }
+
 </style>
 </head>
 <body>
@@ -2254,6 +2273,18 @@ window.FT_CONFIG = {
         addManual: async function (m) { return ok(sb.from('fluxo_manuais').insert(m)); },
         removerManual: async function (id) { return ok(sb.from('fluxo_manuais').delete().eq('id', id)); }
       },
+      holerites: {
+        status: async function (mes) { return ok(sb.from('vw_holerites_status').select('*').eq('mes', mes)); },
+        contab: async function (fid, mes) { return ok(sb.from('holerites_envio').select('contab_pdf,contab_nome').eq('funcionario_id', fid).eq('mes', mes).maybeSingle()); },
+        sistema: async function (fid, mes) { return ok(sb.from('holerites_envio').select('holerite_html').eq('funcionario_id', fid).eq('mes', mes).maybeSingle()); },
+        salvarContab: async function (fid, mes, b64, nome) {
+          return ok(sb.from('holerites_envio').upsert({ funcionario_id: fid, mes: mes, contab_pdf: b64, contab_nome: nome, contab_em: b64 ? new Date().toISOString() : null, atualizado_em: new Date().toISOString() }));
+        },
+        enviar: async function (fid, mes, html) {
+          return ok(sb.from('holerites_envio').upsert({ funcionario_id: fid, mes: mes, holerite_html: html, enviado_em: new Date().toISOString(), atualizado_em: new Date().toISOString() }));
+        },
+        salvarTelefone: async function (fid, tel) { return ok(sb.from('funcionarios').update({ telefone: tel || null }).eq('id', fid)); }
+      },
       produtos: {
         // quantidade vendida por produto e dia
         carregar: async function (de, ate) {
@@ -2326,7 +2357,7 @@ window.FT_CONFIG = {
       funcionarios: clonar(inicial.funcionarios || []),
       config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {}, folhas: {},
       acessos: clonar(inicial.acessos || []), pontos: clonar(inicial.pontos || []),
-      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), produtos: clonar(inicial.produtos || []), fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
+      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), produtos: clonar(inicial.produtos || []), holerites: {}, fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
       pontoConfig: { id: 1, lat: -23.4028019, lng: -46.0428557, raio_m: 100, precisao_max_m: 100 },
       ind: clonar(inicial.indicadores || { vendasDia: [], pedidosDia: [], maoObraDia: [] })
     };
@@ -2410,6 +2441,15 @@ window.FT_CONFIG = {
         salvarDia: function (d, c) { db.fluxoDias[d] = Object.assign({ data: d }, db.fluxoDias[d] || {}, c); return espera(null); },
         addManual: function (m) { db.fluxoMan.push(Object.assign({ id: 'm' + (seq++) }, m)); return espera(null); },
         removerManual: function (id) { db.fluxoMan = db.fluxoMan.filter(function (m) { return m.id !== id; }); return espera(null); }
+      },
+      holerites: {
+        _r: function (fid, mes) { const k = fid + '|' + mes; return db.holerites[k] = db.holerites[k] || { funcionario_id: fid, mes: mes }; },
+        status: function (mes) { return espera(Object.values(db.holerites).filter(function (h) { return h.mes === mes; }).map(function (h) { return { funcionario_id: h.funcionario_id, mes: h.mes, tem_sistema: !!h.holerite_html, tem_contab: !!h.contab_pdf, contab_nome: h.contab_nome, contab_em: h.contab_em, enviado_em: h.enviado_em, visto_em: h.visto_em }; })); },
+        contab: function (fid, mes) { const h = db.holerites[fid + '|' + mes]; return espera(h ? { contab_pdf: h.contab_pdf, contab_nome: h.contab_nome } : null); },
+        sistema: function (fid, mes) { const h = db.holerites[fid + '|' + mes]; return espera(h ? { holerite_html: h.holerite_html } : null); },
+        salvarContab: function (fid, mes, b64, nome) { Object.assign(this._r(fid, mes), { contab_pdf: b64, contab_nome: nome, contab_em: b64 ? new Date().toISOString() : null }); return espera(null); },
+        enviar: function (fid, mes, html) { Object.assign(this._r(fid, mes), { holerite_html: html, enviado_em: new Date().toISOString() }); return espera(null); },
+        salvarTelefone: function (fid, tel) { const f = db.funcionarios.find(function (x) { return x.id === fid; }); if (f) f.telefone = tel || null; return espera(null); }
       },
       produtos: { carregar: function (de, ate) { return espera(db.produtos.filter(function (r) { return r.data >= de && r.data <= ate; })); } },
       folha: {
@@ -4004,6 +4044,7 @@ window.FT_CONFIG = {
       '<button type="button" class="btn-icone" id="fo-prox" aria-label="Próximo mês">›</button></div>' +
       '<div class="fo-fat" id="fo-fat"></div>' +
       '<div class="acoes-linha"><label class="check"><input type="checkbox" id="fo-porfora" checked> Mostrar "por fora" no holerite</label>' +
+      '<button type="button" class="btn btn-sec" id="fo-importar-contab">Importar holerites da contabilidade</button>' +
       '<button type="button" class="btn" id="fo-imprimir-todos">Imprimir todos os holerites</button></div></div>' +
       '<div id="fo-msg" class="msg" hidden></div>' +
       '<div class="kpis kpis-5" id="fo-kpis"></div>' +
@@ -4025,7 +4066,11 @@ window.FT_CONFIG = {
       if (el.dataset.campo === 'obs') { p.obs = FT.mai(el.value); el.value = p.obs; mudou(); }
       else { const v = +p[el.dataset.campo] || 0; el.value = v ? FT.num2(v) : ''; }
     });
-    tab.addEventListener('click', function (e) { const b = e.target.closest('[data-holerite]'); if (b) imprimir([b.dataset.holerite]); });
+    tab.addEventListener('click', function (e) {
+      const b = e.target.closest('[data-holerite]'); if (b) { imprimir([b.dataset.holerite]); return; }
+      const en = e.target.closest('[data-enviar]'); if (en) { if (!st.salvo) salvarAgora(); FT.holerites.abrirEnvio(en.dataset.enviar); }
+    });
+    $('#fo-importar-contab').addEventListener('click', function () { FT.holerites.importarContab(); });
   }
   function pessoa(id) { return id && st.dados.pessoas.find(function (p) { return String(p.id) === id; }); }
 
@@ -4053,6 +4098,7 @@ window.FT_CONFIG = {
       st.dados.faturamentoDe = st.fat.de; st.dados.faturamentoAte = st.fat.ate;
       st.salvo = true; st.erro = null;
       desenhar(); estadoSalvo();
+      FT.holerites.carregarStatus(mes);
       // comissão muda quando entra um relatório de vendas novo: grava sozinha se a folha já existe
       if (st.existe && mudouComissao) { st.salvo = false; salvarDepois(); }
       if (!st.dados.pessoas.length) mostrarMsg('Nenhum funcionário <b>fixo</b> ativo no cadastro. Cadastre em <a href="#funcionarios">Funcionários</a> com o tipo "Fixo".');
@@ -4098,7 +4144,8 @@ window.FT_CONFIG = {
       if (temComissao) h += '<td class="num">' + (+p.comissaoPct ? '<b id="fo-com-' + id + '">' + FT.moeda(p.comissao) + '</b><small>' + FT.num2(p.comissaoPct) + '% do bruto</small>' : '—') + '</td>';
       h += '<td class="num">' + inp(p, 'descontos', 'Descontos') + '</td><td class="num col-total" id="fo-tot-' + id + '"></td>' +
         '<td><input class="val inp-obs" data-p="' + id + '" data-campo="obs" id="fo-obs-' + id + '" value="' + esc(p.obs || '') + '" placeholder="ex.: adiantamento dia 15" aria-label="Observação de ' + esc(p.nome) + '"></td>' +
-        '<td><button type="button" class="btn btn-sec btn-p" data-holerite="' + id + '">Holerite</button></td></tr>';
+        '<td class="fo-acoes"><div><button type="button" class="btn btn-sec btn-p" data-holerite="' + id + '">Holerite</button>' +
+        '<button type="button" class="btn btn-p" data-enviar="' + id + '">Enviar</button></div><small class="fo-env" id="fo-env-' + id + '"></small></td></tr>';
     });
     if (!st.dados.pessoas.length) h += '<tr><td colspan="12" class="vazio-lista">Sem funcionários fixos.</td></tr>';
     h += '</tbody><tfoot><tr><th class="col-nome">Total do mês</th>' + C.CAMPOS_FOLHA.map(function (c) { return '<td class="num" id="fo-f-' + c.id + '"></td>'; }).join('') +
@@ -4164,6 +4211,15 @@ window.FT_CONFIG = {
     setTimeout(function () { window.print(); }, 50);
   }
 
+  // usado pelo envio de holerites (holerites.js)
+  FT.folhaAPI = {
+    estado: function () { return st; },
+    nomeMes: nomeMes,
+    calculo: function (id) { return C.calcularFolha(st.dados).pessoas.find(function (r) { return String(r.id) === String(id); }); },
+    pessoa: function (id) { return pessoa(String(id)); },
+    via: via
+  };
+
   function mostrarMsg(html) { const m = $('#fo-msg'); m.hidden = false; m.className = 'msg'; m.innerHTML = html; }
 
   let montado = false;
@@ -4175,6 +4231,334 @@ window.FT_CONFIG = {
     },
     sair: function () { if (!st.salvo) salvarAgora(); }
   };
+})();
+
+/* Forneria Toscana — envio de holerites aos funcionários (folha de pagamento)
+ * - holerite do sistema: guardado como página HTML no momento do envio
+ * - holerite da contabilidade: PDF importado (um PDF com todos ou um por funcionário),
+ *   separado por funcionário pelas páginas (nome ou CPF escrito no PDF)
+ * O funcionário vê os dois em ponto.html → MEUS HOLERITES (CPF + senha do ponto). */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs';
+  const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs';
+  const PDFLIB = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+  const H = { status: {}, mes: null, envio: null, imp: null };
+
+  const api = () => FT.folhaAPI;
+
+  /* ---------- utilidades ---------- */
+  function b64DeBytes(u8) { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); }
+  function bytesDeB64(b) { const s = atob(b); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; }
+  function abrirBlob(blob) {
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (!w) { const a = document.createElement('a'); a.href = url; a.download = blob.type === 'application/pdf' ? 'holerite.pdf' : 'holerite.html'; document.body.appendChild(a); a.click(); a.remove(); }
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+  function abrirPDF(b64) { abrirBlob(new Blob([bytesDeB64(b64)], { type: 'application/pdf' })); }
+  function abrirHTML(html) { abrirBlob(new Blob([html], { type: 'text/html' })); }
+  function telNumeros(t) { return String(t || '').replace(/\D/g, ''); }
+  function formatarTel(t) {
+    const d = telNumeros(t).replace(/^55(?=\d{10,11}$)/, '').slice(0, 11);
+    if (d.length <= 2) return d;
+    if (d.length <= 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
+    if (d.length <= 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+    return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+  }
+  function linkPonto() {
+    const l = location.href.split('#')[0].split('?')[0];
+    return /^https?:/.test(l) ? l.replace(/[^/]*$/, '') + 'ponto.html' : 'ponto.html';
+  }
+  function scriptUMD(url, global) {
+    if (window[global]) return Promise.resolve(window[global]);
+    return new Promise(function (ok, falha) {
+      const s = document.createElement('script'); s.src = url;
+      s.onload = function () { window[global] ? ok(window[global]) : falha(new Error('biblioteca não carregou')); };
+      s.onerror = function () { falha(new Error('sem internet para carregar a biblioteca de PDF')); };
+      document.head.appendChild(s);
+    });
+  }
+  let pdfjs = null;
+  async function carregarPdfjs() {
+    if (pdfjs) return pdfjs;
+    const m = await import(PDFJS);
+    m.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+    pdfjs = m; return m;
+  }
+
+  /* ---------- holerite do sistema em página própria ---------- */
+  const CSS_DOC = 'html{-webkit-text-size-adjust:100%}body{margin:0;padding:14px;background:#efeee9;font:13px/1.35 Arial,Helvetica,sans-serif;color:#000;text-transform:uppercase}' +
+    '.barra{max-width:190mm;margin:0 auto 10px;display:flex;justify-content:flex-end}.barra button{font:700 13px Arial;padding:10px 16px;border-radius:8px;border:0;background:#23574a;color:#fff;cursor:pointer}' +
+    '.folha{max-width:190mm;margin:0 auto;background:#fff;padding:5mm;box-sizing:border-box}' +
+    '.via{border:1.2px solid #000;padding:3mm 4mm;display:flex;flex-direction:column;gap:1.6mm}' +
+    '.via header{display:grid;grid-template-columns:1fr 1.3fr auto;gap:4mm;align-items:start;border-bottom:1.2px solid #000;padding-bottom:2mm}.via header div{display:grid}.via header b{font-size:15px}.via header span{font-size:11px}' +
+    '.via-tit{text-align:center}.via-rot{font-size:10px;border:1px solid #000;padding:1mm 2mm;white-space:nowrap}' +
+    '.via-func{display:grid;grid-template-columns:2fr 1.2fr 1.2fr;gap:3mm}.via-func div{display:grid;border:1px solid #000;padding:1mm 2mm}.via-func span{font-size:9px}' +
+    '.via table{width:100%;border-collapse:collapse;font-size:12px}.via th,.via td{border:1px solid #000;padding:.8mm 2mm;text-align:left}.via th{font-size:10.5px;background:#eee}' +
+    '.via .num{text-align:right;white-space:nowrap}.via .ref{font-size:10.5px}.via tfoot td{font-weight:700}.via tr.liq td{font-size:14px}' +
+    '.via-obs,.via-decl{margin:0;font-size:11px}.via-ass{margin-top:6mm;display:grid;grid-template-columns:1fr 1fr;gap:10mm;font-size:10px;text-align:center}.via-ass div{padding-top:8mm}.via-ass .linha{display:block;border-top:1px solid #000;margin-bottom:1.5mm}' +
+    '@media (max-width:560px){body{padding:8px}.folha{padding:2mm}.via header{grid-template-columns:1fr;gap:1mm}.via-func{grid-template-columns:1fr}.via-ass{grid-template-columns:1fr;gap:4mm}}' +
+    '@media print{@page{size:A4;margin:10mm}body{background:#fff;padding:0}.barra{display:none}.folha{padding:0}.via th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+  function docHolerite(fid) {
+    const A = api(), st = A.estado(), p = A.pessoa(fid), r = A.calculo(fid);
+    return '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>HOLERITE ' + esc(A.nomeMes(st.mes)) + ' · ' + esc(p.nome) + '</title><style>' + CSS_DOC + '</style></head><body>' +
+      '<div class="barra"><button type="button" onclick="window.print()">SALVAR EM PDF / IMPRIMIR</button></div>' +
+      '<div class="folha">' + A.via(p, r, 'VIA DO FUNCIONÁRIO') + '</div></body></html>';
+  }
+
+  /* ---------- situação de cada funcionário na tabela da folha ---------- */
+  async function carregarStatus(mes) {
+    H.mes = mes; H.status = {}; H.erro = false;
+    try { (await FT.store.holerites.status(mes)).forEach(function (s) { H.status[s.funcionario_id] = s; }); }
+    catch (e) { console.warn('holerites indisponíveis', e); H.erro = true; }
+    desenharStatus();
+  }
+  function desenharStatus() {
+    const st = api().estado(); if (!st.dados) return;
+    st.dados.pessoas.forEach(function (p) {
+      const el = document.getElementById('fo-env-' + p.id); if (!el) return;
+      const s = H.status[p.id] || {};
+      const partes = [];
+      partes.push(s.tem_contab ? '<span class="chip-ok">contab. ✓</span>' : '<span class="chip-cinza">sem contab.</span>');
+      if (s.enviado_em) partes.push('<span class="chip-ok">enviado ' + FT.ddmm(FT.dataSP(s.enviado_em)) + '</span>');
+      if (s.visto_em) partes.push('<span class="chip-ok">visto ' + FT.ddmm(FT.dataSP(s.visto_em)) + '</span>');
+      el.innerHTML = partes.join(' ');
+      const b = document.querySelector('[data-enviar="' + p.id + '"]'); if (b) b.textContent = s.enviado_em ? 'Reenviar' : 'Enviar';
+    });
+  }
+
+  /* ---------- diálogo de envio ---------- */
+  function montarEnvio() {
+    const d = document.createElement('dialog');
+    d.id = 'dlg-envio'; d.setAttribute('aria-labelledby', 'h-envio');
+    d.innerHTML = '<form class="dlg form" id="env-form" novalidate><h2 id="h-envio">Enviar holerite</h2><p id="env-sub"></p>' +
+      '<div class="env-item"><div><b>Holerite do sistema</b><span id="env-sis-info">Gerado agora com os valores da folha.</span></div><button type="button" class="btn btn-sec btn-p" id="env-ver-sis">Ver</button></div>' +
+      '<div class="env-item"><div><b>Holerite da contabilidade</b><span id="env-con-info"></span></div><div class="env-bts" id="env-con-bts"></div></div>' +
+      '<input type="file" id="env-con-arq" accept="application/pdf,.pdf" hidden>' +
+      '<label for="env-tel">WhatsApp do funcionário<input id="env-tel" inputmode="tel" placeholder="(11) 90000-0000" autocomplete="off"></label>' +
+      '<p class="env-aviso" id="env-aviso"></p><p class="erro-form" id="env-erro"></p>' +
+      '<div class="dlg-acoes"><button class="btn btn-sec" type="button" id="env-cancelar">Cancelar</button><button class="btn" type="submit" id="env-enviar">Enviar e avisar no WhatsApp</button></div></form>';
+    document.body.appendChild(d);
+    $('#env-cancelar').addEventListener('click', function () { d.close(); });
+    $('#env-tel').addEventListener('input', function (e) { e.target.value = formatarTel(e.target.value); });
+    $('#env-ver-sis').addEventListener('click', function () { abrirHTML(docHolerite(H.envio.fid)); });
+    $('#env-con-bts').addEventListener('click', async function (e) {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.acao === 'ver') { const c = await FT.store.holerites.contab(H.envio.fid, H.mes); if (c && c.contab_pdf) abrirPDF(c.contab_pdf); }
+      if (b.dataset.acao === 'anexar') $('#env-con-arq').click();
+      if (b.dataset.acao === 'remover') {
+        await FT.store.holerites.salvarContab(H.envio.fid, H.mes, null, null);
+        await carregarStatus(H.mes); infoContab();
+      }
+    });
+    $('#env-con-arq').addEventListener('change', async function (e) {
+      const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+      $('#env-erro').textContent = '';
+      try {
+        const bytes = new Uint8Array(await f.arrayBuffer());
+        if (String.fromCharCode.apply(null, bytes.subarray(0, 5)) !== '%PDF-') throw new Error('o arquivo não é um PDF');
+        await FT.store.holerites.salvarContab(H.envio.fid, H.mes, b64DeBytes(bytes), f.name);
+        await carregarStatus(H.mes); infoContab();
+      } catch (x) { $('#env-erro').textContent = 'Não foi possível anexar: ' + FT.textoErro(x); }
+    });
+    $('#env-form').addEventListener('submit', enviar);
+  }
+  function infoContab() {
+    const s = H.status[H.envio.fid] || {};
+    $('#env-con-info').innerHTML = s.tem_contab ? '✓ ' + esc(s.contab_nome || 'PDF') : '<span class="chip-cinza">ainda não importado</span> você pode enviar só o do sistema';
+    $('#env-con-bts').innerHTML = s.tem_contab
+      ? '<button type="button" class="btn btn-sec btn-p" data-acao="ver">Ver</button><button type="button" class="btn btn-sec btn-p" data-acao="anexar">Trocar</button><button type="button" class="link" data-acao="remover">Remover</button>'
+      : '<button type="button" class="btn btn-sec btn-p" data-acao="anexar">Anexar PDF</button>';
+  }
+  async function abrirEnvio(fid) {
+    if (H.erro) { FT.aviso('O envio de holerites ainda não está ativo. Rode o SQL da atualização 8 no Supabase.', true); return; }
+    if (!document.getElementById('dlg-envio')) montarEnvio();
+    const A = api(), p = A.pessoa(fid);
+    H.envio = { fid: fid };
+    $('#h-envio').textContent = 'Enviar holerite · ' + p.nome;
+    $('#env-sub').textContent = 'Referência: ' + A.nomeMes(A.estado().mes) + '. O funcionário vê os holerites no link do ponto, em "MEUS HOLERITES", entrando com o CPF e a senha do ponto.';
+    $('#env-erro').textContent = ''; $('#env-aviso').textContent = '';
+    infoContab();
+    $('#dlg-envio').showModal();
+    try {
+      const funcs = await FT.store.funcionarios.listar();
+      const f = funcs.find(function (x) { return String(x.id) === String(fid); }) || {};
+      H.envio.telOriginal = f.telefone || '';
+      $('#env-tel').value = formatarTel(f.telefone || '');
+      const acessos = await FT.store.acessos.listar();
+      const a = acessos.find(function (x) { return String(x.funcionario_id) === String(fid); });
+      $('#env-aviso').innerHTML = !a ? '⚠ ' + esc(p.nome.split(' ')[0]) + ' ainda não tem acesso ao ponto. Crie em <a href="#usuarios">Usuários do ponto</a>; sem o acesso, não dá para abrir o holerite.'
+        : !a.ativo ? '⚠ O acesso ao ponto de ' + esc(p.nome.split(' ')[0]) + ' está desativado.' : '';
+    } catch (e) { /* segue sem telefone */ }
+  }
+  async function enviar(e) {
+    e.preventDefault();
+    const A = api(), st = A.estado(), p = A.pessoa(H.envio.fid);
+    const tel = telNumeros($('#env-tel').value);
+    if (tel && tel.length < 10) { $('#env-erro').textContent = 'Telefone incompleto. Use DDD + número.'; return; }
+    // abre a janela já no clique (senão o navegador bloqueia)
+    const janela = window.open('', '_blank');
+    const b = $('#env-enviar'); b.disabled = true;
+    try {
+      if (tel !== telNumeros(H.envio.telOriginal)) await FT.store.holerites.salvarTelefone(H.envio.fid, tel);
+      await FT.store.holerites.enviar(H.envio.fid, st.mes, docHolerite(H.envio.fid));
+      const texto = 'OLÁ, ' + p.nome.split(' ')[0] + '! SEU HOLERITE DE ' + A.nomeMes(st.mes) + ' JÁ ESTÁ DISPONÍVEL.\n' +
+        'ACESSE ' + linkPonto() + ' E TOQUE EM "MEUS HOLERITES" (ENTRE COM SEU CPF E A SENHA DO PONTO).\nFORNERIA TOSCANA';
+      const num = tel ? (tel.length <= 11 ? '55' + tel : tel) : '';
+      const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(texto);
+      if (janela) janela.location.href = url; else window.location.href = url;
+      $('#dlg-envio').close();
+      FT.aviso('Holerite de ' + p.nome + ' enviado. Confirme a mensagem no WhatsApp.');
+      carregarStatus(st.mes);
+    } catch (x) {
+      if (janela) janela.close();
+      $('#env-erro').textContent = 'Não foi possível enviar: ' + FT.textoErro(x);
+    } finally { b.disabled = false; }
+  }
+
+  /* ---------- importar PDF(s) da contabilidade ---------- */
+  function montarImport() {
+    const d = document.createElement('dialog');
+    d.id = 'dlg-contab'; d.setAttribute('aria-labelledby', 'h-contab');
+    d.innerHTML = '<div class="dlg"><h2 id="h-contab">Holerites da contabilidade</h2><p id="ct-sub"></p>' +
+      '<input type="file" id="ct-arq" accept="application/pdf,.pdf" multiple hidden>' +
+      '<div id="ct-corpo"></div><p class="erro-form" id="ct-erro"></p>' +
+      '<div class="dlg-acoes"><button class="btn btn-sec" type="button" id="ct-cancelar">Cancelar</button><button class="btn btn-sec" type="button" id="ct-outro">Escolher outros arquivos</button><button class="btn" type="button" id="ct-salvar" disabled>Salvar holerites</button></div></div>';
+    document.body.appendChild(d);
+    $('#ct-cancelar').addEventListener('click', function () { d.close(); });
+    $('#ct-outro').addEventListener('click', function () { $('#ct-arq').click(); });
+    $('#ct-arq').addEventListener('change', function (e) { const fs = Array.prototype.slice.call(e.target.files); e.target.value = ''; if (fs.length) ler(fs); });
+    $('#ct-salvar').addEventListener('click', salvarImport);
+    $('#ct-corpo').addEventListener('click', function (e) { const b = e.target.closest('[data-ver-pag]'); if (b) verPagina(+b.dataset.verPag); });
+  }
+  function importarContab() {
+    if (H.erro) { FT.aviso('O envio de holerites ainda não está ativo. Rode o SQL da atualização 8 no Supabase.', true); return; }
+    if (!document.getElementById('dlg-contab')) montarImport();
+    const A = api();
+    $('#ct-sub').textContent = 'Mês de referência: ' + A.nomeMes(A.estado().mes) + '. Escolha o PDF que a contabilidade mandou (um com todos os funcionários ou um para cada). O sistema separa as páginas de cada um pelo nome ou CPF.';
+    $('#ct-corpo').innerHTML = ''; $('#ct-erro').textContent = ''; $('#ct-salvar').disabled = true; H.imp = null;
+    $('#dlg-contab').showModal();
+    $('#ct-arq').click();
+  }
+  function palavras(n) { return FT.semAcento(n).split(/[^A-Z0-9]+/).filter(function (w) { return w.length > 2 && ['DOS', 'DAS', 'DES'].indexOf(w) < 0; }); }
+  function identificar(texto, nomeArquivo, pessoas) {
+    const t = ' ' + FT.semAcento(texto).replace(/[^A-Z0-9]+/g, ' ') + ' ';
+    const dig = String(texto).replace(/\D/g, '');
+    const arq = ' ' + FT.semAcento(nomeArquivo).replace(/[^A-Z0-9]+/g, ' ') + ' ';
+    let melhor = null, pts = 0, empate = false;
+    pessoas.forEach(function (p) {
+      let s = 0;
+      if (p.cpf && dig.indexOf(p.cpf) >= 0) s = 100;
+      else if (t.indexOf(' ' + palavras(p.nome).join(' ') + ' ') >= 0) s = 90;
+      else {
+        const w = palavras(p.nome);
+        if (w.length >= 2 && w.every(function (x) { return t.indexOf(' ' + x + ' ') >= 0; })) s = 60;
+        else if (w.length >= 2 && w[0] && t.indexOf(' ' + w[0] + ' ') >= 0 && t.indexOf(' ' + w[w.length - 1] + ' ') >= 0) s = 40;
+      }
+      if (!s && arq.indexOf(' ' + palavras(p.nome).slice(0, 2).join(' ') + ' ') >= 0) s = 30;
+      if (s > pts) { melhor = p; pts = s; empate = false; } else if (s && s === pts) empate = true;
+    });
+    return pts && !empate ? melhor.id : null;
+  }
+  async function ler(arquivos) {
+    const corpo = $('#ct-corpo'); $('#ct-erro').textContent = '';
+    corpo.innerHTML = '<p class="msg">Lendo os PDFs…</p>';
+    try {
+      const lib = await carregarPdfjs();
+      const A = api();
+      const acessos = await FT.store.acessos.listar().catch(function () { return []; });
+      const cpfDe = {}; acessos.forEach(function (a) { cpfDe[a.funcionario_id] = a.cpf; });
+      const pessoas = A.estado().dados.pessoas.map(function (p) { return { id: String(p.id), nome: p.nome, cpf: cpfDe[p.id] }; });
+      const imp = { arquivos: [], paginas: [], pessoas: pessoas };
+      for (let fi = 0; fi < arquivos.length; fi++) {
+        const f = arquivos[fi];
+        const bytes = new Uint8Array(await f.arrayBuffer());
+        imp.arquivos.push({ nome: f.name, bytes: bytes });
+        const doc = await lib.getDocument({ data: bytes.slice() }).promise;
+        let ant = null;
+        for (let i = 1; i <= doc.numPages; i++) {
+          corpo.innerHTML = '<p class="msg">Lendo ' + esc(f.name) + ' · página ' + i + ' de ' + doc.numPages + '…</p>';
+          const pg = await doc.getPage(i);
+          const tc = await pg.getTextContent();
+          const texto = tc.items.map(function (x) { return x.str; }).join(' ');
+          let fid = identificar(texto, f.name, pessoas), confira = false;
+          // página sem nome e sem CPF: provavelmente continuação da anterior
+          if (!fid && ant && !/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/.test(texto)) { fid = ant; confira = true; }
+          imp.paginas.push({ arq: fi, pag: i - 1, fid: fid, confira: confira, semTexto: !texto.trim() });
+          if (fid && !confira) ant = fid;
+        }
+        // arquivo de um funcionário só (sem texto, ex.: escaneado): tenta pelo nome do arquivo
+        const doArq = imp.paginas.filter(function (x) { return x.arq === fi; });
+        if (doArq.every(function (x) { return !x.fid; })) {
+          const fid = identificar('', f.name, pessoas);
+          if (fid) doArq.forEach(function (x) { x.fid = fid; x.confira = true; });
+        }
+      }
+      H.imp = imp;
+      desenharImport();
+    } catch (x) { corpo.innerHTML = ''; $('#ct-erro').textContent = 'Não consegui ler o PDF: ' + FT.textoErro(x); }
+  }
+  function desenharImport() {
+    const imp = H.imp, ok = imp.paginas.filter(function (p) { return p.fid && !p.confira; }).length;
+    const sem = imp.paginas.filter(function (p) { return !p.fid; }).length, conf = imp.paginas.filter(function (p) { return p.fid && p.confira; }).length;
+    const opcoes = function (sel) { return '<option value="">— ignorar esta página —</option>' + imp.pessoas.slice().sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); }).map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === sel ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join(''); };
+    const naoAchados = imp.pessoas.filter(function (p) { return !imp.paginas.some(function (x) { return x.fid === p.id; }); });
+    $('#ct-corpo').innerHTML = '<p class="ct-res"><span class="chip-ok">' + ok + ' página(s) identificada(s)</span> ' + (conf ? '<span class="chip-parcial">' + conf + ' para conferir</span> ' : '') + (sem ? '<span class="chip-dif">' + sem + ' sem funcionário</span>' : '') + '</p>' +
+      '<div class="rolagem ct-rol"><table class="lista"><thead><tr><th>Arquivo</th><th>Página</th><th>Funcionário</th><th></th></tr></thead><tbody>' +
+      imp.paginas.map(function (p, i) {
+        return '<tr class="' + (!p.fid ? 'conc-falta' : p.confira ? 'ct-conf' : '') + '"><td>' + esc(imp.arquivos[p.arq].nome) + '</td><td>' + (p.pag + 1) + '</td><td><select data-pag="' + i + '" aria-label="Funcionário da página ' + (p.pag + 1) + '">' + opcoes(p.fid) + '</select>' +
+          (p.confira ? '<small class="ct-nota">confira</small>' : '') + '</td><td><button type="button" class="link" data-ver-pag="' + i + '">ver</button></td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      (naoAchados.length ? '<p class="ct-falta">Sem holerite neste arquivo: ' + naoAchados.map(function (p) { return esc(p.nome); }).join(', ') + '.</p>' : '');
+    $('#ct-corpo').querySelectorAll('select[data-pag]').forEach(function (s) {
+      s.addEventListener('change', function () { const p = imp.paginas[+s.dataset.pag]; p.fid = s.value || null; p.confira = false; });
+    });
+    $('#ct-salvar').disabled = !imp.paginas.length;
+  }
+  async function verPagina(i) {
+    const imp = H.imp, p = imp.paginas[i];
+    try {
+      const L = await scriptUMD(PDFLIB, 'PDFLib');
+      const src = await L.PDFDocument.load(imp.arquivos[p.arq].bytes);
+      const out = await L.PDFDocument.create();
+      (await out.copyPages(src, [p.pag])).forEach(function (pg) { out.addPage(pg); });
+      abrirBlob(new Blob([await out.save()], { type: 'application/pdf' }));
+    } catch (x) { $('#ct-erro').textContent = 'Não consegui mostrar a página: ' + FT.textoErro(x); }
+  }
+  async function salvarImport() {
+    const imp = H.imp, A = api(), mes = A.estado().mes;
+    const grupos = {};
+    imp.paginas.forEach(function (p) { if (p.fid) (grupos[p.fid] = grupos[p.fid] || []).push(p); });
+    const ids = Object.keys(grupos);
+    if (!ids.length) { $('#ct-erro').textContent = 'Nenhuma página está ligada a um funcionário.'; return; }
+    const b = $('#ct-salvar'); b.disabled = true;
+    try {
+      const L = await scriptUMD(PDFLIB, 'PDFLib');
+      const docs = {};
+      for (let k = 0; k < ids.length; k++) {
+        const fid = ids[k], pags = grupos[fid];
+        $('#ct-erro').textContent = ''; $('#ct-salvar').textContent = 'Salvando ' + (k + 1) + ' de ' + ids.length + '…';
+        const out = await L.PDFDocument.create();
+        for (let j = 0; j < pags.length; j++) {
+          const p = pags[j];
+          docs[p.arq] = docs[p.arq] || await L.PDFDocument.load(imp.arquivos[p.arq].bytes);
+          (await out.copyPages(docs[p.arq], [p.pag])).forEach(function (pg) { out.addPage(pg); });
+        }
+        const pessoa = imp.pessoas.find(function (x) { return x.id === fid; });
+        const nome = 'HOLERITE_' + mes + '_' + FT.semAcento(pessoa.nome).replace(/[^A-Z0-9]+/g, '_') + '.pdf';
+        await FT.store.holerites.salvarContab(fid, mes, b64DeBytes(await out.save()), nome);
+      }
+      $('#dlg-contab').close();
+      FT.aviso(ids.length + ' holerite(s) da contabilidade salvos. Agora use o botão "Enviar" de cada funcionário.');
+      carregarStatus(mes);
+    } catch (x) { $('#ct-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(x); }
+    finally { b.disabled = false; b.textContent = 'Salvar holerites'; }
+  }
+
+  FT.holerites = { carregarStatus: carregarStatus, abrirEnvio: abrirEnvio, importarContab: importarContab, _identificar: identificar };
 })();
 
 /* Forneria Toscana — tela Usuários do ponto (acesso por CPF e senha) */

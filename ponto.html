@@ -57,6 +57,13 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 .selo { width: 64px; height: 64px; border-radius: 50%; background: var(--bom-bg); color: var(--bom); display: grid; place-items: center; margin: 0 auto; font-size: 34px; }
 .rodape { max-width: 440px; margin: 16px auto 0; text-align: center; font-size: 12px; color: var(--claro-2); }
 @media (prefers-reduced-motion: no-preference) { .cartao { animation: sobe .25s ease-out; } @keyframes sobe { from { transform: translateY(8px); opacity: .6; } } }
+.hol-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.hol-lista li { border: 1.5px solid var(--linha); border-radius: 12px; padding: 12px; display: grid; gap: 8px; }
+.hol-lista b { font-size: 16px; }
+.hol-lista small { color: var(--ink-3); font-size: 12px; }
+.hol-bts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hol-bts .btn { font-size: 13px; padding: 12px 8px; }
+.hol-vazio { color: var(--ink-3); text-align: center; padding: 16px 0; }
 </style>
 </head>
 <body>
@@ -77,6 +84,7 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
       <span>A localização do celular precisa estar ligada. O ponto só é aceito dentro da Forneria.</span></div>
     <p class="msg-ponto" id="msg-login" role="status" hidden></p>
     <button class="btn" id="btn-entrar" type="submit">Bater ponto de entrada</button>
+    <button class="btn btn-sec" id="btn-holerites" type="button">Ver meus holerites</button>
   </form>
 
   <!-- 1b. PRIMEIRO ACESSO = CRIAR SENHA NOVA -->
@@ -96,6 +104,14 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
     <p class="msg-ponto" id="msg-turno" role="status" hidden></p>
     <button class="btn btn-saida" id="btn-saida" type="button">Registrar saída</button>
     <button class="btn btn-sec" id="btn-outra" type="button">Não sou eu / trocar de pessoa</button>
+  </section>
+
+  <!-- 4. MEUS HOLERITES (não precisa de localização) -->
+  <section class="cartao" id="tela-holerites" hidden>
+    <div class="estado"><span class="nome" id="hol-nome"></span><span class="tit">Meus holerites</span></div>
+    <p class="msg-ponto" id="msg-hol" role="status" hidden></p>
+    <ul class="hol-lista" id="hol-lista"></ul>
+    <button class="btn btn-sec" id="btn-hol-sair" type="button">Sair</button>
   </section>
 
   <!-- 3. SAÍDA REGISTRADA -->
@@ -293,13 +309,15 @@ window.FT_CONFIG = {
     FORA_DO_LOCAL: 'Você não está na Forneria Toscana. O ponto só pode ser batido no local de trabalho.',
     TURNO_NAO_ENCONTRADO: 'Não encontrei a sua entrada. Entre de novo com CPF e senha.',
     SENHA_CURTA: 'A senha nova precisa ter pelo menos 4 caracteres.',
-    SENHA_IGUAL: 'A senha nova precisa ser diferente da senha provisória.'
+    SENHA_IGUAL: 'A senha nova precisa ser diferente da senha provisória.',
+    NAO_ENCONTRADO: 'Holerite não encontrado. Fale com o gerente.'
   };
+  let cred = null; // CPF e senha só enquanto a tela de holerites está aberta
 
   function lerTurno() { try { return JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { return null; } }
   function gravarTurno(t) { try { if (t) localStorage.setItem(CHAVE, JSON.stringify(t)); else localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento */ } }
 
-  function mostrar(id) { ['tela-login', 'tela-troca', 'tela-turno', 'tela-fim'].forEach(function (t) { $('#' + t).hidden = t !== id; }); }
+  function mostrar(id) { if (id !== 'tela-holerites') cred = null; ['tela-login', 'tela-troca', 'tela-turno', 'tela-fim', 'tela-holerites'].forEach(function (t) { $('#' + t).hidden = t !== id; }); }
   function msg(id, texto, tipo) { const el = $(id); el.textContent = texto || ''; el.className = 'msg-ponto' + (tipo ? ' ' + tipo : ''); el.hidden = !texto; }
   function dataHora(ts) { return FT.ddmmaaaa(FT.dataSP(ts)) + ' às ' + FT.horaSP(ts); }
 
@@ -383,6 +401,11 @@ window.FT_CONFIG = {
       msg('#msg-troca', 'Salvando a sua senha…', 'info');
       const t = await rpc('ponto_trocar_senha', { p_cpf: pendente.cpf, p_senha_atual: pendente.senha, p_senha_nova: n1 });
       if (!t.ok) { msg('#msg-troca', textoErro(t), 'erro'); return; }
+      if (pendente.modo === 'holerites') {
+        const c = { cpf: pendente.cpf, senha: n1 }; pendente = null;
+        await abrirHolerites(c, 'Senha nova salva. Use ela das próximas vezes.');
+        return;
+      }
       // agora bate o ponto com a senha nova (reaproveita a localização se for recente)
       let pos = pendente.pos;
       if (Date.now() - pendente.em > 120000) { msg('#msg-troca', 'Senha salva. Pegando a sua localização…', 'info'); pos = await obterLocal(); }
@@ -438,6 +461,58 @@ window.FT_CONFIG = {
     } finally { b.disabled = false; b.textContent = 'REGISTRAR SAÍDA'; }
   }
 
+  /* ---------- MEUS HOLERITES ---------- */
+  async function verHolerites() {
+    const cpf = FT.cpfNumeros($('#cpf').value), senha = $('#senha').value;
+    if (!FT.cpfValido(cpf)) { msg('#msg-login', 'Digite um CPF válido (11 números).', 'erro'); return; }
+    if (!senha) { msg('#msg-login', 'Digite a sua senha.', 'erro'); return; }
+    const b = $('#btn-holerites'); b.disabled = true;
+    try { msg('#msg-login', 'Buscando os seus holerites…', 'info'); await abrirHolerites({ cpf: cpf, senha: senha }); }
+    catch (x) { msg('#msg-login', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
+    finally { b.disabled = false; }
+  }
+  function nomeMes(m) { const p = m.split('-'); return FT.MESES[+p[1] - 1].toUpperCase() + '/' + p[0]; }
+  async function abrirHolerites(c, aviso) {
+    const r = await rpc('holerite_listar', { p_cpf: c.cpf, p_senha: c.senha });
+    if (!r.ok) {
+      if (r.erro === 'TROCAR_SENHA') {
+        pendente = { cpf: c.cpf, senha: c.senha, modo: 'holerites' };
+        $('#troca-nome').textContent = 'OLÁ, ' + String(r.nome || '').split(' ')[0] + '!';
+        $('#nova1').value = ''; $('#nova2').value = ''; msg('#msg-troca', '');
+        $('#btn-troca').textContent = 'Salvar senha e ver holerites';
+        $('#senha').value = ''; msg('#msg-login', '');
+        mostrar('tela-troca'); $('#nova1').focus(); return;
+      }
+      mostrar('tela-login'); msg('#msg-login', textoErro(r), 'erro'); return;
+    }
+    $('#senha').value = ''; msg('#msg-login', ''); $('#btn-troca').textContent = 'Salvar senha e bater ponto';
+    $('#hol-nome').textContent = 'OLÁ, ' + String(r.nome).split(' ')[0] + '!';
+    $('#hol-lista').innerHTML = r.itens.length ? r.itens.map(function (h) {
+      return '<li><b>' + nomeMes(h.mes) + '</b><small>Enviado em ' + FT.ddmmaaaa(FT.dataSP(h.enviado_em)) + '</small><div class="hol-bts">' +
+        (h.sistema ? '<button type="button" class="btn" data-mes="' + h.mes + '" data-tipo="sistema">Holerite Forneria</button>' : '') +
+        (h.contab ? '<button type="button" class="btn" data-mes="' + h.mes + '" data-tipo="contab">Holerite contabilidade</button>' : '') + '</div></li>';
+    }).join('') : '<li class="hol-vazio">Nenhum holerite enviado ainda.</li>';
+    mostrar('tela-holerites'); cred = c;
+    msg('#msg-hol', aviso || '', aviso ? 'ok' : '');
+  }
+  async function abrirArquivo(mes, tipo, botao) {
+    if (!cred) { mostrar('tela-login'); return; }
+    const janela = window.open('', '_blank');   // abre já no toque (senão o celular bloqueia)
+    botao.disabled = true; msg('#msg-hol', 'Abrindo…', 'info');
+    try {
+      const r = await rpc('holerite_abrir', { p_cpf: cred.cpf, p_senha: cred.senha, p_mes: mes, p_tipo: tipo });
+      if (!r.ok) { if (janela) janela.close(); msg('#msg-hol', textoErro(r), 'erro'); return; }
+      let blob;
+      if (tipo === 'contab') { const bin = atob(r.pdf); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); blob = new Blob([u], { type: 'application/pdf' }); }
+      else blob = new Blob([r.html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      if (janela) janela.location.href = url;
+      else { const a = document.createElement('a'); a.href = url; a.download = 'holerite_' + mes + (tipo === 'contab' ? '.pdf' : '.html'); document.body.appendChild(a); a.click(); a.remove(); }
+      msg('#msg-hol', '');
+    } catch (x) { if (janela) janela.close(); msg('#msg-hol', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
+    finally { botao.disabled = false; }
+  }
+
   async function rpc(nome, args) {
     const r = await sb.rpc(nome, args);
     if (r.error) throw r.error;
@@ -449,8 +524,11 @@ window.FT_CONFIG = {
     $('#cpf').addEventListener('input', function (e) { e.target.value = FT.formatarCPF(e.target.value); });
     $('#tela-login').addEventListener('submit', entrar);
     $('#btn-saida').addEventListener('click', sair);
+    $('#btn-holerites').addEventListener('click', verHolerites);
+    $('#hol-lista').addEventListener('click', function (e) { const b = e.target.closest('[data-tipo]'); if (b) abrirArquivo(b.dataset.mes, b.dataset.tipo, b); });
+    $('#btn-hol-sair').addEventListener('click', function () { mostrar('tela-login'); });
     $('#tela-troca').addEventListener('submit', trocarSenha);
-    $('#btn-troca-voltar').addEventListener('click', function () { pendente = null; mostrar('tela-login'); });
+    $('#btn-troca-voltar').addEventListener('click', function () { pendente = null; $('#btn-troca').textContent = 'Salvar senha e bater ponto'; mostrar('tela-login'); });
     $('#btn-outra').addEventListener('click', function () { gravarTurno(null); msg('#msg-login', ''); mostrar('tela-login'); });
     $('#btn-concluir').addEventListener('click', function () { msg('#msg-login', ''); mostrar('tela-login'); });
 
