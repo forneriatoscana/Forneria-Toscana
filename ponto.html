@@ -62,6 +62,7 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 .hol-lista b { font-size: 16px; }
 .hol-lista small { color: var(--ink-3); font-size: 12px; }
 .hol-bts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hol-bts .btn-esp { grid-column: 1 / -1; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
 .hol-bts .btn { font-size: 13px; padding: 12px 8px; }
 .hol-vazio { color: var(--ink-3); text-align: center; padding: 16px 0; }
 </style>
@@ -84,7 +85,7 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
       <span>A localização do celular precisa estar ligada. O ponto só é aceito dentro da Forneria.</span></div>
     <p class="msg-ponto" id="msg-login" role="status" hidden></p>
     <button class="btn" id="btn-entrar" type="submit">Bater ponto de entrada</button>
-    <button class="btn btn-sec" id="btn-holerites" type="button">Ver meus holerites</button>
+    <button class="btn btn-sec" id="btn-holerites" type="button">Holerites e espelho de ponto</button>
   </form>
 
   <!-- 1b. PRIMEIRO ACESSO = CRIAR SENHA NOVA -->
@@ -108,7 +109,7 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 
   <!-- 4. MEUS HOLERITES (não precisa de localização) -->
   <section class="cartao" id="tela-holerites" hidden>
-    <div class="estado"><span class="nome" id="hol-nome"></span><span class="tit">Meus holerites</span></div>
+    <div class="estado"><span class="nome" id="hol-nome"></span><span class="tit">Holerites e espelho de ponto</span></div>
     <p class="msg-ponto" id="msg-hol" role="status" hidden></p>
     <ul class="hol-lista" id="hol-lista"></ul>
     <button class="btn btn-sec" id="btn-hol-sair" type="button">Sair</button>
@@ -467,7 +468,7 @@ window.FT_CONFIG = {
     if (!FT.cpfValido(cpf)) { msg('#msg-login', 'Digite um CPF válido (11 números).', 'erro'); return; }
     if (!senha) { msg('#msg-login', 'Digite a sua senha.', 'erro'); return; }
     const b = $('#btn-holerites'); b.disabled = true;
-    try { msg('#msg-login', 'Buscando os seus holerites…', 'info'); await abrirHolerites({ cpf: cpf, senha: senha }); }
+    try { msg('#msg-login', 'Buscando os seus documentos…', 'info'); await abrirHolerites({ cpf: cpf, senha: senha }); }
     catch (x) { msg('#msg-login', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
     finally { b.disabled = false; }
   }
@@ -488,10 +489,12 @@ window.FT_CONFIG = {
     $('#senha').value = ''; msg('#msg-login', ''); $('#btn-troca').textContent = 'Salvar senha e bater ponto';
     $('#hol-nome').textContent = 'OLÁ, ' + String(r.nome).split(' ')[0] + '!';
     $('#hol-lista').innerHTML = r.itens.length ? r.itens.map(function (h) {
-      return '<li><b>' + nomeMes(h.mes) + '</b><small>Enviado em ' + FT.ddmmaaaa(FT.dataSP(h.enviado_em)) + '</small><div class="hol-bts">' +
+      const info = [h.enviado_em ? 'Holerite enviado em ' + FT.ddmmaaaa(FT.dataSP(h.enviado_em)) : '', h.espelho_em ? 'Ponto fechado em ' + FT.ddmmaaaa(FT.dataSP(h.espelho_em)) : ''].filter(Boolean).join(' · ');
+      return '<li><b>' + nomeMes(h.mes) + '</b><small>' + info + '</small><div class="hol-bts">' +
         (h.sistema ? '<button type="button" class="btn" data-mes="' + h.mes + '" data-tipo="sistema">Holerite Forneria</button>' : '') +
-        (h.contab ? '<button type="button" class="btn" data-mes="' + h.mes + '" data-tipo="contab">Holerite contabilidade</button>' : '') + '</div></li>';
-    }).join('') : '<li class="hol-vazio">Nenhum holerite enviado ainda.</li>';
+        (h.contab ? '<button type="button" class="btn" data-mes="' + h.mes + '" data-tipo="contab">Holerite contabilidade</button>' : '') +
+        (h.espelho ? '<button type="button" class="btn btn-esp" data-mes="' + h.mes + '" data-tipo="espelho">Espelho de ponto</button>' : '') + '</div></li>';
+    }).join('') : '<li class="hol-vazio">Nada liberado ainda.</li>';
     mostrar('tela-holerites'); cred = c;
     msg('#msg-hol', aviso || '', aviso ? 'ok' : '');
   }
@@ -507,7 +510,7 @@ window.FT_CONFIG = {
       else blob = new Blob([r.html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       if (janela) janela.location.href = url;
-      else { const a = document.createElement('a'); a.href = url; a.download = 'holerite_' + mes + (tipo === 'contab' ? '.pdf' : '.html'); document.body.appendChild(a); a.click(); a.remove(); }
+      else { const a = document.createElement('a'); a.href = url; a.download = (tipo === 'espelho' ? 'espelho_ponto_' : 'holerite_') + mes + (tipo === 'contab' ? '.pdf' : '.html'); document.body.appendChild(a); a.click(); a.remove(); }
       msg('#msg-hol', '');
     } catch (x) { if (janela) janela.close(); msg('#msg-hol', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
     finally { botao.disabled = false; }
