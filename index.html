@@ -2160,14 +2160,29 @@ window.FT_CONFIG = {
     const banco = movs.map(function (m) { return { data: m.data, descricao: m.descricao, documento: m.documento, valor: +m.valor, saldo: m.saldo, par: null }; });
     const debitos = banco.filter(function (m) { return m.valor < 0; });
     const palavras = function (nome) { return FT.semAcento(nome).split(/[^A-Z0-9]+/).filter(function (w) { return w.length >= 4 && ['LTDA', 'COMERCIO', 'ALIMENTOS', 'ATACADISTA', 'SERVICOS', 'DISTRIBUIDORA'].indexOf(w) < 0; }); };
-    const nomeBate = function (s, m) { const d = FT.semAcento(m.descricao); return (s.fatura && /FATURA/.test(d)) || palavras(s.nome).some(function (w) { return d.indexOf(w) >= 0; }); };
-    sis.forEach(function (s) { const m = debitos.find(function (b) { return !b.par && Math.abs(b.valor - s.valor) < 0.005; }); if (m) { m.par = s; s.par = m; } });
-    sis.forEach(function (s) {
-      if (s.par) return;
-      const tol = Math.max(1, Math.abs(s.valor) * 0.01);
-      const m = debitos.find(function (b) { return !b.par && Math.abs(b.valor - s.valor) <= tol && nomeBate(s, b); });
-      if (m) { m.par = s; s.par = m; }
-    });
+    // quanto o nome do sistema "bate" com a descrição do banco: 0 = nada; >= 2 = primeiro nome bate
+    const pontos = function (s, m) {
+      const d = ' ' + FT.semAcento(m.descricao).replace(/[^A-Z0-9]+/g, ' ') + ' ';
+      if (s.fatura) return /FATURA/.test(d) ? 3 : 0;
+      const w = palavras(s.nome); if (!w.length) return 0;
+      let p = d.indexOf(' ' + w[0] + ' ') >= 0 ? 2 : 0;
+      w.slice(1).forEach(function (x) { if (d.indexOf(' ' + x) >= 0) p += 1; });
+      return p;
+    };
+    const casar = function (filtro, minimo) {
+      sis.forEach(function (s) {
+        if (s.par) return;
+        let melhor = null, mp = -1;
+        debitos.forEach(function (b) { if (b.par || !filtro(s, b)) return; const p = pontos(s, b); if (p >= minimo && p > mp) { melhor = b; mp = p; } });
+        if (melhor) { melhor.par = s; s.par = melhor; }
+      });
+    };
+    const igual = function (s, b) { return Math.abs(b.valor - s.valor) < 0.005; };
+    const perto = function (s, b) { return Math.abs(b.valor - s.valor) <= Math.max(1, Math.abs(s.valor) * 0.01); };
+    casar(igual, 2);   // 1º mesmo valor e mesmo nome
+    casar(perto, 2);   // 2º valor quase igual e mesmo nome
+    casar(igual, 0);   // 3º mesmo valor (nome diferente ou abreviado no banco)
+    casar(perto, 1);   // 4º valor quase igual e parte do nome
     const soma = function (l) { return FT.r2(l.reduce(function (t, x) { return t + x.valor; }, 0)); };
     return {
       sistema: sis, banco: banco,
