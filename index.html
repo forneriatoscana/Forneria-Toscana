@@ -632,6 +632,31 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
 @media (prefers-color-scheme: dark) { .home-palco .logo-escuro { display: none; } .home-palco .logo-claro { display: block; } }
 @media (max-width: 900px) { .home-palco { height: calc(100svh - 150px); } .home-logo-img { width: 80vw; } }
 
+/* ---------- Vendas por produto ---------- */
+.kpis-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.vp-tabelas { display: grid; gap: 18px; }
+.vp-sec h2 { font-size: 17px; margin: 0 0 8px; }
+.vp-sec h2 small { font-size: 12px; font-weight: 500; color: var(--ink-3); letter-spacing: .03em; }
+.vp-tab th small { display: block; font-size: 11px; font-weight: 500; letter-spacing: 0; }
+.vp-tab td:first-child { font-weight: 500; }
+.vp-tab .num { min-width: 92px; }
+.vp-tab .vp-tot { background: var(--surface-2); font-weight: 700; }
+.vp-tab .vp-atual { background: var(--accent-soft); }
+.vp-tab tfoot td { font-weight: 700; border-top: 2px solid var(--line); background: var(--surface-2); }
+@media (max-width: 900px) { .kpis-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media print {
+  .vp-imp { font-size: 9pt; text-transform: uppercase; }
+  .vp-imp header { display: flex; justify-content: space-between; border-bottom: 1.2px solid #000; padding-bottom: 2mm; margin-bottom: 3mm; }
+  .vp-imp .vp-sec { break-inside: avoid; margin-bottom: 4mm; }
+  .vp-imp h2 { font-size: 11pt; margin: 0 0 1.5mm; }
+  .vp-imp h2 small { font-size: 7.5pt; font-weight: 400; }
+  .vp-imp table { width: 100%; border-collapse: collapse; }
+  .vp-imp th, .vp-imp td { border: 1px solid #000; padding: .5mm 1.5mm; text-align: left; }
+  .vp-imp th small { display: block; font-size: 7pt; font-weight: 400; }
+  .vp-imp .num { text-align: right; }
+  .vp-imp .vp-tot, .vp-imp tfoot td, .vp-imp th { background: #eee !important; font-weight: 700; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 </style>
 </head>
 <body>
@@ -660,6 +685,7 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
         <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-dash"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5" rx="1.5"/><rect x="13.5" y="11" width="7.5" height="10" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/></svg><span>Dashboard</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="menu-itens" id="mg-dash" hidden>
           <a href="#indicadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Indicadores</a>
+          <a href="#produtos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4M12 12 3.6 15"/><circle cx="8" cy="8.5" r="1"/><circle cx="15.5" cy="8" r="1"/><circle cx="9" cy="16.5" r="1"/></svg>Vendas por produto</a>
         </div>
       </div>
       <div class="menu-grupo" data-grupo="fin">
@@ -764,6 +790,7 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
       </div>
     </section>
 
+    <section id="tela-produtos" class="tela" hidden></section>
     <section id="tela-pagamento" class="tela" hidden></section>
     <section id="tela-folha" class="tela" hidden></section>
     <section id="tela-escala" class="tela" hidden></section>
@@ -2227,6 +2254,17 @@ window.FT_CONFIG = {
         addManual: async function (m) { return ok(sb.from('fluxo_manuais').insert(m)); },
         removerManual: async function (id) { return ok(sb.from('fluxo_manuais').delete().eq('id', id)); }
       },
+      produtos: {
+        // quantidade vendida por produto e dia
+        carregar: async function (de, ate) {
+          const r = [];
+          for (let i = 0; ; i += 1000) {
+            const d = await ok(sb.from('vw_vendas_produto_dia').select('data,grupo,produto,qtde').gte('data', de).lte('data', ate).order('data').order('produto').range(i, i + 999));
+            r.push.apply(r, d); if (d.length < 1000) break;
+          }
+          return r;
+        }
+      },
       folha: {
         ler: async function (mes) { const d = await ok(sb.from('folhas').select('dados').eq('mes', mes).maybeSingle()); return d ? d.dados : null; },
         salvar: async function (mes, dados) { return ok(sb.from('folhas').upsert({ mes: mes, dados: dados, total: FT.calc.calcularFolha(dados).totais.total, atualizado_em: new Date().toISOString() })); },
@@ -2288,7 +2326,7 @@ window.FT_CONFIG = {
       funcionarios: clonar(inicial.funcionarios || []),
       config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {}, folhas: {},
       acessos: clonar(inicial.acessos || []), pontos: clonar(inicial.pontos || []),
-      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
+      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), produtos: clonar(inicial.produtos || []), fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
       pontoConfig: { id: 1, lat: -23.4028019, lng: -46.0428557, raio_m: 100, precisao_max_m: 100 },
       ind: clonar(inicial.indicadores || { vendasDia: [], pedidosDia: [], maoObraDia: [] })
     };
@@ -2373,6 +2411,7 @@ window.FT_CONFIG = {
         addManual: function (m) { db.fluxoMan.push(Object.assign({ id: 'm' + (seq++) }, m)); return espera(null); },
         removerManual: function (id) { db.fluxoMan = db.fluxoMan.filter(function (m) { return m.id !== id; }); return espera(null); }
       },
+      produtos: { carregar: function (de, ate) { return espera(db.produtos.filter(function (r) { return r.data >= de && r.data <= ate; })); } },
       folha: {
         ler: function (m) { return espera(db.folhas[m] || null); },
         salvar: function (m, d) { db.folhas[m] = clonar(d); return espera(null); },
@@ -2397,6 +2436,9 @@ window.FT_CONFIG = {
           const ag = root.FTParsers.agregarVendas(a.itens);
           db.ind.vendasDia = db.ind.vendasDia.filter(fora).concat(ag.vendasDia);
           db.ind.pedidosDia = db.ind.pedidosDia.filter(fora).concat(ag.pedidosDia);
+          const gp = {};
+          a.itens.forEach(function (x) { const k = x.data + '|' + x.grupo + '|' + x.produto; gp[k] = (gp[k] || 0) + x.qtde; });
+          db.produtos = db.produtos.filter(fora).concat(Object.keys(gp).map(function (k) { const q = k.split('|'); return { data: q[0], grupo: q[1], produto: q[2], qtde: gp[k] }; }));
         } else substituirMO(a.inicio, a.fim, a.itens);
         db.ind.atualizadoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + ' (prévia, não salvo)';
         return espera(null);
@@ -2744,6 +2786,146 @@ window.FT_CONFIG = {
         FT.aviso('');
         render();
       } catch (e) { FT.aviso('Não consegui ler os dados: ' + FT.textoErro(e), true); }
+    }
+  };
+})();
+
+/* Forneria Toscana — Vendas por produto (reunião semanal da pizzaria)
+ * Só pizzas (sabores grande e broto), entradas e banana na lenha. Quantidade por semana e total do mês. */
+(function () {
+  'use strict';
+  const FT = window.FT, I = window.FTIndicadores;
+  const $ = FT.$, esc = FT.esc;
+  const st = { mes: null, dados: null };
+
+  const SECOES = [
+    { id: 'grande', nome: 'Pizzas grandes', nota: 'por sabor · meia pizza conta 0,5' },
+    { id: 'broto', nome: 'Pizzas broto', nota: 'por sabor · meia pizza conta 0,5' },
+    { id: 'entradas', nome: 'Entradas', nota: '' },
+    { id: 'banana', nome: 'Banana na lenha', nota: '' }
+  ];
+  function secaoDe(grupo, produto) {
+    const g = FT.semAcento(grupo), p = FT.semAcento(produto);
+    if (/BANANA NA LENHA/.test(p)) return 'banana';
+    if (g === 'PIZZA GRANDE') return 'grande';
+    if (g === 'PIZZA BROTO') return 'broto';
+    if (g === 'ENTRADAS' || g === 'ENTRADA') return 'entradas';
+    return null;
+  }
+  function nomeProduto(sec, produto) {
+    let n = String(produto || '').toUpperCase().replace(/\*/g, '').trim();
+    if (sec === 'grande' || sec === 'broto') n = n.replace(/^PIZZA\s+/, '').replace(/\s*-\s*(GRANDE|BROTO)\s*$/, '');
+    return n || 'SEM NOME';
+  }
+  function qtd(v) {
+    if (!v) return '';
+    const r = Math.round(v * 10) / 10;
+    return r.toLocaleString('pt-BR', { minimumFractionDigits: Number.isInteger(r) ? 0 : 1, maximumFractionDigits: 1 });
+  }
+  function somaMes(chave, n) { const p = chave.split('-').map(Number); const d = new Date(p[0], p[1] - 1 + n, 1, 12); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+
+  function calcular(linhas, semanas) {
+    const sec = {};
+    SECOES.forEach(function (s) { sec[s.id] = { prod: {}, sem: semanas.map(function () { return 0; }), total: 0 }; });
+    linhas.forEach(function (r) {
+      const s = secaoDe(r.grupo, r.produto); if (!s) return;
+      const d = String(r.data).slice(0, 10), q = +r.qtde || 0;
+      const w = semanas.findIndex(function (x) { return d >= x.inicio && d <= x.fim; }); if (w < 0) return;
+      const n = nomeProduto(s, r.produto), o = sec[s];
+      const p = o.prod[n] = o.prod[n] || { nome: n, sem: semanas.map(function () { return 0; }), total: 0 };
+      p.sem[w] += q; p.total += q; o.sem[w] += q; o.total += q;
+    });
+    SECOES.forEach(function (s) { sec[s.id].lista = Object.values(sec[s.id].prod).sort(function (a, b) { return b.total - a.total || (a.nome < b.nome ? -1 : 1); }); });
+    return sec;
+  }
+
+  function montar() {
+    $('#tela-produtos').innerHTML =
+      '<div class="cab-tela"><div><h1>Vendas por produto</h1><p>Para a reunião semanal da pizzaria: quantidade vendida de cada pizza, entrada e banana na lenha, semana a semana, e o total do mês.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="vp-excel">Baixar Excel</button><button type="button" class="btn" id="vp-imprimir">Imprimir</button></div></div>' +
+      '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="vp-ant" aria-label="Mês anterior">‹</button>' +
+      '<div class="nav-semana-t"><span>Mês</span><b id="vp-rotulo"></b></div>' +
+      '<button type="button" class="btn-icone" id="vp-prox" aria-label="Próximo mês">›</button>' +
+      '<button type="button" class="btn btn-sec btn-p" id="vp-atual">Mês atual</button></div></div>' +
+      '<div id="vp-msg" class="msg" hidden></div>' +
+      '<div class="kpis kpis-4" id="vp-kpis"></div>' +
+      '<div id="vp-tabelas" class="vp-tabelas"></div>';
+    $('#vp-ant').addEventListener('click', function () { ir(somaMes(st.mes, -1)); });
+    $('#vp-prox').addEventListener('click', function () { ir(somaMes(st.mes, 1)); });
+    $('#vp-atual').addEventListener('click', function () { ir(FT.hoje().slice(0, 7)); });
+    $('#vp-imprimir').addEventListener('click', imprimir);
+    $('#vp-excel').addEventListener('click', excel);
+  }
+
+  async function ir(mes) {
+    st.mes = mes;
+    $('#vp-rotulo').textContent = I.nomeMes(mes).toUpperCase();
+    const semanas = I.semanasDoMes(mes);
+    try {
+      const linhas = await FT.store.produtos.carregar(semanas[0].inicio, semanas[semanas.length - 1].fim);
+      st.dados = { semanas: semanas, sec: calcular(linhas, semanas) };
+      desenhar();
+    } catch (e) { FT.aviso('Não consegui carregar as vendas por produto: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 7 foi rodado no Supabase.', true); }
+  }
+
+  function tabelaHTML(s, o, semanas, hojeIdx) {
+    let h = '<section class="vp-sec"><h2>' + esc(s.nome) + (s.nota ? ' <small>' + esc(s.nota) + '</small>' : '') + '</h2>' +
+      '<div class="rolagem"><table class="lista vp-tab"><thead><tr><th>Produto</th>' +
+      semanas.map(function (w, i) { return '<th class="num' + (i === hojeIdx ? ' vp-atual' : '') + '">' + esc(w.rotulo) + '<small>' + esc(w.periodo) + '</small></th>'; }).join('') +
+      '<th class="num vp-tot">Total do mês</th></tr></thead><tbody>';
+    if (!o.lista.length) h += '<tr><td class="vazio-lista" colspan="' + (semanas.length + 2) + '">Nenhuma venda neste mês.</td></tr>';
+    o.lista.forEach(function (p) {
+      h += '<tr><td>' + esc(p.nome) + '</td>' + p.sem.map(function (v, i) { return '<td class="num' + (i === hojeIdx ? ' vp-atual' : '') + '">' + qtd(v) + '</td>'; }).join('') + '<td class="num vp-tot">' + qtd(p.total) + '</td></tr>';
+    });
+    h += '</tbody><tfoot><tr><td>Total ' + esc(s.nome.toLowerCase()) + '</td>' + o.sem.map(function (v, i) { return '<td class="num' + (i === hojeIdx ? ' vp-atual' : '') + '">' + (qtd(v) || '0') + '</td>'; }).join('') + '<td class="num vp-tot">' + (qtd(o.total) || '0') + '</td></tr></tfoot></table></div></section>';
+    return h;
+  }
+
+  function desenhar() {
+    const d = st.dados, hoje = FT.hoje();
+    const hojeIdx = d.semanas.findIndex(function (w) { return hoje >= w.inicio && hoje <= w.fim; });
+    const vazio = SECOES.every(function (s) { return !d.sec[s.id].total; });
+    $('#vp-msg').hidden = !vazio;
+    $('#vp-msg').innerHTML = 'Nenhuma venda neste mês. Importe o relatório de pedidos de venda em <a href="#importar">Importar planilhas</a>.';
+    $('#vp-kpis').innerHTML = SECOES.map(function (s) {
+      return '<article class="kpi"><h3>' + esc(s.nome) + '</h3><p class="kpi-v">' + (qtd(d.sec[s.id].total) || '0') + '</p><p class="kpi-s">' + d.sec[s.id].lista.length + ' produto(s) no mês</p></article>';
+    }).join('');
+    $('#vp-tabelas').innerHTML = SECOES.map(function (s) { return tabelaHTML(s, d.sec[s.id], d.semanas, hojeIdx); }).join('');
+  }
+
+  function imprimir() {
+    const d = st.dados; if (!d) return;
+    let area = document.getElementById('impressao');
+    if (!area) { area = document.createElement('div'); area.id = 'impressao'; document.body.appendChild(area); }
+    area.innerHTML = '<div class="vp-imp"><header><b>FORNERIA TOSCANA</b><span>VENDAS POR PRODUTO · ' + esc(I.nomeMes(st.mes).toUpperCase()) + '</span></header>' +
+      SECOES.map(function (s) { return tabelaHTML(s, d.sec[s.id], d.semanas, -1); }).join('') + '</div>';
+    window.print();
+  }
+
+  function excel() {
+    if (typeof XLSX === 'undefined') { FT.aviso('O gerador de planilhas não carregou. Confira a internet e recarregue a página.', true); return; }
+    const d = st.dados; if (!d) return;
+    const rows = [];
+    const r1 = function (v) { return Math.round(v * 10) / 10; };
+    SECOES.forEach(function (s) {
+      const o = d.sec[s.id];
+      rows.push([s.nome.toUpperCase()]);
+      rows.push(['PRODUTO'].concat(d.semanas.map(function (w) { return w.rotulo.toUpperCase() + ' (' + w.periodo + ')'; })).concat(['TOTAL DO MÊS']));
+      o.lista.forEach(function (p) { rows.push([p.nome].concat(p.sem.map(r1)).concat([r1(p.total)])); });
+      rows.push(['TOTAL'].concat(o.sem.map(r1)).concat([r1(o.total)]));
+      rows.push([]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{ wch: 38 }].concat(d.semanas.map(function () { return { wch: 16 }; })).concat([{ wch: 14 }]);
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'PRODUTOS');
+    XLSX.writeFile(wb, 'vendas_por_produto_' + st.mes + '.xlsx');
+  }
+
+  let montado = false;
+  FT.telas.produtos = {
+    abrir: async function () {
+      if (!montado) { montado = true; montar(); }
+      await ir(st.mes || FT.hoje().slice(0, 7));
     }
   };
 })();
@@ -4893,7 +5075,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'indicadores', 'pagamento', 'folha', 'escala', 'fluxo', 'ponto', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'indicadores', 'produtos', 'pagamento', 'folha', 'escala', 'fluxo', 'ponto', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
