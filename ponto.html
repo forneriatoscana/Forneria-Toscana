@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d3a32">
+<title>Ponto Forneria Toscana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Tela única de celular: relógio no topo, cartão com a ação do momento (entrar / sair / concluído) */
+:root {
+  --bg: #1d3a32; --cartao: #ffffff; --ink: #1b1f1a; --ink-2: #4d544b; --ink-3: #6f766c; --linha: #dfe3dc;
+  --accent: #23574a; --accent-soft: #e4eee9; --brasa: #e0782f; --claro: #e6efe9; --claro-2: #a9c4b8;
+  --bom: #1d7a3b; --bom-bg: #e3f3e7; --ruim: #b3261e; --ruim-bg: #fde8e6; --info-bg: #eef2ee;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1d19; --cartao: #1b1f1b; --ink: #eef1ec; --ink-2: #bfc6bb; --ink-3: #969e92; --linha: #2f352e; --accent: #8fd1b8; --accent-soft: #1f3a32;
+    --bom: #6fcf8a; --bom-bg: #173323; --ruim: #ff8a80; --ruim-bg: #3a1b18; --info-bg: #20251f; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.45 var(--f-body); text-transform: uppercase; -webkit-font-smoothing: antialiased;
+  padding: calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 24px); }
+[hidden] { display: none !important; }
+.topo { max-width: 440px; margin: 0 auto 18px; color: var(--claro); text-align: center; display: grid; gap: 4px; }
+.marca { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.marca svg { width: 34px; height: 34px; }
+.marca b { font: 700 18px/1.1 var(--f-display); letter-spacing: .01em; }
+#relogio { font: 700 54px/1 var(--f-display); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; margin-top: 10px; color: #fff; }
+#hoje { font-size: 13px; color: var(--claro-2); letter-spacing: .06em; }
+.cartao { max-width: 440px; margin: 0 auto; background: var(--cartao); border-radius: 18px; padding: 22px 20px; display: grid; gap: 14px; box-shadow: 0 12px 40px rgb(0 0 0 / .25); }
+h1 { font: 700 22px/1.2 var(--f-display); margin: 0; }
+.sub { margin: -6px 0 0; color: var(--ink-3); font-size: 13.5px; }
+label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink-2); letter-spacing: .04em; }
+input { font: 600 20px var(--f-body); padding: 13px 14px; border: 1.5px solid var(--linha); border-radius: 12px; background: var(--cartao); color: var(--ink); width: 100%; letter-spacing: .04em; }
+input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+#senha { text-transform: none; }
+.btn { font: 700 17px var(--f-body); letter-spacing: .04em; text-transform: uppercase; border: 0; border-radius: 14px; padding: 18px 16px; cursor: pointer; width: 100%; background: var(--accent); color: #fff; }
+.btn:disabled { opacity: .55; cursor: wait; }
+.btn-saida { background: var(--brasa); }
+.btn-sec { background: transparent; color: var(--accent); border: 1.5px solid var(--linha); padding: 13px; font-size: 14px; }
+.aviso-gps { display: flex; gap: 10px; align-items: flex-start; background: var(--info-bg); border-radius: 12px; padding: 10px 12px; font-size: 13px; color: var(--ink-2); }
+.aviso-gps svg { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.msg-ponto { border-radius: 12px; padding: 12px 14px; font-size: 14.5px; font-weight: 500; }
+.msg-ponto.erro { background: var(--ruim-bg); color: var(--ruim); }
+.msg-ponto.ok { background: var(--bom-bg); color: var(--bom); }
+.msg-ponto.info { background: var(--info-bg); color: var(--ink-2); }
+.estado { text-align: center; display: grid; gap: 6px; padding: 6px 0; }
+.estado .nome { font: 700 24px/1.15 var(--f-display); }
+.estado .tit { font-weight: 700; color: var(--accent); letter-spacing: .05em; }
+.estado .tit.novo, .estado .ok { color: var(--bom); }
+.estado .hora { font-size: 15px; color: var(--ink-2); }
+.selo { width: 64px; height: 64px; border-radius: 50%; background: var(--bom-bg); color: var(--bom); display: grid; place-items: center; margin: 0 auto; font-size: 34px; }
+.rodape { max-width: 440px; margin: 16px auto 0; text-align: center; font-size: 12px; color: var(--claro-2); }
+@media (prefers-reduced-motion: no-preference) { .cartao { animation: sobe .25s ease-out; } @keyframes sobe { from { transform: translateY(8px); opacity: .6; } } }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 34 V20 a15 15 0 0 1 30 0 V34 Z" fill="#e6efe9"/><path d="M13 34 V24 a7 7 0 0 1 14 0 V34 Z" fill="#1d3a32"/><path d="M15 31 q5 -6 10 0" stroke="#e0782f" stroke-width="2.4" fill="none" stroke-linecap="round"/><rect x="3" y="33" width="34" height="3" rx="1.5" fill="#a9c4b8"/></svg><b>FORNERIA TOSCANA</b></div>
+  <div id="relogio">--:--:--</div>
+  <div id="hoje"></div>
+</header>
+
+<main>
+  <!-- 1. ENTRAR = BATER ENTRADA -->
+  <form class="cartao" id="tela-login" novalidate>
+    <h1>Ponto eletrônico</h1>
+    <p class="sub">Entre com o seu CPF e senha. A entrada é registrada na hora.</p>
+    <label for="cpf">CPF<input id="cpf" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00"></label>
+    <label for="senha">Senha<input id="senha" type="password" autocomplete="current-password"></label>
+    <div class="aviso-gps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+      <span>A localização do celular precisa estar ligada. O ponto só é aceito dentro da Forneria.</span></div>
+    <p class="msg-ponto" id="msg-login" role="status" hidden></p>
+    <button class="btn" id="btn-entrar" type="submit">Bater ponto de entrada</button>
+  </form>
+
+  <!-- 2. EM TURNO = BOTÃO DE SAÍDA -->
+  <section class="cartao" id="tela-turno" hidden>
+    <div class="estado"><span class="nome" id="turno-nome"></span><span class="tit" id="turno-titulo"></span><span class="hora" id="turno-entrada"></span></div>
+    <p class="msg-ponto" id="msg-turno" role="status" hidden></p>
+    <button class="btn btn-saida" id="btn-saida" type="button">Registrar saída</button>
+    <button class="btn btn-sec" id="btn-outra" type="button">Não sou eu / trocar de pessoa</button>
+  </section>
+
+  <!-- 3. SAÍDA REGISTRADA -->
+  <section class="cartao" id="tela-fim" hidden>
+    <div class="estado"><span class="selo" aria-hidden="true">✓</span><span class="nome" id="fim-nome"></span><span class="tit ok">Saída registrada</span><span class="hora" id="fim-saida"></span><span class="hora" id="fim-turno"></span></div>
+    <button class="btn btn-sec" id="btn-concluir" type="button">Concluir</button>
+  </section>
+</main>
+<p class="rodape">Esqueceu a senha ou não consegue bater o ponto? Fale com o gerente.</p>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.FT_CONFIG = {
+  SUPABASE_URL: 'https://wncpvwvaxqwdsunejyum.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_u3NQhe2kReI0vtmMGwP9_w_puw3FCQ9'
+};
+</script>
+<script>
+/* Forneria Toscana — utilidades comuns a todas as telas */
+(function (root) {
+  'use strict';
+  const FT = root.FT = root.FT || {};
+
+  FT.$ = function (s, el) { return (el || document).querySelector(s); };
+  FT.$$ = function (s, el) { return Array.from((el || document).querySelectorAll(s)); };
+  FT.esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+
+  const fMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fNum2 = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  FT.moeda = function (v) { return v == null || !isFinite(v) ? '—' : fMoeda.format(v); };
+  FT.num2 = function (v) { return v == null || !isFinite(v) ? '' : fNum2.format(v); };
+  FT.r2 = function (v) { return Math.round((+v || 0) * 100) / 100; };
+  // lê "1.234,56", "1234.56", "1234,5" -> número
+  FT.lerValor = function (s) {
+    if (typeof s === 'number') return s;
+    s = String(s == null ? '' : s).trim().replace(/R\$\s?/i, '').replace(/\s/g, '');
+    if (!s) return 0;
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(s); return isFinite(n) ? n : 0;
+  };
+
+  /* ---------- datas ---------- */
+  const pad = function (n) { return String(n).padStart(2, '0'); };
+  FT.iso = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  FT.dataDe = function (iso) { return new Date(iso + 'T12:00:00'); };
+  FT.hoje = function () { return FT.iso(new Date()); };
+  FT.somaDias = function (iso, n) { const d = FT.dataDe(iso); d.setDate(d.getDate() + n); return FT.iso(d); };
+  FT.segunda = function (iso) { const d = FT.dataDe(iso); const k = (d.getDay() + 6) % 7; d.setDate(d.getDate() - k); return FT.iso(d); };
+  FT.diasDaSemana = function (seg) { const r = []; for (let i = 0; i < 7; i++) r.push(FT.somaDias(seg, i)); return r; };
+  FT.diaSemana = function (iso) { return FT.dataDe(iso).getDay(); }; // 0 = domingo
+  FT.DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+  FT.DIAS_CURTOS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  FT.MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  FT.ddmm = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1]; };
+  FT.ddmmaaaa = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
+  FT.rotuloSemana = function (seg) { return FT.ddmm(seg) + ' a ' + FT.ddmmaaaa(FT.somaDias(seg, 6)); };
+
+  /* ---------- horário de Brasília (ponto) ---------- */
+  FT.TZ = 'America/Sao_Paulo';
+  const fmtDataSP = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const fmtHoraSP = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+  FT.dataSP = function (ts) { return fmtDataSP.format(new Date(ts)); };          // 'aaaa-mm-dd'
+  FT.horaSP = function (ts) { return ts ? fmtHoraSP.format(new Date(ts)) : ''; }; // 'hh:mm'
+  FT.localSP = function (ts) { return ts ? FT.dataSP(ts) + 'T' + FT.horaSP(ts) : ''; }; // para <input type="datetime-local">
+  FT.tsDeLocal = function (v) { return v ? new Date(v + ':00-03:00').toISOString() : null; }; // Brasília não tem horário de verão
+  FT.duracao = function (a, b) {
+    if (!a || !b) return '';
+    const min = Math.max(0, Math.round((new Date(b) - new Date(a)) / 60000));
+    return Math.floor(min / 60) + 'h' + String(min % 60).padStart(2, '0');
+  };
+  FT.cpfNumeros = function (c) { return String(c || '').replace(/\D/g, ''); };
+  FT.formatarCPF = function (c) { c = FT.cpfNumeros(c).slice(0, 11); return c.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'); };
+  FT.cpfValido = function (c) {
+    c = FT.cpfNumeros(c);
+    if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+    for (let t = 9; t < 11; t++) {
+      let s = 0; for (let i = 0; i < t; i++) s += +c[i] * (t + 1 - i);
+      if (((s * 10) % 11) % 10 !== +c[t]) return false;
+    }
+    return true;
+  };
+
+  FT.semAcento = function (s) {
+    return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim().replace(/\s+/g, ' ');
+  };
+
+  /* ---------- cadastro ---------- */
+  FT.TIPOS = [
+    { id: 'fixo', nome: 'Fixo' },
+    { id: 'freelancer', nome: 'Freelancer' },
+    { id: 'motoboy', nome: 'Motoboy' }
+  ];
+  FT.nomeTipo = function (t) { const x = FT.TIPOS.find(function (y) { return y.id === t; }); return x ? x.nome : t; };
+  // Tudo em CAIXA ALTA (pedido do Luiz): textos digitados são gravados em maiúsculas
+  FT.mai = function (s) { return String(s == null ? '' : s).trim().replace(/\s+/g, ' ').toLocaleUpperCase('pt-BR'); };
+  FT.SETOR_MOTO = 'ENTREGA';
+  FT.SETORES = ['CAIXA', 'SALÃO', 'BAR', 'PIZZARIA', 'LOUÇA', 'ESTACIONAMENTO', 'ENTREGA'];
+  FT.nomeSetor = function (s) { return s === FT.SETOR_MOTO ? 'MOTOBOYS (ENTREGA)' : s; };
+  FT.CARGOS = ['ATENDENTE DE CAIXA', 'GARÇOM', 'CUMIM', 'BARTENDER', 'PIZZAIOLO', 'AUXILIAR DE PIZZAIOLO', 'AUXILIAR DE COZINHA', 'LAVADOR DE LOUÇA', 'MANOBRISTA', 'MOTOBOY', 'GERENTE'];
+
+  // Setores e cargos editáveis (guardados em configuracoes). "ENTREGA" é fixo: é o setor dos motoboys.
+  function normalizarSetores(lista) {
+    const vistos = {}, r = [];
+    (lista || []).forEach(function (s) { s = FT.mai(s); if (s && s !== FT.SETOR_MOTO && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
+    r.push(FT.SETOR_MOTO);
+    return r;
+  }
+  FT.normalizarSetores = normalizarSetores;
+  function normalizarCargos(lista) {
+    const vistos = {}, r = [];
+    (lista || []).forEach(function (s) { s = FT.mai(s); if (s && !vistos[FT.semAcento(s)]) { vistos[FT.semAcento(s)] = 1; r.push(s); } });
+    return r.sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+  }
+  FT.carregarListas = async function () {
+    try {
+      const s = await FT.store.config.ler('setores'); if (s && s.length) FT.SETORES = normalizarSetores(s);
+      const c = await FT.store.config.ler('cargos'); FT.CARGOS = normalizarCargos(c && c.length ? c : FT.CARGOS);
+    } catch (e) { console.warn('Listas de setores/cargos não carregadas', e); }
+  };
+  // Converte uma única vez os dados já gravados (nomes, setores, cargos, escalas) para CAIXA ALTA
+  FT.migrarMaiusculas = async function () {
+    try {
+      if (await FT.store.config.ler('migracao_maiusculas_v1')) return;
+      const funcs = await FT.store.funcionarios.listar();
+      for (const f of funcs) {
+        if (f.nome !== FT.mai(f.nome) || (f.setor || '') !== FT.mai(f.setor) || (f.cargo || '') !== FT.mai(f.cargo)) await FT.store.funcionarios.salvar(f);
+      }
+      const set = await FT.store.config.ler('setores'); if (set) await FT.store.config.salvar('setores', normalizarSetores(set));
+      const car = await FT.store.config.ler('cargos'); if (car) await FT.store.config.salvar('cargos', normalizarCargos(car));
+      const chaves = function (obj) { if (!obj) return false; let m = false; Object.keys(obj).forEach(function (k) { const K = FT.mai(k); if (K !== k) { obj[K] = obj[k]; delete obj[k]; m = true; } }); return m; };
+      const pad = await FT.store.config.ler('escala_padrao');
+      if (pad) { let m = false; Object.keys(pad).forEach(function (k) { m = chaves(pad[k].vagas) || m; }); if (m) await FT.store.config.salvar('escala_padrao', pad); }
+      const escalas = await FT.store.escala.listar('2000-01-01', '2999-12-31');
+      for (const sem of Object.keys(escalas)) {
+        const e = escalas[sem]; let m = false;
+        Object.keys(e.dias || {}).forEach(function (d) { m = chaves(e.dias[d].vagas) || m; m = chaves(e.dias[d].alocados) || m; });
+        if (m) await FT.store.escala.salvar(sem, e);
+      }
+      await FT.store.config.salvar('migracao_maiusculas_v1', true);
+    } catch (e) { console.warn('Migração para maiúsculas não concluída', e); }
+  };
+  FT.salvarSetores = async function (lista) { FT.SETORES = normalizarSetores(lista); await FT.store.config.salvar('setores', FT.SETORES); };
+  FT.salvarCargos = async function (lista) { FT.CARGOS = normalizarCargos(lista); await FT.store.config.salvar('cargos', FT.CARGOS); };
+
+  // Quantidade padrão de pessoas por setor em cada dia (0 = domingo … 6 = sábado)
+  const qua = { 'CAIXA': 1, 'SALÃO': 2, 'BAR': 1, 'PIZZARIA': 4, 'LOUÇA': 1, 'ESTACIONAMENTO': 0, 'ENTREGA': 1 };
+  FT.PADRAO_ESCALA = {
+    1: { aberto: false, vagas: Object.assign({}, qua) },
+    2: { aberto: false, vagas: Object.assign({}, qua) },
+    3: { aberto: true, vagas: Object.assign({}, qua) },
+    4: { aberto: true, vagas: Object.assign({}, qua) },
+    5: { aberto: true, vagas: { 'CAIXA': 2, 'SALÃO': 5, 'BAR': 2, 'PIZZARIA': 4, 'LOUÇA': 2, 'ESTACIONAMENTO': 1, 'ENTREGA': 3 } },
+    6: { aberto: true, vagas: { 'CAIXA': 2, 'SALÃO': 6, 'BAR': 2, 'PIZZARIA': 4, 'LOUÇA': 2, 'ESTACIONAMENTO': 1, 'ENTREGA': 4 } },
+    0: { aberto: true, vagas: { 'CAIXA': 1, 'SALÃO': 2, 'BAR': 2, 'PIZZARIA': 4, 'LOUÇA': 1, 'ESTACIONAMENTO': 0, 'ENTREGA': 2 } }
+  };
+  FT.PERCENTUAL_PADRAO = 80; // parte do 10% do dia que vai para a equipe
+
+  /* ---------- avisos ---------- */
+  let timerAviso;
+  FT.aviso = function (txt, erro) {
+    const s = FT.$('#status'); if (!s) return;
+    s.textContent = txt; s.classList.toggle('erro', !!erro); s.hidden = !txt;
+    clearTimeout(timerAviso);
+    if (txt && !erro) timerAviso = setTimeout(function () { s.hidden = true; }, 4000);
+  };
+  FT.textoErro = function (e) {
+    return [e && e.message, e && e.details, e && e.hint, e && e.code ? 'código ' + e.code : ''].filter(Boolean).join(' · ') || String(e);
+  };
+  FT.copiar = async function (texto, botao) {
+    try { await navigator.clipboard.writeText(texto); if (botao) { const t = botao.textContent; botao.textContent = 'Copiado'; setTimeout(function () { botao.textContent = t; }, 1800); } }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = texto; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (x) { /* nada */ } ta.remove();
+    }
+  };
+  FT.debounce = function (fn, ms) { let t; return function () { const a = arguments; clearTimeout(t); t = setTimeout(function () { fn.apply(null, a); }, ms); }; };
+
+  FT.telas = FT.telas || {};
+  if (typeof module !== 'undefined' && module.exports) module.exports = FT;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* Forneria Toscana — página do funcionário para bater ponto (celular) */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$;
+  const CHAVE = 'ft_ponto_turno';
+  let sb = null, confirmarSaida = false;
+
+  const ERROS = {
+    CPF_OU_SENHA: 'CPF ou senha incorretos. Confira e tente de novo.',
+    BLOQUEADO: 'Muitas tentativas erradas. Aguarde 15 minutos ou fale com o gerente.',
+    INATIVO: 'Seu acesso ao ponto está desativado. Fale com o gerente.',
+    SEM_LOCALIZACAO: 'Não recebi a sua localização. Ative a localização do celular e tente de novo.',
+    PRECISAO_BAIXA: 'O sinal do GPS está fraco. Ative a "localização precisa", saia de perto de paredes grossas e tente de novo.',
+    FORA_DO_LOCAL: 'Você não está na Forneria Toscana. O ponto só pode ser batido no local de trabalho.',
+    TURNO_NAO_ENCONTRADO: 'Não encontrei a sua entrada. Entre de novo com CPF e senha.'
+  };
+
+  function lerTurno() { try { return JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { return null; } }
+  function gravarTurno(t) { try { if (t) localStorage.setItem(CHAVE, JSON.stringify(t)); else localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento */ } }
+
+  function mostrar(id) { ['tela-login', 'tela-turno', 'tela-fim'].forEach(function (t) { $('#' + t).hidden = t !== id; }); }
+  function msg(id, texto, tipo) { const el = $(id); el.textContent = texto || ''; el.className = 'msg-ponto' + (tipo ? ' ' + tipo : ''); el.hidden = !texto; }
+  function dataHora(ts) { return FT.ddmmaaaa(FT.dataSP(ts)) + ' às ' + FT.horaSP(ts); }
+
+  /* Relógio */
+  function relogio() {
+    const agora = new Date();
+    $('#relogio').textContent = new Intl.DateTimeFormat('pt-BR', { timeZone: FT.TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(agora);
+    $('#hoje').textContent = new Intl.DateTimeFormat('pt-BR', { timeZone: FT.TZ, weekday: 'long', day: '2-digit', month: 'long' }).format(agora).toUpperCase();
+  }
+
+  /* Localização: espera o GPS firmar (até 15 s) e usa a leitura mais precisa */
+  function obterLocal(onStatus) {
+    return new Promise(function (ok, falha) {
+      if (!navigator.geolocation) { falha({ code: 'SEM_GPS' }); return; }
+      let melhor = null, fim = false;
+      const acabar = function () {
+        if (fim) return; fim = true; navigator.geolocation.clearWatch(id); clearTimeout(t);
+        if (melhor) ok(melhor); else falha({ code: 3 });
+      };
+      const id = navigator.geolocation.watchPosition(function (p) {
+        if (!melhor || p.coords.accuracy < melhor.coords.accuracy) melhor = p;
+        if (onStatus) onStatus(Math.round(melhor.coords.accuracy));
+        if (p.coords.accuracy <= 30) acabar();
+      }, function (e) {
+        if (e.code === 1) { fim = true; navigator.geolocation.clearWatch(id); clearTimeout(t); falha(e); }
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
+      const t = setTimeout(acabar, 15000);
+    });
+  }
+  function erroGPS(e) {
+    if (e && e.code === 1) return 'A localização está bloqueada para este site. Ative a localização do celular e permita o acesso no navegador (ícone de cadeado ao lado do endereço → Localização → Permitir). Depois toque de novo.';
+    if (e && e.code === 'SEM_GPS') return 'Este aparelho ou navegador não informa localização. Use o Chrome ou o Safari do celular.';
+    return 'Não consegui pegar a sua localização. Confira se a localização (GPS) do celular está ligada e tente de novo.';
+  }
+  function textoErro(r) {
+    let t = ERROS[r.erro] || ('Não foi possível registrar: ' + r.erro);
+    if (r.erro === 'FORA_DO_LOCAL' && r.distancia != null) t += ' (você está a ' + (r.distancia >= 1000 ? (r.distancia / 1000).toFixed(1).replace('.', ',') + ' km' : r.distancia + ' m') + ' da Forneria)';
+    return t;
+  }
+
+  /* ---------- ENTRADA ---------- */
+  async function entrar(e) {
+    e.preventDefault();
+    const cpf = FT.cpfNumeros($('#cpf').value), senha = $('#senha').value;
+    if (!FT.cpfValido(cpf)) { msg('#msg-login', 'Digite um CPF válido (11 números).', 'erro'); return; }
+    if (!senha) { msg('#msg-login', 'Digite a sua senha.', 'erro'); return; }
+    const b = $('#btn-entrar'); b.disabled = true;
+    try {
+      msg('#msg-login', 'Pegando a sua localização…', 'info');
+      const pos = await obterLocal(function (acc) { msg('#msg-login', 'Pegando a sua localização… precisão de ' + acc + ' m', 'info'); });
+      msg('#msg-login', 'Registrando…', 'info');
+      const r = await rpc('ponto_entrar', { p_cpf: cpf, p_senha: senha, p_lat: pos.coords.latitude, p_lng: pos.coords.longitude, p_precisao: pos.coords.accuracy });
+      if (!r.ok) { msg('#msg-login', textoErro(r), 'erro'); return; }
+      gravarTurno({ token: r.token, nome: r.nome, entrada: r.entrada });
+      $('#senha').value = '';
+      mostrarTurno(r.nome, r.entrada, r.estado === 'entrada');
+    } catch (x) {
+      msg('#msg-login', x && x.code !== undefined ? erroGPS(x) : 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro');
+    } finally { b.disabled = false; }
+  }
+
+  function mostrarTurno(nome, entrada, acabouDeEntrar) {
+    $('#turno-nome').textContent = 'OLÁ, ' + String(nome).split(' ')[0] + '!';
+    $('#turno-titulo').textContent = acabouDeEntrar ? '✓ ENTRADA REGISTRADA' : 'VOCÊ ESTÁ EM TURNO';
+    $('#turno-entrada').textContent = (acabouDeEntrar ? 'Entrada em ' : 'Entrada registrada em ') + dataHora(entrada);
+    $('#turno-titulo').classList.toggle('novo', acabouDeEntrar);
+    confirmarSaida = false; $('#btn-saida').textContent = 'REGISTRAR SAÍDA';
+    msg('#msg-turno', acabouDeEntrar ? 'Bom trabalho! Na hora de ir embora, abra este link de novo e toque em "Registrar saída".' : '', 'ok');
+    mostrar('tela-turno');
+  }
+
+  /* ---------- SAÍDA ---------- */
+  async function sair() {
+    const t = lerTurno(); if (!t) { mostrar('tela-login'); return; }
+    const b = $('#btn-saida');
+    if (!confirmarSaida) {
+      confirmarSaida = true; b.textContent = 'TOQUE DE NOVO PARA CONFIRMAR A SAÍDA';
+      setTimeout(function () { confirmarSaida = false; b.textContent = 'REGISTRAR SAÍDA'; }, 6000);
+      return;
+    }
+    confirmarSaida = false; b.disabled = true;
+    try {
+      msg('#msg-turno', 'Pegando a sua localização…', 'info');
+      const pos = await obterLocal(function (acc) { msg('#msg-turno', 'Pegando a sua localização… precisão de ' + acc + ' m', 'info'); });
+      msg('#msg-turno', 'Registrando a saída…', 'info');
+      const r = await rpc('ponto_sair', { p_token: t.token, p_lat: pos.coords.latitude, p_lng: pos.coords.longitude, p_precisao: pos.coords.accuracy });
+      if (!r.ok) {
+        msg('#msg-turno', textoErro(r), 'erro');
+        if (r.erro === 'TURNO_NAO_ENCONTRADO') { gravarTurno(null); setTimeout(function () { mostrar('tela-login'); }, 2500); }
+        return;
+      }
+      gravarTurno(null);
+      $('#fim-nome').textContent = 'ATÉ LOGO, ' + String(r.nome).split(' ')[0] + '!';
+      $('#fim-saida').textContent = 'Saída em ' + dataHora(r.saida);
+      $('#fim-turno').textContent = 'Turno: ' + FT.horaSP(r.entrada) + ' → ' + FT.horaSP(r.saida) + ' · ' + FT.duracao(r.entrada, r.saida);
+      mostrar('tela-fim');
+    } catch (x) {
+      msg('#msg-turno', x && x.code !== undefined ? erroGPS(x) : 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro');
+    } finally { b.disabled = false; b.textContent = 'REGISTRAR SAÍDA'; }
+  }
+
+  async function rpc(nome, args) {
+    const r = await sb.rpc(nome, args);
+    if (r.error) throw r.error;
+    return typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+  }
+
+  async function iniciar() {
+    relogio(); setInterval(relogio, 1000);
+    $('#cpf').addEventListener('input', function (e) { e.target.value = FT.formatarCPF(e.target.value); });
+    $('#tela-login').addEventListener('submit', entrar);
+    $('#btn-saida').addEventListener('click', sair);
+    $('#btn-outra').addEventListener('click', function () { gravarTurno(null); msg('#msg-login', ''); mostrar('tela-login'); });
+    $('#btn-concluir').addEventListener('click', function () { msg('#msg-login', ''); mostrar('tela-login'); });
+
+    const cfg = window.FT_CONFIG || {};
+    if (typeof supabase === 'undefined' || !cfg.SUPABASE_URL) { msg('#msg-login', 'Não consegui carregar o sistema. Confira a internet e recarregue a página.', 'erro'); $('#btn-entrar').disabled = true; return; }
+    sb = supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+
+    // Turno aberto neste celular? Volta direto para a tela de saída.
+    const t = lerTurno();
+    if (t && t.token) {
+      try {
+        const r = await rpc('ponto_status', { p_token: t.token });
+        if (r.ok && r.estado === 'aberto') { mostrarTurno(r.nome, r.entrada, false); return; }
+        gravarTurno(null);
+      } catch (e) { mostrarTurno(t.nome, t.entrada, false); return; }
+    }
+    mostrar('tela-login');
+  }
+  document.addEventListener('DOMContentLoaded', iniciar);
+})();
+
+</script>
+</body>
+</html>
