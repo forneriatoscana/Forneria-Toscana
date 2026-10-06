@@ -473,6 +473,61 @@ input::placeholder { text-transform: uppercase; }
 @media (max-width: 700px) { .grade-local { grid-template-columns: 1fr 1fr; } }
 .lista.pt .prec { font-size: 11px; color: var(--ink-3); }
 
+/* ---------- ponto: lista → espelho ---------- */
+.pt-lista tbody tr[data-func] { cursor: pointer; }
+.pt-lista tbody tr[data-func]:hover td, .pt-lista tbody tr[data-func]:focus td { background: var(--accent-soft); }
+.pt-lista td small { display: block; font-size: 11.5px; color: var(--ink-3); }
+.pt-lista tr.sem-registro td { color: var(--ink-3); }
+.fer-chip { display: inline-block; font-size: 11.5px; font-weight: 700; background: #ffe2c7; color: #8a3b00; border-radius: 4px; padding: 2px 6px; }
+.falta-chip { display: inline-block; font-size: 11.5px; font-weight: 700; background: var(--aviso-bg); color: var(--ruim); border-radius: 4px; padding: 2px 6px; }
+.espelho td { vertical-align: top; }
+.espelho tr.linha-fer td { background: #fff1e4; }
+.espelho tr.linha-falta td { background: var(--aviso-bg); }
+.espelho tr.folga td { color: var(--ink-3); }
+.espelho td .motivo { display: block; font-size: 11.5px; color: var(--ink-3); }
+.espelho tfoot td { font-weight: 700; background: var(--surface-2); }
+.det-cab { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin-bottom: 12px; }
+.det-nome { margin-right: auto; }
+.det-nome h2 { margin: 0; }
+.det-nome p { margin: 2px 0 0; font-size: 13px; color: var(--ink-3); }
+#pt-det-box { display: grid; gap: 12px; }
+.kpi-fer { background: #fff1e4; border-color: #f2c79c; }
+.rel-tit { font-size: 12px; font-weight: 600; color: var(--ink-3); letter-spacing: .04em; }
+button.pessoa-chip { font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.pessoa-chip:hover { border-color: var(--accent); }
+details.local-ponto summary { cursor: pointer; }
+details.local-ponto[open] summary { margin-bottom: 8px; }
+.fer-add { display: grid; grid-template-columns: 150px minmax(0, 1fr) 140px auto; gap: 8px; }
+#dlg-feriados { width: min(760px, calc(100vw - 32px)); }
+#fer-tabela td, #fer-tabela th { padding: 6px 10px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .espelho tr.linha-fer td, :root:not([data-theme="light"]) .kpi-fer { background: #3b2412; } :root:not([data-theme="light"]) .fer-chip { background: #5a2f10; color: #ffd2a8; } }
+:root[data-theme="dark"] .espelho tr.linha-fer td, :root[data-theme="dark"] .kpi-fer { background: #3b2412; }
+:root[data-theme="dark"] .fer-chip { background: #5a2f10; color: #ffd2a8; }
+@media (max-width: 700px) { .fer-add { grid-template-columns: 1fr 1fr; } }
+
+@media print {
+  .esp-pagina { break-after: page; page-break-after: always; font-size: 9pt; }
+  .esp-pagina:last-child { break-after: auto; page-break-after: auto; }
+  .esp-cab { display: flex; justify-content: space-between; border-bottom: 1.2px solid #000; padding-bottom: 2mm; margin-bottom: 3mm; }
+  .esp-cab div { display: grid; }
+  .esp-cab b { font-size: 12pt; }
+  .esp-tit { text-align: right; }
+  .esp-func { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 2mm; margin-bottom: 3mm; }
+  .esp-func div { display: grid; border: 1px solid #000; padding: 1mm 2mm; }
+  .esp-func span { font-size: 7pt; }
+  .esp-tab { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  .esp-tab th, .esp-tab td { border: 1px solid #000; padding: .4mm 1.5mm; text-align: left; }
+  .esp-tab th { background: #eee !important; font-size: 7.5pt; }
+  .esp-tab .num { text-align: right; }
+  .esp-tab tr.linha-fer td { background: #ffd9b3 !important; font-weight: 700; }
+  .esp-tab tr.linha-falta td { background: #f2f2f2 !important; font-style: italic; }
+  .esp-tab tfoot td { font-weight: 700; }
+  .esp-pagina, .esp-tab th, .esp-tab tr.linha-fer td, .esp-tab tr.linha-falta td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .esp-nota { font-size: 8pt; margin: 3mm 0 0; }
+  .esp-ass { margin-top: 10mm; display: grid; grid-template-columns: 1fr 1fr; gap: 12mm; text-align: center; font-size: 8pt; }
+  .esp-ass .linha { display: block; border-top: 1px solid #000; margin-bottom: 1.5mm; }
+}
+
 </style>
 </head>
 <body>
@@ -1544,6 +1599,100 @@ window.FT_CONFIG = {
     if (reais) partes.push(inteiro(reais) + (reais === 1 ? ' real' : (reais % 1e6 === 0 ? ' de reais' : ' reais')));
     if (cent) partes.push(inteiro(cent) + (cent === 1 ? ' centavo' : ' centavos'));
     return (partes.join(' e ') || 'zero reais').toLocaleUpperCase('pt-BR');
+  };
+
+  /* =================== FERIADOS =================== */
+  // Páscoa (algoritmo de Meeus/Jones/Butcher)
+  function pascoa(ano) {
+    const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25),
+      g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4,
+      l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+      mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+    return ano + '-' + String(mes).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+  }
+  C.pascoa = pascoa;
+  C.TIPOS_FERIADO = { nacional: 'Nacional', estadual: 'Estadual (SP)', municipal: 'Municipal (Guararema)', facultativo: 'Ponto facultativo', outro: 'Outro' };
+  // Feriados que valem para a Forneria (Guararema/SP). cfg = { extras: [{data, nome, tipo}], desativados: [datas], ativados: [datas] }
+  C.feriadosDoAno = function (ano, cfg) {
+    cfg = cfg || {};
+    const P = pascoa(ano), f = {};
+    const add = function (data, nome, tipo, ativo) { f[data] = { data: data, nome: nome, tipo: tipo, ativo: ativo !== false, fixo: true }; };
+    const d = function (mmdd) { return ano + '-' + mmdd; };
+    add(d('01-01'), 'Confraternização Universal', 'nacional');
+    add(FT.somaDias(P, -48), 'Carnaval (segunda)', 'facultativo', false);
+    add(FT.somaDias(P, -47), 'Carnaval (terça)', 'facultativo', false);
+    add(FT.somaDias(P, -2), 'Sexta-feira Santa (Paixão)', 'nacional');
+    add(d('04-21'), 'Tiradentes', 'nacional');
+    add(d('05-01'), 'Dia do Trabalho', 'nacional');
+    add(FT.somaDias(P, 60), 'Corpus Christi', 'municipal');
+    add(d('07-09'), 'Revolução Constitucionalista', 'estadual');
+    add(d('09-07'), 'Independência do Brasil', 'nacional');
+    add(d('09-19'), 'Aniversário de Guararema', 'municipal');
+    add(d('10-12'), 'Nossa Senhora Aparecida', 'nacional');
+    add(d('11-02'), 'Finados', 'nacional');
+    add(d('11-15'), 'Proclamação da República', 'nacional');
+    add(d('11-20'), 'Dia de Zumbi e da Consciência Negra', 'nacional');
+    add(d('12-25'), 'Natal', 'nacional');
+    (cfg.extras || []).forEach(function (x) { if (x.data && x.data.slice(0, 4) === String(ano)) f[x.data] = { data: x.data, nome: x.nome, tipo: x.tipo || 'outro', ativo: true, fixo: false }; });
+    (cfg.desativados || []).forEach(function (x) { if (f[x]) f[x].ativo = false; });
+    (cfg.ativados || []).forEach(function (x) { if (f[x]) f[x].ativo = true; });
+    return f;
+  };
+  // feriados ativos entre duas datas: { 'aaaa-mm-dd': {nome, tipo} }
+  C.feriadosNoPeriodo = function (de, ate, cfg) {
+    const r = {};
+    for (let a = +de.slice(0, 4); a <= +ate.slice(0, 4); a++) {
+      const f = C.feriadosDoAno(a, cfg);
+      Object.keys(f).forEach(function (k) { if (k >= de && k <= ate && f[k].ativo) r[k] = f[k]; });
+    }
+    return r;
+  };
+
+  /* =================== ESPELHO DE PONTO =================== */
+  // minutos entre 22h e 5h (horário de Brasília, UTC-3) dentro do turno
+  C.minutosNoturnos = function (ent, sai) {
+    if (!ent || !sai) return 0;
+    const ini = Math.floor(new Date(ent).getTime() / 60000), fim = Math.floor(new Date(sai).getTime() / 60000);
+    let n = 0;
+    for (let m = ini; m < fim && m - ini < 24 * 60; m++) {
+      const loc = (((m - 180) % 1440) + 1440) % 1440;
+      if (loc >= 1320 || loc < 300) n++;
+    }
+    return n;
+  };
+  C.hhmm = function (min) { min = Math.round(min || 0); return Math.floor(min / 60) + ':' + String(min % 60).padStart(2, '0'); };
+
+  /* Monta o espelho do mês de um funcionário.
+   * regs: registros do funcionário no mês; feriados: mapa de C.feriadosNoPeriodo; escalados: { 'aaaa-mm-dd': true } */
+  C.espelho = function (mes, regs, feriados, escalados, hoje) {
+    const p = mes.split('-').map(Number);
+    const ultimo = new Date(p[0], p[1], 0).getDate();
+    const porDia = {};
+    regs.forEach(function (r) { if (r.anulado) return; const d = FT.dataSP(r.entrada); (porDia[d] = porDia[d] || []).push(r); });
+    const dias = [], tot = { dias: 0, min: 0, noturnos: 0, feriadosDias: 0, feriadosMin: 0, domingos: 0, faltas: 0, semSaida: 0, ajustes: 0 };
+    for (let i = 1; i <= ultimo; i++) {
+      const d = mes + '-' + String(i).padStart(2, '0');
+      const fer = feriados[d] || null, dom = FT.diaSemana(d) === 0;
+      const rs = (porDia[d] || []).sort(function (a, b) { return new Date(a.entrada) - new Date(b.entrada); });
+      const turnos = rs.map(function (r) {
+        const min = r.saida ? Math.max(0, (new Date(r.saida) - new Date(r.entrada)) / 60000) : 0;
+        const not = C.minutosNoturnos(r.entrada, r.saida);
+        if (!r.saida) tot.semSaida++;
+        if (r.ajustado || r.origem === 'manual') tot.ajustes++;
+        return { reg: r, min: min, noturnos: not };
+      });
+      const min = turnos.reduce(function (s, t) { return s + t.min; }, 0), not = turnos.reduce(function (s, t) { return s + t.noturnos; }, 0);
+      const trabalhou = turnos.length > 0;
+      const falta = !trabalhou && escalados && escalados[d] && d < hoje;
+      if (trabalhou) {
+        tot.dias++; tot.min += min; tot.noturnos += not;
+        if (fer) { tot.feriadosDias++; tot.feriadosMin += min; }
+        if (dom) tot.domingos++;
+      }
+      if (falta) tot.faltas++;
+      dias.push({ data: d, feriado: fer, domingo: dom, turnos: turnos, min: min, noturnos: not, trabalhou: trabalhou, falta: !!falta, escalado: !!(escalados && escalados[d]) });
+    }
+    return { dias: dias, totais: tot };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -3461,41 +3610,60 @@ window.FT_CONFIG = {
   };
 })();
 
-/* Forneria Toscana — tela Ponto eletrônico (acompanhamento e ajustes) */
+/* Forneria Toscana — tela Ponto eletrônico: lista de funcionários → espelho de ponto de cada um,
+ * feriados e relatório mensal para a contabilidade */
 (function () {
   'use strict';
-  const FT = window.FT;
+  const FT = window.FT, C = FT.calc;
   const $ = FT.$, esc = FT.esc;
-  const st = { semana: null, regs: [], funcs: [], porId: {}, ajustando: null };
+  const st = { mes: null, regs: [], funcs: [], porId: {}, cpf: {}, escalados: {}, feriados: {}, cfgFer: {}, sel: null, ajustando: null, anoFer: null, abertos: [] };
+
+  function somaMes(chave, n) { const p = chave.split('-').map(Number); return FT.iso(new Date(p[0], p[1] - 1 + n, 1, 12)).slice(0, 7); }
+  function nomeMes(chave) { const p = chave.split('-'); return FT.MESES[+p[1] - 1].toLocaleUpperCase('pt-BR') + '/' + p[0]; }
+  function ultimoDia(chave) { const p = chave.split('-').map(Number); return FT.iso(new Date(p[0], p[1], 0, 12)); }
+  function nome(id) { return st.porId[id] ? st.porId[id].nome : 'REMOVIDO DO CADASTRO'; }
+  function rotFeriado(f) { return 'FERIADO ' + (C.TIPOS_FERIADO[f.tipo] || '').toUpperCase() + ' · ' + f.nome.toUpperCase(); }
 
   function montar() {
     $('#tela-ponto').innerHTML =
-      '<div class="cab-tela"><div><h1>Ponto eletrônico</h1><p>Entradas e saídas batidas pelo celular na Forneria. As entradas marcam o dia trabalhado no Pagamento 10% automaticamente.</p></div>' +
-      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-copiar-link">Copiar link do ponto</button><button type="button" class="btn" id="pt-manual">Lançar ponto manual</button></div></div>' +
+      '<div class="cab-tela"><div><h1>Ponto eletrônico</h1><p>Clique num funcionário para ver o espelho de ponto do mês. As entradas marcam o dia trabalhado no Pagamento 10% automaticamente.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-feriados">Feriados</button><button type="button" class="btn btn-sec" id="pt-copiar-link">Copiar link do ponto</button><button type="button" class="btn btn-sec" id="pt-manual">Lançar ponto manual</button></div></div>' +
       '<div class="painel agora"><h3>Trabalhando agora</h3><div id="pt-agora" class="es-pessoas"></div></div>' +
-      '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="pt-ant" aria-label="Semana anterior">‹</button>' +
-      '<div class="nav-semana-t"><span>Semana</span><b id="pt-rotulo"></b></div>' +
-      '<button type="button" class="btn-icone" id="pt-prox" aria-label="Próxima semana">›</button>' +
-      '<button type="button" class="btn btn-sec btn-p" id="pt-atual">Esta semana</button></div>' +
-      '<div class="es-resumo" id="pt-resumo"></div></div>' +
-      '<div class="rolagem"><table class="lista pt" id="pt-tabela"></table></div>' +
-      '<h2 class="h2-sec">Horas por pessoa na semana</h2><div class="rolagem"><table class="lista" id="pt-horas"></table></div>' +
-      '<div class="painel local-ponto"><h3>Local da Forneria</h3><p class="sub">O ponto só é aceito dentro deste raio. O GPS do celular costuma errar de 5 a 30 metros, por isso o raio não pode ser zero.</p>' +
+      '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="pt-ant" aria-label="Mês anterior">‹</button>' +
+      '<div class="nav-semana-t"><span>Mês</span><b id="pt-rotulo"></b></div>' +
+      '<button type="button" class="btn-icone" id="pt-prox" aria-label="Próximo mês">›</button>' +
+      '<button type="button" class="btn btn-sec btn-p" id="pt-atual">Mês atual</button></div>' +
+      '<div class="acoes-linha"><span class="rel-tit">Relatório para a contabilidade:</span><button type="button" class="btn" id="pt-rel-imprimir">Imprimir / PDF</button><button type="button" class="btn" id="pt-rel-excel">Baixar Excel</button></div></div>' +
+      '<p class="msg" id="pt-fer-mes" hidden></p>' +
+      '<div id="pt-lista-box"><div class="rolagem"><table class="lista pt-lista" id="pt-lista"></table></div></div>' +
+      '<div id="pt-det-box" hidden></div>' +
+      '<details class="painel local-ponto"><summary><b>Local da Forneria</b> · onde o ponto é aceito</summary><p class="sub">O ponto só é aceito dentro deste raio. O GPS do celular costuma errar de 5 a 30 metros, por isso o raio não pode ser zero.</p>' +
       '<div class="grade-local"><label for="pt-lat">Latitude<input id="pt-lat" inputmode="decimal"></label><label for="pt-lng">Longitude<input id="pt-lng" inputmode="decimal"></label>' +
       '<label for="pt-raio">Raio aceito (metros)<input id="pt-raio" type="number" min="20" max="1000"></label><label for="pt-prec">Precisão mínima do GPS (metros)<input id="pt-prec" type="number" min="10" max="1000"></label></div>' +
       '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-aqui">Usar a localização deste aparelho</button><a class="btn btn-sec" id="pt-mapa" target="_blank" rel="noopener">Ver no mapa</a><button type="button" class="btn" id="pt-salvar-local">Salvar local</button></div>' +
-      '<p class="dica" id="pt-local-msg"></p></div>';
+      '<p class="dica" id="pt-local-msg"></p></details>';
 
-    $('#pt-ant').addEventListener('click', function () { irPara(FT.somaDias(st.semana, -7)); });
-    $('#pt-prox').addEventListener('click', function () { irPara(FT.somaDias(st.semana, 7)); });
-    $('#pt-atual').addEventListener('click', function () { irPara(FT.segunda(FT.hoje())); });
+    $('#pt-ant').addEventListener('click', function () { irPara(somaMes(st.mes, -1)); });
+    $('#pt-prox').addEventListener('click', function () { irPara(somaMes(st.mes, 1)); });
+    $('#pt-atual').addEventListener('click', function () { irPara(FT.hoje().slice(0, 7)); });
     $('#pt-copiar-link').addEventListener('click', function (e) { FT.copiar(FT.linkPonto(), e.currentTarget); });
-    $('#pt-manual').addEventListener('click', function () { abrirAjuste(null); });
-    $('#pt-tabela').addEventListener('click', function (e) { const b = e.target.closest('[data-ajustar]'); if (b) abrirAjuste(st.regs.find(function (r) { return r.id === b.dataset.ajustar; })); });
+    $('#pt-manual').addEventListener('click', function () { abrirAjuste(null, st.sel); });
+    $('#pt-feriados').addEventListener('click', abrirFeriados);
+    $('#pt-rel-imprimir').addEventListener('click', function () { imprimir(null); });
+    $('#pt-rel-excel').addEventListener('click', baixarExcel);
+    $('#pt-lista').addEventListener('click', function (e) { const tr = e.target.closest('[data-func]'); if (tr) abrirDetalhe(tr.dataset.func); });
+    $('#pt-lista').addEventListener('keydown', function (e) { const tr = e.target.closest('[data-func]'); if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); abrirDetalhe(tr.dataset.func); } });
+    $('#pt-det-box').addEventListener('click', function (e) {
+      if (e.target.closest('#pt-voltar')) { fecharDetalhe(); return; }
+      if (e.target.closest('#pt-det-imprimir')) { imprimir([st.sel]); return; }
+      if (e.target.closest('#pt-det-manual')) { abrirAjuste(null, st.sel); return; }
+      const b = e.target.closest('[data-ajustar]'); if (b) abrirAjuste(st.regs.find(function (r) { return r.id === b.dataset.ajustar; }));
+    });
     $('#pt-aqui').addEventListener('click', usarAqui);
     $('#pt-salvar-local').addEventListener('click', salvarLocal);
     ['pt-lat', 'pt-lng'].forEach(function (id) { $('#' + id).addEventListener('input', atualizarMapa); });
 
+    // diálogo de ajuste / lançamento manual
     const dlg = document.createElement('dialog');
     dlg.id = 'dlg-ponto'; dlg.setAttribute('aria-labelledby', 'h-ponto');
     dlg.innerHTML = '<form class="dlg form" id="form-ponto" novalidate><h2 id="h-ponto">Ajustar ponto</h2><p id="ap-info"></p>' +
@@ -3508,88 +3676,260 @@ window.FT_CONFIG = {
     document.body.appendChild(dlg);
     $('#ap-cancelar').addEventListener('click', function () { dlg.close(); });
     $('#form-ponto').addEventListener('submit', salvarAjuste);
+
+    // diálogo de feriados
+    const df = document.createElement('dialog');
+    df.id = 'dlg-feriados'; df.setAttribute('aria-labelledby', 'h-fer');
+    df.innerHTML = '<div class="dlg"><h2 id="h-fer">Feriados</h2>' +
+      '<p>Nacionais, estadual (SP) e municipais (Guararema) já vêm cadastrados. Desmarque o que não vale e acrescente os que faltarem. Quem trabalhar num feriado ativo aparece em destaque no relatório.</p>' +
+      '<div class="nav-semana"><button type="button" class="btn-icone" id="fer-ant" aria-label="Ano anterior">‹</button><div class="nav-semana-t"><span>Ano</span><b id="fer-ano"></b></div><button type="button" class="btn-icone" id="fer-prox" aria-label="Próximo ano">›</button></div>' +
+      '<div class="rolagem"><table class="lista" id="fer-tabela"></table></div>' +
+      '<div class="fer-add"><input id="fer-data" type="date" aria-label="Data do feriado"><input id="fer-nome" placeholder="Nome do feriado" aria-label="Nome do feriado">' +
+      '<select id="fer-tipo" aria-label="Tipo"><option value="municipal">Municipal</option><option value="estadual">Estadual</option><option value="nacional">Nacional</option><option value="outro">Outro</option></select>' +
+      '<button type="button" class="btn" id="fer-add">Adicionar</button></div>' +
+      '<p class="erro-form" id="fer-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><button class="btn" type="button" id="fer-fechar">Fechar</button></div></div>';
+    document.body.appendChild(df);
+    $('#fer-fechar').addEventListener('click', function () { df.close(); irPara(st.mes); });
+    $('#fer-ant').addEventListener('click', function () { st.anoFer--; desenharFeriados(); });
+    $('#fer-prox').addEventListener('click', function () { st.anoFer++; desenharFeriados(); });
+    $('#fer-add').addEventListener('click', adicionarFeriado);
+    $('#fer-tabela').addEventListener('change', function (e) { const c = e.target.closest('[data-fer]'); if (c) alternarFeriado(c.dataset.fer, c.checked); });
+    $('#fer-tabela').addEventListener('click', function (e) { const b = e.target.closest('[data-remover]'); if (b) removerFeriado(b.dataset.remover); });
   }
 
-  /* ---------- semana ---------- */
-  async function irPara(semana) {
-    st.semana = semana;
-    $('#pt-rotulo').textContent = FT.rotuloSemana(semana);
-    $('#pt-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
+  /* ---------- carregar o mês ---------- */
+  async function irPara(mes) {
+    st.mes = mes;
+    $('#pt-rotulo').textContent = nomeMes(mes);
+    const ini = mes + '-01', fim = ultimoDia(mes);
     try {
       st.funcs = await FT.obterFuncionarios(true);
       st.porId = {}; st.funcs.forEach(function (f) { st.porId[f.id] = f; });
-      st.regs = await FT.store.ponto.listar(semana, FT.somaDias(semana, 6));
-      desenhar();
-      const ab = await FT.store.ponto.abertos();
+      st.cfgFer = (await FT.store.config.ler('feriados')) || {};
+      st.feriados = C.feriadosNoPeriodo(ini, fim, st.cfgFer);
+      st.regs = await FT.store.ponto.listar(ini, fim);
+      st.cpf = {}; try { (await FT.store.acessos.listar()).forEach(function (a) { st.cpf[a.funcionario_id] = a.cpf; }); } catch (e) { /* sem acessos */ }
+      // quem estava na escala em cada dia (para apontar possíveis faltas)
+      st.escalados = {};
+      try {
+        const esc_ = await FT.store.escala.listar(FT.segunda(ini), FT.segunda(fim));
+        Object.keys(esc_).forEach(function (sem) {
+          const dias = (esc_[sem] && esc_[sem].dias) || {};
+          Object.keys(dias).forEach(function (d) {
+            const dia = dias[d]; if (!dia.aberto || d < ini || d > fim) return;
+            Object.keys(dia.alocados || {}).forEach(function (s) {
+              (dia.alocados[s] || []).slice(0, +((dia.vagas || {})[s] || 0)).forEach(function (id) { if (id) (st.escalados[id] = st.escalados[id] || {})[d] = true; });
+            });
+          });
+        });
+      } catch (e) { /* sem escala */ }
+      const ab = await FT.store.ponto.abertos(); st.abertos = ab;
       $('#pt-agora').innerHTML = ab.length ? ab.map(function (r) {
-        return '<span class="pessoa-chip"><b>' + esc(nome(r.funcionario_id)) + '</b>desde ' + FT.horaSP(r.entrada) + '<small>' + FT.ddmm(FT.dataSP(r.entrada)) + '</small></span>';
+        return '<button type="button" class="pessoa-chip" data-func="' + esc(r.funcionario_id) + '"><b>' + esc(nome(r.funcionario_id)) + '</b>desde ' + FT.horaSP(r.entrada) + '<small>' + FT.ddmm(FT.dataSP(r.entrada)) + '</small></button>';
       }).join('') : '<p class="vazio-bloco">Ninguém com entrada aberta agora.</p>';
+      $('#pt-agora').onclick = function (e) { const b = e.target.closest('[data-func]'); if (b) abrirDetalhe(b.dataset.func); };
+      const fer = Object.keys(st.feriados).sort();
+      $('#pt-fer-mes').hidden = !fer.length;
+      $('#pt-fer-mes').innerHTML = fer.length ? '<b>Feriados no mês:</b> ' + fer.map(function (d) { return FT.ddmm(d) + ' ' + esc(st.feriados[d].nome.toUpperCase()); }).join(' · ') : '';
+      desenharLista();
+      if (st.sel) abrirDetalhe(st.sel); else fecharDetalhe();
     } catch (e) { FT.aviso('Não consegui carregar o ponto: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 4 (ponto) foi rodado no Supabase.', true); }
   }
-  function nome(id) { return st.porId[id] ? st.porId[id].nome : 'REMOVIDO DO CADASTRO'; }
 
-  function situacao(r) {
-    const chips = [];
-    if (r.anulado) chips.push('<span class="tag tag-motoboy">Anulado</span>');
-    else if (!r.saida) chips.push(Date.now() - new Date(r.entrada) > 20 * 3600e3 ? '<span class="chip-parcial">sem saída</span>' : '<span class="tag tag-ok">No turno</span>');
-    if (r.origem === 'manual') chips.push('<span class="tag">Manual</span>');
-    else if (r.ajustado) chips.push('<span class="tag">Ajustado</span>');
-    return chips.join(' ');
+  function espelhoDe(id) { return C.espelho(st.mes, st.regs.filter(function (r) { return r.funcionario_id === id; }), st.feriados, st.escalados[id] || {}, FT.hoje()); }
+  function pessoasDoMes() {
+    const ids = {};
+    st.funcs.forEach(function (f) { if (f.ativo !== false) ids[f.id] = 1; });
+    st.regs.forEach(function (r) { ids[r.funcionario_id] = 1; });
+    return Object.keys(ids).sort(function (a, b) { return nome(a).localeCompare(nome(b), 'pt-BR'); });
   }
-  function local(d, p) { return d == null ? '—' : Math.round(d) + ' m' + (p ? ' <span class="prec">±' + Math.round(p) + '</span>' : ''); }
-  function difere(a, b) { return a && b && new Date(a).getTime() !== new Date(b).getTime(); }
 
-  function desenhar() {
-    const regs = st.regs;
-    const validos = regs.filter(function (r) { return !r.anulado; });
-    const pessoasDias = {}; validos.forEach(function (r) { pessoasDias[r.funcionario_id + '|' + FT.dataSP(r.entrada)] = 1; });
-    $('#pt-resumo').innerHTML = '<span><b>' + validos.length + '</b> turnos</span><span><b>' + Object.keys(pessoasDias).length + '</b> dias-pessoa</span>' +
-      (validos.filter(function (r) { return !r.saida && Date.now() - new Date(r.entrada) > 20 * 3600e3; }).length ? '<span class="chip-parcial">' + validos.filter(function (r) { return !r.saida && Date.now() - new Date(r.entrada) > 20 * 3600e3; }).length + ' sem saída</span>' : '');
-    if (!regs.length) {
-      $('#pt-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Nenhum ponto batido nesta semana.</td></tr></tbody>';
-    } else {
-      let h = '<thead><tr><th>Dia</th><th>Funcionário</th><th>Entrada</th><th>Saída</th><th class="num">Horas</th><th>Distância (entrada / saída)</th><th>Situação</th><th></th></tr></thead><tbody>';
-      let diaAnt = '';
-      regs.forEach(function (r) {
-        const d = FT.dataSP(r.entrada);
-        const novoDia = d !== diaAnt; diaAnt = d;
-        h += '<tr class="' + (r.anulado ? 'inativo' : '') + (novoDia ? ' novo-dia' : '') + '"><td>' + (novoDia ? '<b>' + FT.DIAS_CURTOS[FT.diaSemana(d)] + ' ' + FT.ddmm(d) + '</b>' : '') + '</td>' +
-          '<td><b>' + esc(nome(r.funcionario_id)) + '</b>' + (r.motivo_ajuste ? '<small class="motivo">' + esc(r.motivo_ajuste) + '</small>' : '') + '</td>' +
-          '<td>' + FT.horaSP(r.entrada) + (difere(r.entrada_original, r.entrada) ? '<small class="orig">era ' + FT.horaSP(r.entrada_original) + '</small>' : '') + '</td>' +
-          '<td>' + (r.saida ? FT.horaSP(r.saida) + (FT.dataSP(r.saida) !== d ? ' <small>(' + FT.ddmm(FT.dataSP(r.saida)) + ')</small>' : '') : '—') + (difere(r.saida_original, r.saida) ? '<small class="orig">era ' + FT.horaSP(r.saida_original) + '</small>' : '') + '</td>' +
-          '<td class="num">' + (FT.duracao(r.entrada, r.saida) || '—') + '</td>' +
-          '<td>' + local(r.entrada_distancia, r.entrada_precisao) + ' / ' + local(r.saida_distancia, r.saida_precisao) + '</td>' +
-          '<td>' + situacao(r) + '</td><td class="num"><button type="button" class="link" data-ajustar="' + esc(r.id) + '">Ajustar</button></td></tr>';
-      });
-      $('#pt-tabela').innerHTML = h + '</tbody>';
-    }
-    // horas por pessoa
-    const tot = {};
-    validos.forEach(function (r) {
-      const t = tot[r.funcionario_id] = tot[r.funcionario_id] || { dias: {}, min: 0, abertos: 0 };
-      t.dias[FT.dataSP(r.entrada)] = 1;
-      if (r.saida) t.min += Math.max(0, (new Date(r.saida) - new Date(r.entrada)) / 60000); else t.abertos++;
-    });
-    const ids = Object.keys(tot).sort(function (a, b) { return nome(a).localeCompare(nome(b), 'pt-BR'); });
-    $('#pt-horas').innerHTML = ids.length ? '<thead><tr><th>Funcionário</th><th class="num">Dias</th><th class="num">Horas trabalhadas</th><th>Observação</th></tr></thead><tbody>' +
+  /* ---------- lista de funcionários ---------- */
+  function desenharLista() {
+    const ids = pessoasDoMes();
+    const aberto = {}; st.abertos.forEach(function (r) { aberto[r.funcionario_id] = r; });
+    if (!ids.length) { $('#pt-lista').innerHTML = '<tbody><tr><td class="vazio-lista">Nenhum funcionário cadastrado.</td></tr></tbody>'; return; }
+    $('#pt-lista').innerHTML = '<thead><tr><th>Funcionário</th><th class="num">Dias</th><th class="num">Horas</th><th class="num">Noturnas</th><th class="num">Feriados trabalhados</th><th class="num">Faltas na escala</th><th>Pendências</th><th></th></tr></thead><tbody>' +
       ids.map(function (id) {
-        const t = tot[id], m = Math.round(t.min);
-        return '<tr><td><b>' + esc(nome(id)) + '</b></td><td class="num">' + Object.keys(t.dias).length + '</td><td class="num">' + Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') + '</td><td>' + (t.abertos ? t.abertos + ' turno(s) sem saída não somados' : '') + '</td></tr>';
-      }).join('') + '</tbody>' : '<tbody><tr><td class="vazio-lista">Sem horas nesta semana.</td></tr></tbody>';
+        const f = st.porId[id] || {}, t = espelhoDe(id).totais;
+        const pend = [];
+        if (t.semSaida) pend.push('<span class="chip-parcial">' + t.semSaida + ' sem saída</span>');
+        if (t.ajustes) pend.push('<span class="tag">' + t.ajustes + ' ajuste(s)</span>');
+        if (!st.cpf[id] && f.ativo !== false) pend.push('<span class="tag">sem acesso</span>');
+        return '<tr data-func="' + esc(id) + '" tabindex="0" class="' + (t.dias ? '' : 'sem-registro') + '"><td><b>' + esc(nome(id)) + '</b>' + (aberto[id] ? ' <span class="tag tag-ok">no turno</span>' : '') +
+          '<small>' + esc([FT.nomeTipo(f.tipo || ''), f.setor ? FT.nomeSetor(f.setor) : ''].filter(Boolean).join(' · ')) + '</small></td>' +
+          '<td class="num">' + (t.dias || '—') + '</td><td class="num">' + (t.min ? C.hhmm(t.min) : '—') + '</td><td class="num">' + (t.noturnos ? C.hhmm(t.noturnos) : '—') + '</td>' +
+          '<td class="num">' + (t.feriadosDias ? '<span class="fer-chip">★ ' + t.feriadosDias + '</span>' : '—') + '</td>' +
+          '<td class="num">' + (t.faltas ? '<span class="falta-chip">' + t.faltas + '</span>' : '—') + '</td>' +
+          '<td>' + pend.join(' ') + '</td><td class="num"><span class="link">Ver espelho ›</span></td></tr>';
+      }).join('') + '</tbody>';
+  }
+
+  /* ---------- espelho de um funcionário ---------- */
+  function abrirDetalhe(id) {
+    st.sel = id;
+    const f = st.porId[id] || {}, e = espelhoDe(id), t = e.totais;
+    let h = '<div class="det-cab"><button type="button" class="btn btn-sec" id="pt-voltar">‹ Voltar para a lista</button>' +
+      '<div class="det-nome"><h2>' + esc(nome(id)) + '</h2><p>' + esc([FT.nomeTipo(f.tipo || ''), f.cargo, f.setor ? FT.nomeSetor(f.setor) : '', st.cpf[id] ? 'CPF ' + FT.formatarCPF(st.cpf[id]) : ''].filter(Boolean).join(' · ')) + ' · ' + nomeMes(st.mes) + '</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-det-manual">Lançar ponto manual</button><button type="button" class="btn" id="pt-det-imprimir">Imprimir espelho</button></div></div>' +
+      '<div class="kpis kpis-5">' + [
+        { t: 'Dias trabalhados', v: t.dias },
+        { t: 'Horas no mês', v: C.hhmm(t.min) },
+        { t: 'Horas noturnas (22h–5h)', v: C.hhmm(t.noturnos) },
+        { t: 'Feriados trabalhados', v: t.feriadosDias + (t.feriadosDias ? ' · ' + C.hhmm(t.feriadosMin) : ''), d: t.feriadosDias > 0 },
+        { t: 'Faltas na escala', v: t.faltas }
+      ].map(function (k) { return '<article class="kpi' + (k.d ? ' kpi-fer' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p></article>'; }).join('') + '</div>' +
+      '<div class="rolagem"><table class="lista espelho"><thead><tr><th>Dia</th><th>Entrada</th><th>Saída</th><th class="num">Horas</th><th class="num">Noturnas</th><th>Ocorrência</th><th>Distância</th><th></th></tr></thead><tbody>';
+    e.dias.forEach(function (d) {
+      const dia = '<b>' + FT.ddmm(d.data) + '</b> ' + FT.DIAS_CURTOS[FT.diaSemana(d.data)];
+      const ocor = [];
+      if (d.feriado) ocor.push('<span class="fer-chip">★ ' + esc(rotFeriado(d.feriado)) + (d.trabalhou ? ' · TRABALHOU: HORA EXTRA' : '') + '</span>');
+      if (d.domingo && d.trabalhou) ocor.push('<span class="tag">DOMINGO</span>');
+      if (d.falta) ocor.push('<span class="falta-chip">FALTA? ESTAVA NA ESCALA</span>');
+      const cls = (d.feriado && d.trabalhou ? 'linha-fer' : '') + (d.falta ? ' linha-falta' : '') + (!d.trabalhou && !d.feriado && !d.falta ? ' folga' : '');
+      if (!d.turnos.length) {
+        h += '<tr class="' + cls + '"><td>' + dia + '</td><td>—</td><td>—</td><td class="num"></td><td class="num"></td><td>' + (ocor.join(' ') || '<span class="vazio">folga</span>') + '</td><td></td><td></td></tr>';
+        return;
+      }
+      d.turnos.forEach(function (t, i) {
+        const r = t.reg;
+        const ajuste = r.origem === 'manual' ? '<span class="tag">MANUAL</span>' : r.ajustado ? '<span class="tag">AJUSTADO</span>' : '';
+        h += '<tr class="' + cls + '"><td>' + (i === 0 ? dia : '') + '</td><td>' + FT.horaSP(r.entrada) + '</td>' +
+          '<td>' + (r.saida ? FT.horaSP(r.saida) + (FT.dataSP(r.saida) !== d.data ? ' <small>(' + FT.ddmm(FT.dataSP(r.saida)) + ')</small>' : '') : '<span class="chip-parcial">sem saída</span>') + '</td>' +
+          '<td class="num">' + (r.saida ? C.hhmm(t.min) : '—') + '</td><td class="num">' + (t.noturnos ? C.hhmm(t.noturnos) : '—') + '</td>' +
+          '<td>' + (i === 0 ? ocor.join(' ') : '') + ' ' + ajuste + (r.motivo_ajuste ? '<small class="motivo">' + esc(r.motivo_ajuste) + '</small>' : '') + '</td>' +
+          '<td>' + (r.entrada_distancia != null ? Math.round(r.entrada_distancia) + ' m' : '—') + '</td>' +
+          '<td class="num"><button type="button" class="link" data-ajustar="' + esc(r.id) + '">Ajustar</button></td></tr>';
+      });
+    });
+    h += '</tbody><tfoot><tr><td>Total</td><td></td><td></td><td class="num">' + C.hhmm(t.min) + '</td><td class="num">' + C.hhmm(t.noturnos) + '</td><td colspan="3">' + t.dias + ' dias · ' + t.feriadosDias + ' em feriado · ' + t.domingos + ' domingos</td></tr></tfoot></table></div>';
+    $('#pt-det-box').innerHTML = h;
+    $('#pt-lista-box').hidden = true; $('#pt-det-box').hidden = false;
+    window.scrollTo(0, 0);
+  }
+  function fecharDetalhe() { st.sel = null; $('#pt-det-box').hidden = true; $('#pt-lista-box').hidden = false; }
+
+  /* ---------- relatório para a contabilidade ---------- */
+  function idsRelatorio(ids) {
+    return (ids || pessoasDoMes()).filter(function (id) { const t = espelhoDe(id).totais; return ids ? true : (t.dias || t.faltas); });
+  }
+  function imprimir(ids) {
+    const lista = idsRelatorio(ids);
+    if (!lista.length) { FT.aviso('Nenhum ponto registrado em ' + nomeMes(st.mes) + '.', true); return; }
+    let area = document.getElementById('impressao');
+    if (!area) { area = document.createElement('div'); area.id = 'impressao'; document.body.appendChild(area); }
+    const fer = Object.keys(st.feriados).sort();
+    let h = '';
+    if (!ids) {
+      h += '<div class="esp-pagina"><header class="esp-cab"><div><b>FORNERIA TOSCANA</b><span>GUARAREMA/SP</span></div><div class="esp-tit"><b>RELATÓRIO DE PONTO · RESUMO</b><span>' + nomeMes(st.mes) + '</span></div></header>' +
+        '<table class="esp-tab"><thead><tr><th>FUNCIONÁRIO</th><th>CPF</th><th>TIPO</th><th class="num">DIAS</th><th class="num">HORAS</th><th class="num">NOTURNAS</th><th class="num">DIAS EM FERIADO</th><th class="num">HORAS EM FERIADO</th><th class="num">DOMINGOS</th><th class="num">FALTAS NA ESCALA</th></tr></thead><tbody>' +
+        lista.map(function (id) {
+          const f = st.porId[id] || {}, t = espelhoDe(id).totais;
+          return '<tr' + (t.feriadosDias ? ' class="linha-fer"' : '') + '><td>' + esc(nome(id)) + '</td><td>' + (st.cpf[id] ? FT.formatarCPF(st.cpf[id]) : '—') + '</td><td>' + esc(FT.nomeTipo(f.tipo || '')) + '</td><td class="num">' + t.dias + '</td><td class="num">' + C.hhmm(t.min) + '</td><td class="num">' + C.hhmm(t.noturnos) + '</td><td class="num">' + (t.feriadosDias ? '★ ' + t.feriadosDias : '0') + '</td><td class="num">' + C.hhmm(t.feriadosMin) + '</td><td class="num">' + t.domingos + '</td><td class="num">' + t.faltas + '</td></tr>';
+        }).join('') + '</tbody></table>' +
+        '<p class="esp-nota"><b>FERIADOS NO MÊS:</b> ' + (fer.length ? fer.map(function (d) { return FT.ddmm(d) + ' – ' + esc(st.feriados[d].nome.toUpperCase()) + ' (' + esc((C.TIPOS_FERIADO[st.feriados[d].tipo] || '').toUpperCase()) + ')'; }).join('; ') : 'NENHUM') + '.</p>' +
+        '<p class="esp-nota">★ = TRABALHOU EM FERIADO (VERIFICAR HORA EXTRA). HORAS NOTURNAS = TEMPO ENTRE 22H E 5H, EM HORAS DE RELÓGIO. FALTAS NA ESCALA = DIAS EM QUE O FUNCIONÁRIO ESTAVA NA ESCALA E NÃO BATEU PONTO (CONFERIR).</p></div>';
+    }
+    lista.forEach(function (id) {
+      const f = st.porId[id] || {}, e = espelhoDe(id), t = e.totais;
+      h += '<div class="esp-pagina"><header class="esp-cab"><div><b>FORNERIA TOSCANA</b><span>GUARAREMA/SP</span></div><div class="esp-tit"><b>ESPELHO DE PONTO</b><span>' + nomeMes(st.mes) + '</span></div></header>' +
+        '<div class="esp-func"><div><span>FUNCIONÁRIO</span><b>' + esc(nome(id)) + '</b></div><div><span>CPF</span><b>' + (st.cpf[id] ? FT.formatarCPF(st.cpf[id]) : '—') + '</b></div><div><span>TIPO</span><b>' + esc(FT.nomeTipo(f.tipo || '')) + '</b></div><div><span>CARGO / SETOR</span><b>' + esc([f.cargo, f.setor ? FT.nomeSetor(f.setor) : ''].filter(Boolean).join(' / ') || '—') + '</b></div></div>' +
+        '<table class="esp-tab"><thead><tr><th>DIA</th><th>ENTRADA</th><th>SAÍDA</th><th class="num">HORAS</th><th class="num">NOTURNAS</th><th>OCORRÊNCIA</th></tr></thead><tbody>';
+      e.dias.forEach(function (d) {
+        const dia = FT.ddmm(d.data) + ' ' + FT.DIAS_CURTOS[FT.diaSemana(d.data)].toUpperCase();
+        const oc = [];
+        if (d.feriado) oc.push('★ ' + rotFeriado(d.feriado) + (d.trabalhou ? ' – TRABALHOU (HORA EXTRA)' : ''));
+        if (d.falta) oc.push('FALTA? ESTAVA NA ESCALA');
+        const cls = (d.feriado && d.trabalhou ? 'linha-fer' : '') + (d.falta ? ' linha-falta' : '');
+        if (!d.turnos.length) { h += '<tr class="' + cls + '"><td>' + dia + '</td><td></td><td></td><td></td><td></td><td>' + esc(oc.join(' · ')) + '</td></tr>'; return; }
+        d.turnos.forEach(function (tu, i) {
+          const r = tu.reg, aj = r.origem === 'manual' ? 'LANÇADO MANUALMENTE' : r.ajustado ? 'AJUSTADO' : '';
+          h += '<tr class="' + cls + '"><td>' + (i === 0 ? dia : '') + '</td><td>' + FT.horaSP(r.entrada) + '</td><td>' + (r.saida ? FT.horaSP(r.saida) : 'SEM SAÍDA') + '</td><td class="num">' + (r.saida ? C.hhmm(tu.min) : '') + '</td><td class="num">' + (tu.noturnos ? C.hhmm(tu.noturnos) : '') + '</td>' +
+            '<td>' + esc([i === 0 ? oc.join(' · ') : '', aj ? aj + (r.motivo_ajuste ? ': ' + r.motivo_ajuste : '') : ''].filter(Boolean).join(' · ')) + '</td></tr>';
+        });
+      });
+      h += '</tbody><tfoot><tr><td colspan="3">TOTAIS: ' + t.dias + ' DIAS · ' + t.feriadosDias + ' EM FERIADO · ' + t.domingos + ' DOMINGOS · ' + t.faltas + ' FALTAS NA ESCALA</td><td class="num">' + C.hhmm(t.min) + '</td><td class="num">' + C.hhmm(t.noturnos) + '</td><td>HORAS EM FERIADO: ' + C.hhmm(t.feriadosMin) + '</td></tr></tfoot></table>' +
+        '<div class="via-ass esp-ass"><div><span class="linha"></span>ASSINATURA DO FUNCIONÁRIO</div><div><span class="linha"></span>FORNERIA TOSCANA</div></div></div>';
+    });
+    area.innerHTML = h;
+    setTimeout(function () { window.print(); }, 50);
+  }
+
+  function baixarExcel() {
+    if (typeof XLSX === 'undefined') { FT.aviso('O gerador de planilhas não carregou. Confira a internet e recarregue a página.', true); return; }
+    const lista = idsRelatorio(null);
+    if (!lista.length) { FT.aviso('Nenhum ponto registrado em ' + nomeMes(st.mes) + '.', true); return; }
+    const resumo = [['FUNCIONÁRIO', 'CPF', 'TIPO', 'CARGO', 'SETOR', 'DIAS TRABALHADOS', 'HORAS (HH:MM)', 'HORAS (DECIMAL)', 'HORAS NOTURNAS (HH:MM)', 'DIAS EM FERIADO', 'HORAS EM FERIADO (HH:MM)', 'DOMINGOS TRABALHADOS', 'FALTAS NA ESCALA', 'TURNOS SEM SAÍDA', 'AJUSTES']];
+    const regs = [['FUNCIONÁRIO', 'CPF', 'DATA', 'DIA', 'ENTRADA', 'SAÍDA', 'HORAS (HH:MM)', 'HORAS (DECIMAL)', 'NOTURNAS (HH:MM)', 'FERIADO', 'TIPO DO FERIADO', 'DOMINGO', 'OCORRÊNCIA', 'ORIGEM', 'MOTIVO DO AJUSTE']];
+    lista.forEach(function (id) {
+      const f = st.porId[id] || {}, e = espelhoDe(id), t = e.totais, cpf = st.cpf[id] ? FT.formatarCPF(st.cpf[id]) : '';
+      resumo.push([nome(id), cpf, FT.nomeTipo(f.tipo || '').toUpperCase(), f.cargo || '', f.setor ? FT.nomeSetor(f.setor) : '', t.dias, C.hhmm(t.min), +(t.min / 60).toFixed(2), C.hhmm(t.noturnos), t.feriadosDias, C.hhmm(t.feriadosMin), t.domingos, t.faltas, t.semSaida, t.ajustes]);
+      e.dias.forEach(function (d) {
+        const base = [nome(id), cpf, FT.ddmmaaaa(d.data), FT.DIAS[FT.diaSemana(d.data)].toUpperCase()];
+        const ferN = d.feriado ? d.feriado.nome.toUpperCase() : '', ferT = d.feriado ? (C.TIPOS_FERIADO[d.feriado.tipo] || '').toUpperCase() : '';
+        if (!d.turnos.length) { if (d.falta) regs.push(base.concat(['', '', '', '', '', ferN, ferT, d.domingo ? 'SIM' : '', 'FALTA? ESTAVA NA ESCALA', '', ''])); return; }
+        d.turnos.forEach(function (tu) {
+          const r = tu.reg;
+          regs.push(base.concat([FT.horaSP(r.entrada), r.saida ? FT.horaSP(r.saida) : 'SEM SAÍDA', r.saida ? C.hhmm(tu.min) : '', r.saida ? +(tu.min / 60).toFixed(2) : '', C.hhmm(tu.noturnos), ferN, ferT, d.domingo ? 'SIM' : '',
+            d.feriado ? 'TRABALHOU EM FERIADO – HORA EXTRA' : '', r.origem === 'manual' ? 'MANUAL' : r.ajustado ? 'AJUSTADO' : 'CELULAR', r.motivo_ajuste || '']));
+        });
+      });
+    });
+    const fer = [['DATA', 'DIA', 'FERIADO', 'TIPO']].concat(Object.keys(st.feriados).sort().map(function (d) { return [FT.ddmmaaaa(d), FT.DIAS[FT.diaSemana(d)].toUpperCase(), st.feriados[d].nome.toUpperCase(), (C.TIPOS_FERIADO[st.feriados[d].tipo] || '').toUpperCase()]; }));
+    const wb = XLSX.utils.book_new();
+    const largura = function (ws, cols) { ws['!cols'] = cols.map(function (w) { return { wch: w }; }); return ws; };
+    XLSX.utils.book_append_sheet(wb, largura(XLSX.utils.aoa_to_sheet(resumo), [32, 16, 12, 18, 18, 10, 10, 10, 12, 10, 12, 12, 10, 10, 8]), 'RESUMO');
+    XLSX.utils.book_append_sheet(wb, largura(XLSX.utils.aoa_to_sheet(regs), [32, 16, 12, 10, 9, 10, 10, 10, 10, 30, 22, 9, 34, 10, 30]), 'REGISTROS');
+    XLSX.utils.book_append_sheet(wb, largura(XLSX.utils.aoa_to_sheet(fer), [12, 12, 36, 24]), 'FERIADOS');
+    XLSX.writeFile(wb, 'ponto_forneria_toscana_' + st.mes + '.xlsx');
+    FT.aviso('Planilha do ponto de ' + nomeMes(st.mes) + ' baixada. Envie para a contabilidade.');
+  }
+
+  /* ---------- feriados ---------- */
+  function abrirFeriados() { st.anoFer = +st.mes.slice(0, 4); $('#fer-erro').textContent = ''; desenharFeriados(); $('#dlg-feriados').showModal(); }
+  function desenharFeriados() {
+    $('#fer-ano').textContent = st.anoFer;
+    const f = C.feriadosDoAno(st.anoFer, st.cfgFer);
+    $('#fer-tabela').innerHTML = '<thead><tr><th>Vale?</th><th>Data</th><th>Dia</th><th>Feriado</th><th>Tipo</th><th></th></tr></thead><tbody>' +
+      Object.keys(f).sort().map(function (d) {
+        const x = f[d];
+        return '<tr class="' + (x.ativo ? '' : 'inativo') + '"><td><input type="checkbox" data-fer="' + d + '" id="fer-' + d + '"' + (x.ativo ? ' checked' : '') + ' aria-label="Considerar ' + esc(x.nome) + '"></td><td>' + FT.ddmmaaaa(d) + '</td><td>' + FT.DIAS[FT.diaSemana(d)] + '</td><td><b>' + esc(x.nome) + '</b></td><td>' + esc(C.TIPOS_FERIADO[x.tipo] || x.tipo) + '</td>' +
+          '<td>' + (x.fixo ? '' : '<button type="button" class="link" data-remover="' + d + '">Remover</button>') + '</td></tr>';
+      }).join('') + '</tbody>';
+  }
+  async function salvarCfgFer() { await FT.store.config.salvar('feriados', st.cfgFer); }
+  async function alternarFeriado(d, ativo) {
+    const c = st.cfgFer; c.desativados = (c.desativados || []).filter(function (x) { return x !== d; }); c.ativados = (c.ativados || []).filter(function (x) { return x !== d; });
+    const padrao = (C.feriadosDoAno(+d.slice(0, 4), { extras: c.extras })[d] || {}).ativo;
+    if (ativo && !padrao) c.ativados.push(d);
+    if (!ativo && padrao) c.desativados.push(d);
+    try { await salvarCfgFer(); desenharFeriados(); } catch (e) { $('#fer-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(e); }
+  }
+  async function adicionarFeriado() {
+    const d = $('#fer-data').value, n = FT.mai($('#fer-nome').value), t = $('#fer-tipo').value;
+    if (!d) { $('#fer-erro').textContent = 'Escolha a data.'; return; }
+    if (!n) { $('#fer-erro').textContent = 'Escreva o nome do feriado.'; return; }
+    st.cfgFer.extras = (st.cfgFer.extras || []).filter(function (x) { return x.data !== d; }).concat([{ data: d, nome: n, tipo: t }]);
+    try { await salvarCfgFer(); $('#fer-erro').textContent = ''; $('#fer-nome').value = ''; st.anoFer = +d.slice(0, 4); desenharFeriados(); }
+    catch (e) { $('#fer-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(e); }
+  }
+  async function removerFeriado(d) {
+    st.cfgFer.extras = (st.cfgFer.extras || []).filter(function (x) { return x.data !== d; });
+    try { await salvarCfgFer(); desenharFeriados(); } catch (e) { $('#fer-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(e); }
   }
 
   /* ---------- ajuste / lançamento manual ---------- */
-  function abrirAjuste(r) {
+  function abrirAjuste(r, funcPadrao) {
     st.ajustando = r;
     $('#h-ponto').textContent = r ? 'Ajustar ponto' : 'Lançar ponto manual';
     $('#ap-info').textContent = r ? nome(r.funcionario_id) + (r.origem === 'app' ? ' · batido pelo celular' : ' · lançado manualmente') : 'Use quando alguém não conseguiu bater o ponto pelo celular.';
     $('#ap-func-l').hidden = !!r; $('#ap-anular-l').hidden = !r;
     if (!r) {
       $('#ap-func').innerHTML = '<option value="">Selecione</option>' + st.funcs.filter(function (f) { return f.ativo !== false; })
-        .map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.nome) + '</option>'; }).join('');
+        .map(function (f) { return '<option value="' + esc(f.id) + '"' + (f.id === funcPadrao ? ' selected' : '') + '>' + esc(f.nome) + '</option>'; }).join('');
     }
-    const hoje = FT.hoje();
-    $('#ap-entrada').value = r ? FT.localSP(r.entrada) : hoje + 'T18:00';
+    $('#ap-entrada').value = r ? FT.localSP(r.entrada) : FT.hoje() + 'T18:00';
     $('#ap-saida').value = r ? FT.localSP(r.saida) : '';
     $('#ap-motivo').value = ''; $('#ap-anular').checked = r ? !!r.anulado : false; $('#ap-erro').textContent = '';
     $('#dlg-ponto').showModal();
@@ -3610,20 +3950,19 @@ window.FT_CONFIG = {
       else await FT.store.ponto.lancar($('#ap-func').value, entrada, saida, motivo);
       $('#dlg-ponto').close();
       FT.aviso(r ? 'Ponto ajustado.' : 'Ponto lançado.');
-      await irPara(st.semana);
+      await irPara(st.mes);
     } catch (x) { err.textContent = 'Não foi possível salvar: ' + FT.textoErro(x); }
     finally { b.disabled = false; }
   }
 
   /* ---------- local da Forneria ---------- */
   function atualizarMapa() {
-    const lat = FT.lerValor($('#pt-lat').value.replace(',', '.')), lng = FT.lerValor($('#pt-lng').value.replace(',', '.'));
+    const lat = parseFloat(String($('#pt-lat').value).replace(',', '.')), lng = parseFloat(String($('#pt-lng').value).replace(',', '.'));
     $('#pt-mapa').href = 'https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng;
   }
   async function carregarLocal() {
     try {
-      const c = await FT.store.ponto.lerConfig();
-      if (!c) return;
+      const c = await FT.store.ponto.lerConfig(); if (!c) return;
       $('#pt-lat').value = c.lat; $('#pt-lng').value = c.lng; $('#pt-raio').value = c.raio_m; $('#pt-prec').value = c.precisao_max_m;
       atualizarMapa();
     } catch (e) { /* aviso já mostrado */ }
@@ -3655,7 +3994,7 @@ window.FT_CONFIG = {
   FT.telas.ponto = {
     abrir: async function () {
       if (!montado) { montado = true; montar(); carregarLocal(); }
-      await irPara(st.semana || FT.segunda(FT.hoje()));
+      await irPara(st.mes || FT.hoje().slice(0, 7));
     }
   };
 })();
