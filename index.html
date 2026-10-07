@@ -800,6 +800,14 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
   .ct-tab .ep-local td { display: table-cell !important; }
 }
 
+.ep-conv { white-space: nowrap; }
+.ep-conv-f { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font-size: 12.5px; color: var(--ink-2); }
+.ep-fat { width: 58px; text-align: right; padding: 4px 6px; }
+.ep-fat.salvo { box-shadow: 0 0 0 2px var(--bom); }
+.pr-cfat { display: flex; align-items: center; gap: 6px; }
+.pr-cex { align-self: end; margin: 0; }
+.ct-conv { display: block; font-size: 11px; color: var(--accent); font-weight: 600; }
+
 </style>
 </head>
 <body>
@@ -2532,7 +2540,7 @@ window.FT_CONFIG = {
   const porNome = function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); };
   function limparProduto(p) {
     const n = function (v) { return v === '' || v == null || isNaN(+v) ? null : +v; };
-    return { nome: FT.mai(p.nome), unidade: FT.mai(p.unidade || 'UN') || 'UN', local: p.local ? FT.mai(p.local) : null, ordem: +p.ordem || 0, estoque_minimo: n(p.estoque_minimo), ativo: p.ativo !== false, obs: p.obs ? FT.mai(p.obs) : null };
+    return { nome: FT.mai(p.nome), unidade: FT.mai(p.unidade || 'UN') || 'UN', local: p.local ? FT.mai(p.local) : null, ordem: +p.ordem || 0, estoque_minimo: n(p.estoque_minimo), unidade_contagem: p.unidade_contagem ? FT.mai(p.unidade_contagem) : null, fator_contagem: n(p.fator_contagem) > 0 ? n(p.fator_contagem) : null, ativo: p.ativo !== false, obs: p.obs ? FT.mai(p.obs) : null };
   }
   function limparFornecedor(f) {
     const t = function (v) { return v ? FT.mai(v) : null; };
@@ -3054,7 +3062,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT;
   const E = FT.est = {
-    UNIDADES: ['UN', 'KG', 'G', 'L', 'ML', 'CX', 'PCT', 'FD', 'DZ', 'SC', 'BD', 'GL', 'LATA', 'POTE', 'BALDE', 'ROLO', 'MAÇO', 'BANDEJA', 'PAR'],
+    UNIDADES: ['UN', 'PEÇA', 'KG', 'G', 'L', 'ML', 'CX', 'PCT', 'FD', 'DZ', 'SC', 'BD', 'GL', 'LATA', 'POTE', 'BALDE', 'ROLO', 'MAÇO', 'BANDEJA', 'PAR'],
     dados: null,
     // carrega produtos, fornecedores e vínculos (com cache curto)
     carregar: async function (forcar) {
@@ -3067,6 +3075,11 @@ window.FT_CONFIG = {
       E.dados = d; return d;
     },
     limpar: function () { E.dados = null; },
+    // como o produto é contado: ex. MUSSARELA no estoque em KG, contada em PEÇA (1 PEÇA = 2 KG)
+    contagem: function (p) {
+      const f = +p.fator_contagem;
+      return p.unidade_contagem && f > 0 && (p.unidade_contagem !== p.unidade || f !== 1) ? { un: p.unidade_contagem, fator: f, conv: true } : { un: p.unidade, fator: 1, conv: false };
+    },
     vinculosDoProduto: function (pid) { return E.dados.vinculos.filter(function (v) { return v.produto_id === pid; }); },
     vinculosDoFornecedor: function (fid) { return E.dados.vinculos.filter(function (v) { return v.fornecedor_id === fid; }); },
     nomeForn: function (fid) { const f = E.dados && E.dados.forn[fid]; return f ? (f.fantasia || f.nome) : '—'; },
@@ -5981,7 +5994,9 @@ window.FT_CONFIG = {
       const novo = Object.assign({}, p);
       if (el.dataset.campo === 'unidade') novo.unidade = el.value;
       if (el.dataset.campo === 'minimo') novo.estoque_minimo = E.lerQtd(el.value);
-      try { const s = await FT.store.estoque.produtos.salvar(novo); Object.assign(p, s); el.classList.add('salvo'); setTimeout(function () { el.classList.remove('salvo'); }, 900); desenharKpis(); }
+      if (el.dataset.campo === 'cont_un') { novo.unidade_contagem = el.value || null; if (!el.value) novo.fator_contagem = null; }
+      if (el.dataset.campo === 'cont_fator') novo.fator_contagem = E.lerQtd(el.value);
+      try { const s = await FT.store.estoque.produtos.salvar(novo); Object.assign(p, s); el.classList.add('salvo'); setTimeout(function () { el.classList.remove('salvo'); }, 900); desenharKpis(); if (el.dataset.campo === 'cont_un' || el.dataset.campo === 'unidade') { desenhar(); const f = document.querySelector('[data-campo="cont_fator"][data-id="' + p.id + '"]'); if (f && !p.fator_contagem) f.focus(); } }
       catch (x) { FT.aviso('Não foi possível salvar: ' + FT.textoErro(x), true); }
     });
     montarDialogos();
@@ -6010,14 +6025,16 @@ window.FT_CONFIG = {
       if (st.filtro === 'semforn' && E.vinculosDoProduto(p.id).length) return false;
       return !st.busca || FT.semAcento(p.nome).indexOf(st.busca) >= 0;
     });
-    let localAnt = null, h = '<thead><tr><th class="num">#</th><th>Produto</th><th>Unidade</th><th class="num">Estoque</th><th class="num">Mínimo</th><th class="num">Último custo</th><th>Fornecedores</th><th></th></tr></thead><tbody>';
+    let localAnt = null, h = '<thead><tr><th class="num">#</th><th>Produto</th><th>Unidade</th><th>Conta em</th><th class="num">Estoque</th><th class="num">Mínimo</th><th class="num">Último custo</th><th>Fornecedores</th><th></th></tr></thead><tbody>';
     lista.forEach(function (p, i) {
-      if (p.local && p.local !== localAnt) h += '<tr class="ep-local"><td colspan="8">' + esc(p.local) + '</td></tr>';
+      if (p.local && p.local !== localAnt) h += '<tr class="ep-local"><td colspan="9">' + esc(p.local) + '</td></tr>';
       localAnt = p.local;
       const vs = E.vinculosDoProduto(p.id);
       h += '<tr class="' + (abaixo(p) ? 'ep-baixo' : '') + '"><td class="num ep-pos">' + (E.dados.produtos.indexOf(p) + 1) + '</td>' +
         '<td><button type="button" class="link ep-nome" data-editar="' + esc(p.id) + '">' + esc(p.nome) + '</button></td>' +
         '<td><select class="ep-un" data-campo="unidade" data-id="' + esc(p.id) + '" aria-label="Unidade de ' + esc(p.nome) + '">' + E.opcoesUnidade(p.unidade) + '</select></td>' +
+        '<td class="ep-conv"><select class="ep-un" data-campo="cont_un" data-id="' + esc(p.id) + '" aria-label="Unidade da contagem de ' + esc(p.nome) + '"><option value="">= ' + esc(p.unidade) + '</option>' + E.opcoesUnidade(p.unidade_contagem && p.unidade_contagem !== p.unidade ? p.unidade_contagem : '').replace('<option>' + p.unidade + '</option>', '') + '</select>' +
+        (p.unidade_contagem && p.unidade_contagem !== p.unidade ? '<span class="ep-conv-f">1 = <input class="ep-fat" data-campo="cont_fator" data-id="' + esc(p.id) + '" inputmode="decimal" value="' + (p.fator_contagem ? E.qtd(p.fator_contagem) : '') + '" placeholder="?" aria-label="Quanto tem cada ' + esc(p.unidade_contagem) + '"> ' + esc(p.unidade) + '</span>' : '') + '</td>' +
         '<td class="num"><b>' + E.qtd(p.estoque) + '</b>' + (abaixo(p) ? ' <span class="chip-dif">baixo</span>' : '') + '</td>' +
         '<td class="num"><input class="ep-min" data-campo="minimo" data-id="' + esc(p.id) + '" inputmode="decimal" value="' + (p.estoque_minimo != null ? E.qtd(p.estoque_minimo) : '') + '" placeholder="—" aria-label="Estoque mínimo de ' + esc(p.nome) + '"></td>' +
         '<td class="num">' + (p.ultimo_custo != null ? FT.moeda(p.ultimo_custo) : '—') + '</td>' +
@@ -6035,6 +6052,7 @@ window.FT_CONFIG = {
       '<label for="pr-nome">Nome<input id="pr-nome" required autocomplete="off"></label>' +
       '<div class="grade3"><label for="pr-un">Unidade do estoque<select id="pr-un"></select></label><label for="pr-min">Estoque mínimo<input id="pr-min" inputmode="decimal" placeholder="opcional"></label>' +
       '<label for="pr-local">Local / seção<input id="pr-local" list="pr-locais" placeholder="ex.: DESPENSA" autocomplete="off"><datalist id="pr-locais"></datalist></label></div>' +
+      '<div class="grade3"><label for="pr-cun">Conta em (contagem)<select id="pr-cun"></select></label><label for="pr-cfat">Cada uma tem<span class="pr-cfat"><input id="pr-cfat" inputmode="decimal" placeholder="ex.: 2"> <b id="pr-cfat-un"></b></span></label><p class="sub pr-cex" id="pr-cex"></p></div>' +
       '<label for="pr-pos">Posição na contagem<select id="pr-pos"></select></label>' +
       '<label class="check"><input type="checkbox" id="pr-ativo" checked> Produto ativo</label>' +
       '<div id="pr-forn-box"><h3 class="h3-dia">Fornecedores deste produto</h3><p class="sub">Unidade de compra e conversão: ex.: o fornecedor vende em CX e 1 CX = 12 UN no estoque.</p>' +
@@ -6045,6 +6063,7 @@ window.FT_CONFIG = {
     document.body.appendChild(d);
     $('#pr-cancelar').addEventListener('click', function () { d.close(); });
     $('#pr-form').addEventListener('submit', salvarProduto);
+    ['pr-cun', 'pr-un', 'pr-cfat'].forEach(function (id) { $('#' + id).addEventListener('input', convDialogo); });
     $('#pr-excluir').addEventListener('click', excluirProduto);
     $('#pr-forn-add').addEventListener('click', addFornecedor);
     $('#pr-forn').addEventListener('change', salvarVinculo);
@@ -6073,6 +6092,9 @@ window.FT_CONFIG = {
     $('#pr-nome').value = p ? p.nome : '';
     $('#pr-un').innerHTML = E.opcoesUnidade(p ? p.unidade : 'UN');
     $('#pr-min').value = p && p.estoque_minimo != null ? E.qtd(p.estoque_minimo) : '';
+    $('#pr-cun').innerHTML = '<option value="">Mesma unidade do estoque</option>' + E.opcoesUnidade(p && p.unidade_contagem && p.unidade_contagem !== p.unidade ? p.unidade_contagem : '');
+    $('#pr-cfat').value = p && p.fator_contagem ? E.qtd(p.fator_contagem) : '';
+    convDialogo();
     $('#pr-local').value = p && p.local ? p.local : '';
     $('#pr-locais').innerHTML = Array.from(new Set(E.dados.produtos.map(function (x) { return x.local; }).filter(Boolean))).map(function (l) { return '<option value="' + esc(l) + '">'; }).join('');
     const outros = E.dados.produtos.filter(function (x) { return !p || x.id !== p.id; });
@@ -6083,6 +6105,11 @@ window.FT_CONFIG = {
     $('#pr-excluir').hidden = !p; $('#pr-forn-box').hidden = !p; $('#pr-erro').textContent = '';
     if (p) { desenharFornecedores(); desenharMovimentos(p.id); }
     $('#dlg-prod').showModal();
+  }
+  function convDialogo() {
+    const cu = $('#pr-cun').value, un = $('#pr-un').value, f = E.lerQtd($('#pr-cfat').value);
+    $('#pr-cfat').disabled = !cu || cu === un; $('#pr-cfat-un').textContent = un;
+    $('#pr-cex').textContent = cu && cu !== un ? (f ? 'Na contagem você digita em ' + cu + '. Ex.: 5 ' + cu + ' = ' + E.qtd(5 * f) + ' ' + un + ' no estoque.' : 'Informe quanto ' + un + ' tem cada ' + cu + '.') : 'Na contagem você digita em ' + un + '.';
   }
   function desenharFornecedores() {
     const p = st.editando, vs = E.vinculosDoProduto(p.id);
@@ -6142,7 +6169,7 @@ window.FT_CONFIG = {
     let renumerar = false;
     if (!p || pos !== antesAtual) { ordem = ordemPara(pos, p && p.id); if (ordem == null) { renumerar = true; ordem = 0; } }
     try {
-      const salvo = await FT.store.estoque.produtos.salvar(Object.assign({}, p || {}, { nome: nome, unidade: $('#pr-un').value, estoque_minimo: E.lerQtd($('#pr-min').value), local: $('#pr-local').value, ordem: ordem, ativo: $('#pr-ativo').checked }));
+      const salvo = await FT.store.estoque.produtos.salvar(Object.assign({}, p || {}, { nome: nome, unidade: $('#pr-un').value, estoque_minimo: E.lerQtd($('#pr-min').value), local: $('#pr-local').value, ordem: ordem, ativo: $('#pr-ativo').checked, unidade_contagem: $('#pr-cun').value || null, fator_contagem: $('#pr-cun').value ? E.lerQtd($('#pr-cfat').value) : null }));
       if (renumerar) {
         const l = E.dados.produtos.filter(function (x) { return x.id !== salvo.id; });
         const i = pos === '__inicio' ? 0 : pos === '__fim' ? l.length : l.findIndex(function (x) { return x.id === pos; }) + 1;
@@ -6237,7 +6264,8 @@ window.FT_CONFIG = {
     $('#ct-corpo').addEventListener('input', function (e) {
       const el = e.target.closest('[data-cont]'); if (!el) return;
       const v = el.value.trim();
-      if (v === '') delete st.c.itens[el.dataset.cont]; else { const n = E.lerQtd(v); if (n != null) st.c.itens[el.dataset.cont] = n; }
+      const pc = E.dados.prod[el.dataset.cont], cv = E.contagem(pc);
+      if (v === '') delete st.c.itens[el.dataset.cont]; else { const n = E.lerQtd(v); if (n != null) st.c.itens[el.dataset.cont] = Math.round(n * cv.fator * 1000) / 1000; }
       linhaDif(el.dataset.cont); progresso(); st.salvo = false; estado(); salvarDepois();
     });
     $('#ct-corpo').addEventListener('keydown', function (e) {
@@ -6301,12 +6329,12 @@ window.FT_CONFIG = {
   function desenharLista() {
     let localAnt = null, h = '<thead><tr><th class="num">#</th><th>Produto</th><th class="num">No sistema</th><th class="num">Contado</th><th>Unid.</th><th class="num">Diferença</th></tr></thead><tbody>';
     ativos().forEach(function (p, i) {
-      const v = st.c.itens[p.id];
+      const v = st.c.itens[p.id], cv = E.contagem(p);
       if (st.so && v != null && v !== '') return;
       if (p.local && p.local !== localAnt) h += '<tr class="ep-local"><td colspan="6">' + esc(p.local) + '</td></tr>';
       localAnt = p.local;
-      h += '<tr id="ct-l-' + esc(p.id) + '"><td class="num ep-pos">' + (i + 1) + '</td><td><b>' + esc(p.nome) + '</b></td><td class="num">' + E.qtd(p.estoque) + '</td>' +
-        '<td class="num"><input class="ct-inp" data-cont="' + esc(p.id) + '" inputmode="decimal" value="' + (v != null && v !== '' ? E.qtd(v) : '') + '" aria-label="Contado de ' + esc(p.nome) + '"></td><td>' + esc(p.unidade) + '</td><td class="num ct-dif" id="ct-d-' + esc(p.id) + '"></td></tr>';
+      h += '<tr id="ct-l-' + esc(p.id) + '"><td class="num ep-pos">' + (i + 1) + '</td><td><b>' + esc(p.nome) + '</b></td><td class="num">' + E.qtd(p.estoque) + ' ' + esc(p.unidade) + '</td>' +
+        '<td class="num"><input class="ct-inp" data-cont="' + esc(p.id) + '" inputmode="decimal" value="' + (v != null && v !== '' ? E.qtd(Math.round(v / cv.fator * 1000) / 1000) : '') + '" aria-label="Contado de ' + esc(p.nome) + ' em ' + esc(cv.un) + '"></td><td><b>' + esc(cv.un) + '</b>' + (cv.conv ? '<small class="ct-conv" id="ct-cv-' + esc(p.id) + '">1 = ' + E.qtd(cv.fator) + ' ' + esc(p.unidade) + '</small>' : '') + '</td><td class="num ct-dif" id="ct-d-' + esc(p.id) + '"></td></tr>';
     });
     $('#ct-tab').innerHTML = h + '</tbody>';
     ativos().forEach(function (p) { linhaDif(p.id); });
@@ -6314,9 +6342,11 @@ window.FT_CONFIG = {
   function linhaDif(pid) {
     const el = document.getElementById('ct-d-' + pid); if (!el) return;
     const p = E.dados.prod[pid], v = st.c.itens[pid];
+    const cv = E.contagem(p), conv = document.getElementById('ct-cv-' + pid);
+    if (conv) conv.textContent = v != null && v !== '' ? '= ' + E.qtd(v) + ' ' + p.unidade : '1 = ' + E.qtd(cv.fator) + ' ' + p.unidade;
     if (v == null || v === '') { el.textContent = ''; el.className = 'num ct-dif'; return; }
     const d = Math.round((v - (+p.estoque || 0)) * 1000) / 1000;
-    el.textContent = d === 0 ? '✓' : (d > 0 ? '+' : '') + E.qtd(d);
+    el.textContent = d === 0 ? '✓' : (d > 0 ? '+' : '') + E.qtd(d) + ' ' + p.unidade;
     el.className = 'num ct-dif ' + (d === 0 ? 'ok' : d < 0 ? 'neg' : 'pos');
   }
   function progresso() {
@@ -6342,7 +6372,7 @@ window.FT_CONFIG = {
     $('#ctf-sub').innerHTML = '<b>' + contados.length + '</b> produto(s) contado(s), <b>' + difs.length + '</b> com diferença. ' + (ativos().length - contados.length) + ' não contado(s) ficam como estão.';
     $('#ctf-tab').innerHTML = difs.length ? '<thead><tr><th>Produto</th><th class="num">Sistema</th><th class="num">Contado</th><th class="num">Diferença</th></tr></thead><tbody>' + difs.map(function (p) {
       const d = st.c.itens[p.id] - (+p.estoque || 0);
-      return '<tr><td>' + esc(p.nome) + '</td><td class="num">' + E.qtd(p.estoque) + ' ' + esc(p.unidade) + '</td><td class="num">' + E.qtd(st.c.itens[p.id]) + '</td><td class="num ' + (d < 0 ? 'neg' : '') + '">' + (d > 0 ? '+' : '') + E.qtd(d) + '</td></tr>';
+      return '<tr><td>' + esc(p.nome) + '</td><td class="num">' + E.qtd(p.estoque) + ' ' + esc(p.unidade) + '</td><td class="num">' + E.qtd(st.c.itens[p.id]) + ' ' + esc(p.unidade) + (E.contagem(p).conv ? ' <small>(' + E.qtd(Math.round(st.c.itens[p.id] / E.contagem(p).fator * 1000) / 1000) + ' ' + esc(E.contagem(p).un) + ')</small>' : '') + '</td><td class="num ' + (d < 0 ? 'neg' : '') + '">' + (d > 0 ? '+' : '') + E.qtd(d) + '</td></tr>';
     }).join('') + '</tbody>' : '<tbody><tr><td class="vazio-lista">Tudo bate com o sistema.</td></tr></tbody>';
     $('#ctf-erro').textContent = '';
     $('#dlg-ct-fim').showModal();
