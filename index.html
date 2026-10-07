@@ -5044,7 +5044,7 @@ window.FT_CONFIG = {
     '.via table{width:100%;border-collapse:collapse;font-size:12px}.via th,.via td{border:1px solid #000;padding:.8mm 2mm;text-align:left}.via th{font-size:10.5px;background:#eee}' +
     '.via .num{text-align:right;white-space:nowrap}.via .ref{font-size:10.5px}.via tfoot td{font-weight:700}.via tr.liq td{font-size:14px}' +
     '.via-obs,.via-decl{margin:0;font-size:11px}.via-ass{margin-top:6mm;display:grid;grid-template-columns:1fr 1fr;gap:10mm;font-size:10px;text-align:center}.via-ass div{padding-top:8mm}.via-ass .linha{display:block;border-top:1px solid #000;margin-bottom:1.5mm}' +
-    '@media (max-width:560px){body{padding:8px}.folha{padding:2mm}.via header{grid-template-columns:1fr;gap:1mm}.via-func{grid-template-columns:1fr}.via-ass{grid-template-columns:1fr;gap:4mm}}' +
+    '@media (max-width:560px){body{padding:8px}.folha{padding:2mm}.via header{grid-template-columns:1fr;gap:1mm}.via-func{grid-template-columns:1fr}.via-ass{grid-template-columns:1fr;gap:4mm}.via table{font-size:11px}.via th{font-size:9px}.via th,.via td{padding:.8mm 1.2mm}.via .ref{font-size:9px}.via .num{white-space:normal}.via tr.liq td{font-size:12.5px}}' +
     '@media print{@page{size:A4;margin:10mm}body{background:#fff;padding:0}.barra{display:none}.folha{padding:0}.via th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
   function docHolerite(fid) {
     const A = api(), st = A.estado(), p = A.pessoa(fid), r = A.calculo(fid);
@@ -7439,7 +7439,7 @@ window.FT_CONFIG = {
         return '<tr><td><input type="checkbox" data-fp="' + esc(id) + '" checked aria-label="' + esc(nome(id)) + '"></td><td>' + esc(nome(id)) + '</td><td class="num">' + t.dias + '</td><td class="num">' + C.hhmm(t.min) + '</td>' +
           '<td>' + (st.cpf[id] ? 'sim' : '<span class="chip-parcial">sem acesso</span>') + '</td><td>' + (l.espelho_em ? '<span class="chip-ok">liberado ' + FT.ddmm(FT.dataSP(l.espelho_em)) + '</span>' + (l.espelho_visto_em ? ' <span class="chip-ok">visto</span>' : '') : '—') + '</td></tr>';
       }).join('') + '</tbody>';
-    $('#fp-erro').textContent = '';
+    $('#fp-erro').textContent = ''; $('#fp-ok').hidden = false; $('#fp-cancelar').textContent = 'Cancelar';
     d.showModal();
   }
   async function liberarEspelhos() {
@@ -7451,11 +7451,27 @@ window.FT_CONFIG = {
         b.textContent = 'Liberando ' + (i + 1) + ' de ' + ids.length + '…';
         await FT.store.holerites.liberarEspelho(ids[i], st.mes, docEspelho(ids[i]));
       }
-      $('#dlg-fechar').close();
       await carregarLiberados(); desenharLista();
       FT.aviso('Espelho de ponto de ' + nomeMes(st.mes) + ' liberado para ' + ids.length + ' funcionário(s) no app.');
+      avisosWhatsApp(ids);
     } catch (x) { $('#fp-erro').textContent = 'Não foi possível liberar: ' + FT.textoErro(x) + '. Confira se o SQL da atualização 9 foi rodado.'; }
     finally { b.disabled = false; b.textContent = 'Liberar espelhos no app'; }
+  }
+
+  // depois de liberar: um botão por funcionário para avisar no WhatsApp
+  function mensagemEspelho(id) {
+    return 'OLÁ, ' + nome(id).split(' ')[0] + '! O SEU ESPELHO DE PONTO DE ' + nomeMes(st.mes) + ' JÁ ESTÁ DISPONÍVEL.\n' +
+      'ACESSE ' + FT.linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO).\nFORNERIA TOSCANA';
+  }
+  function avisosWhatsApp(ids) {
+    $('#fp-sub').innerHTML = '✓ Espelhos de <b>' + nomeMes(st.mes) + '</b> liberados no app. Agora avise cada funcionário no WhatsApp (abre a conversa com a mensagem pronta):';
+    $('#fp-tab').innerHTML = '<thead><tr><th>Funcionário</th><th>WhatsApp</th><th></th></tr></thead><tbody>' + ids.map(function (id) {
+      const tel = String((st.porId[id] || {}).telefone || '').replace(/\D/g, '');
+      const num = tel ? (tel.length <= 11 ? '55' + tel : tel) : '';
+      return '<tr><td>' + esc(nome(id)) + '</td><td>' + (tel ? esc(tel.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3')) : '<span class="chip-cinza">sem telefone</span>') + '</td>' +
+        '<td><a class="btn btn-sec btn-p" target="_blank" rel="noopener" href="https://wa.me/' + num + '?text=' + encodeURIComponent(mensagemEspelho(id)) + '">Avisar no WhatsApp</a></td></tr>';
+    }).join('') + '</tbody>';
+    $('#fp-ok').hidden = true; $('#fp-cancelar').textContent = 'Fechar';
   }
 
   function baixarExcel() {
