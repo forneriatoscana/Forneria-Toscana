@@ -708,6 +708,98 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
 .fp-rol { max-height: 50vh; overflow: auto; }
 #dlg-fechar { width: min(760px, calc(100vw - 24px)); }
 
+/* ---------- Estoque e compras ---------- */
+.grade3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ep-busca { min-width: 240px; flex: 1; max-width: 360px; }
+.ep-tab td { vertical-align: middle; }
+.ep-pos { color: var(--ink-3); font-size: 12px; width: 36px; }
+.ep-nome { text-align: left; font-weight: 600; text-decoration: none; color: var(--ink); }
+.ep-nome:hover { text-decoration: underline; color: var(--accent); }
+.ep-un { padding: 4px 6px; font-size: 13px; }
+.ep-min { width: 80px; text-align: right; padding: 4px 6px; }
+.ep-un.salvo, .ep-min.salvo { box-shadow: 0 0 0 2px var(--bom); }
+.ep-baixo td { background: color-mix(in srgb, var(--aviso-bg) 55%, transparent); }
+.ep-local td { background: var(--surface-2); font-weight: 700; font-size: 12px; letter-spacing: .06em; color: var(--accent); }
+#dlg-prod, #dlg-entrada, #dlg-forn { width: min(860px, calc(100vw - 24px)); }
+.pr-forn input, .pr-forn select { padding: 4px 6px; font-size: 13px; max-width: 120px; }
+.pr-fator { white-space: nowrap; }
+.pr-fator input { width: 64px; }
+.pr-forn-add { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pr-mov-rol { max-height: 200px; overflow: auto; }
+.ct-ini { text-align: center; display: grid; gap: 10px; justify-items: center; padding: 28px; }
+.ct-barra { position: sticky; top: 0; z-index: 5; }
+.ct-prog { display: grid; gap: 4px; min-width: 200px; }
+.ct-barra-fundo { display: block; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.ct-barra-fundo span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+.ct-tab td { padding-top: 6px; padding-bottom: 6px; }
+.ct-inp { width: 110px; text-align: right; font-size: 17px; font-weight: 600; padding: 7px 9px; }
+.ct-dif.ok { color: var(--bom); font-weight: 700; }
+.ct-dif.neg { color: var(--ruim); font-weight: 700; }
+.ct-dif.pos { color: var(--aviso-ink); font-weight: 700; }
+.ct-dif-rol { max-height: 45vh; overflow: auto; }
+#dlg-ct-fim { width: min(700px, calc(100vw - 24px)); }
+.nf-botoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.nf-bt { display: grid; gap: 4px; padding: 18px; border: 1.5px dashed var(--accent); border-radius: var(--r); background: var(--surface); cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+.nf-bt:hover { background: var(--accent-soft); }
+.nf-bt b { font-size: 16px; color: var(--accent); }
+.nf-bt span { font-size: 13px; color: var(--ink-2); }
+.nf-rev { display: grid; gap: 12px; border: 2px solid var(--accent); }
+.nf-cab h2 small { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+.grade-nf { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 12px; align-items: end; }
+.nf-foto img { max-width: 100%; max-height: 70vh; border: 1px solid var(--line); border-radius: 8px; margin-top: 8px; }
+.nf-itens td { vertical-align: top; }
+.nf-itens tr.conc-falta td { background: var(--aviso-bg); }
+.nf-itens select { max-width: 220px; }
+.nf-itens select { max-width: 260px; padding: 5px 6px; font-size: 13px; }
+.nf-itens small { display: block; font-size: 11px; color: var(--ink-3); }
+.nf-sug { color: var(--aviso-ink) !important; }
+.nf-sug.ok { color: var(--bom) !important; }
+.nf-desc { min-width: 220px; }
+.nf-un { width: 56px; }
+.nf-n { width: 86px; text-align: right; }
+.nf-conv { white-space: nowrap; font-size: 13px; }
+.nf-conv input { width: 60px; padding: 4px 6px; }
+.nf-tot { margin: 0; }
+.cp-forns { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.cp-forn { display: grid; gap: 3px; text-align: left; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); cursor: pointer; font: inherit; color: var(--ink); }
+.cp-forn:hover, .cp-forn.ativo { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.cp-forn span { font-size: 13px; color: var(--ink-2); }
+.cp-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cp-ped { display: grid; gap: 12px; }
+.cp-q, .cp-p { width: 90px; text-align: right; padding: 5px 7px; }
+.cp-tab small { display: block; font-size: 11px; color: var(--ink-3); }
+.cp-sug { display: block; font-size: 11px; margin-top: 2px; }
+.cp-rod { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cp-rod p { margin: 0; }
+.cq-ed { display: grid; gap: 12px; }
+.cq-titulo { font: 700 18px var(--f-display); text-transform: uppercase; border: 0; border-bottom: 1px dashed var(--line); padding: 4px 0; background: none; flex: 1; }
+.cq-add { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cq-add select { max-width: 280px; }
+.cq-rol { max-height: 70vh; overflow: auto; }
+.cq-tab thead th { position: sticky; top: 0; z-index: 2; }
+.cq-fcol { min-width: 130px; white-space: normal !important; }
+.cq-fbts { font-weight: 500; text-transform: none; font-size: 11px; margin-top: 2px; }
+.cq-cel input { width: 96px; text-align: right; padding: 5px 7px; }
+.cq-cel small, .cq-melhor small { display: block; font-size: 10.5px; color: var(--ink-3); white-space: normal; }
+.cq-cel.vence { background: var(--ok-bg); }
+.cq-cel.vence input { border-color: var(--bom); font-weight: 700; }
+.cq-q { width: 80px; text-align: right; padding: 5px 7px; }
+.cq-melhor { min-width: 150px; white-space: normal !important; }
+.cq-feita { display: grid; gap: 8px; }
+.cq-ped-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cq-ped-lista li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--surface); border-radius: 8px; padding: 8px 10px; }
+.ac-form { display: grid; gap: 12px; }
+.ac-hist-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+@media (max-width: 760px) {
+  .grade3, .grade-nf, .nf-botoes { grid-template-columns: 1fr; }
+  .ct-inp { width: 90px; }
+}
+@media (max-width: 700px) {
+  .ct-tab th:nth-child(1), .ct-tab td:nth-child(1), .ct-tab th:nth-child(3), .ct-tab td:nth-child(3), .ct-tab th:nth-child(6), .ct-tab td:nth-child(6) { display: none; }
+  .ct-tab td:nth-child(2) { white-space: normal; }
+  .ct-tab .ep-local td { display: table-cell !important; }
+}
+
 </style>
 </head>
 <body>
@@ -748,6 +840,22 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
           <a href="#folha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4M9 11h7M9 14.5h7M9 18h4"/></svg>Folha de pagamento</a>
         </div>
       </div>
+      <div class="menu-grupo" data-grupo="est">
+        <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-est"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l9-5 9 5v9l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v9"/></svg><span>Estoque</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <div class="menu-itens" id="mg-est" hidden>
+          <a href="#est-contagem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6v3H9z"/><path d="M7 5H5v16h14V5h-2"/><path d="M9 12l2 2 4-4M9 17h6"/></svg>Contagem de estoque</a>
+          <a href="#est-produtos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l8-4 8 4-8 4z"/><path d="M4 7v10l8 4 8-4V7"/></svg>Produtos</a>
+          <a href="#est-notas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4M9 13h7M9 17h7"/></svg>Entrada de nota</a>
+          <a href="#est-acerto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 17h6M18 4v6M15 7h6M14 17h7"/></svg>Acerto de estoque</a>
+        </div>
+      </div>
+      <div class="menu-grupo" data-grupo="comp">
+        <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-comp"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h12L22 7H6.2"/></svg><span>Compras</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <div class="menu-itens" id="mg-comp" hidden>
+          <a href="#compras"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h12v19H6z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Pedidos por fornecedor</a>
+          <a href="#cotacao"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7"/><path d="M14 9l3-3 3 3"/></svg>Cotação</a>
+        </div>
+      </div>
       <div class="menu-grupo" data-grupo="rh">
         <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-rh"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8.5 7V5a1.5 1.5 0 0 1 1.5-1.5h4A1.5 1.5 0 0 1 15.5 5v2M3 12.5h18M11 12.5v2h2v-2"/></svg><span>RH e DP</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="menu-itens" id="mg-rh" hidden>
@@ -760,6 +868,7 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
         <div class="menu-itens" id="mg-cad" hidden>
           <a href="#funcionarios"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16.5 14.2c2.7-.3 4.6 1.4 5.2 4.3"/></svg>Funcionários</a>
           <a href="#usuarios"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>Usuários do ponto</a>
+          <a href="#fornecedores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>Fornecedores</a>
         </div>
       </div>
       <div class="menu-grupo" data-grupo="dados">
@@ -848,6 +957,13 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
     <section id="tela-escala" class="tela" hidden></section>
     <section id="tela-fluxo" class="tela" hidden></section>
     <section id="tela-analise" class="tela" hidden></section>
+    <section id="tela-est-contagem" class="tela" hidden></section>
+    <section id="tela-est-produtos" class="tela" hidden></section>
+    <section id="tela-est-notas" class="tela" hidden></section>
+    <section id="tela-est-acerto" class="tela" hidden></section>
+    <section id="tela-compras" class="tela" hidden></section>
+    <section id="tela-cotacao" class="tela" hidden></section>
+    <section id="tela-fornecedores" class="tela" hidden></section>
     <section id="tela-ponto" class="tela" hidden></section>
     <section id="tela-funcionarios" class="tela" hidden></section>
     <section id="tela-usuarios" class="tela" hidden></section>
@@ -1417,6 +1533,221 @@ window.FT_CONFIG = {
     agregarVendas: agregarVendas, agregarMaoDeObra: agregarMaoDeObra
   };
   root.FTParsers = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+/* Forneria Toscana — leitores do estoque e das compras (sem tela; testável no node)
+ *  - XML da NF-e
+ *  - texto lido da FOTO da nota (DANFE ou cupom), por reconhecimento de texto
+ *  - cotação do fornecedor (linhas de planilha ou texto de PDF)
+ *  - planilha de produtos
+ *  - "casar" a descrição do fornecedor com o produto cadastrado */
+(function (root) {
+  'use strict';
+
+  function semAcento(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+  function num(v) {
+    if (v == null || v === '') return null;
+    if (typeof v === 'number') return isFinite(v) ? v : null;
+    let s = String(v).trim().replace(/R\$\s*/i, '');
+    if (/^-?\d+(\.\d+)?$/.test(s)) return parseFloat(s);
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(s); return isFinite(n) ? n : null;
+  }
+  const r2 = function (v) { return Math.round(v * 100) / 100; };
+
+  /* ---------------- NF-e (XML) ---------------- */
+  function lerNFeXML(texto, DOMParserImpl) {
+    const P = DOMParserImpl || root.DOMParser;
+    const doc = new P().parseFromString(String(texto).replace(/^﻿/, ''), 'text/xml');
+    const tudo = function (el, tag) { return el ? Array.prototype.slice.call(el.getElementsByTagNameNS ? el.getElementsByTagNameNS('*', tag) : el.getElementsByTagName(tag)) : []; };
+    const um = function (el, tag) { return tudo(el, tag)[0] || null; };
+    const txt = function (el, tag) { const e = um(el, tag); return e ? String(e.textContent).trim() : ''; };
+    const inf = um(doc, 'infNFe');
+    if (!inf) throw new Error('Este arquivo não é o XML de uma NF-e.');
+    const emit = um(inf, 'emit'), ide = um(inf, 'ide'), ender = um(emit, 'enderEmit');
+    const chave = String(inf.getAttribute('Id') || '').replace(/\D/g, '') || txt(doc, 'chNFe');
+    const itens = tudo(inf, 'det').map(function (det) {
+      const p = um(det, 'prod');
+      const q = num(txt(p, 'qCom')), vu = num(txt(p, 'vUnCom')), vt = num(txt(p, 'vProd'));
+      const desc = num(txt(p, 'vDesc')) || 0;
+      return {
+        codigo: txt(p, 'cProd'), ean: /^\d{8,14}$/.test(txt(p, 'cEAN')) ? txt(p, 'cEAN') : '',
+        descricao: txt(p, 'xProd').toUpperCase(), unidade: txt(p, 'uCom').toUpperCase(),
+        qtd: q, valorUnit: vu, total: r2((vt || 0) - desc)
+      };
+    });
+    return {
+      chave: chave.length === 44 ? chave : '', numero: txt(ide, 'nNF'), serie: txt(ide, 'serie'),
+      emissao: (txt(ide, 'dhEmi') || txt(ide, 'dEmi')).slice(0, 10),
+      valorTotal: num(txt(um(inf, 'ICMSTot'), 'vNF')),
+      emitente: {
+        cnpj: (txt(emit, 'CNPJ') || txt(emit, 'CPF')).replace(/\D/g, ''), nome: txt(emit, 'xNome').toUpperCase(), fantasia: txt(emit, 'xFant').toUpperCase(),
+        telefone: txt(ender, 'fone'), endereco: [txt(ender, 'xLgr'), txt(ender, 'nro'), txt(ender, 'xBairro'), txt(ender, 'xMun'), txt(ender, 'UF')].filter(Boolean).join(', ').toUpperCase()
+      },
+      itens: itens
+    };
+  }
+
+  /* ---------------- texto da FOTO da nota ---------------- */
+  const UNID = 'UN|UND|UNID|KG|CX|PC|PCT|PT|FD|LT|L|G|GR|DZ|SC|BD|GL|FR|LA|BJ|RL|CJ|KIT|BAN|BDJ|POTE|PO|MC|M|SACO|GF';
+  function chaveValida(c) {
+    if (!/^\d{44}$/.test(c)) return false;
+    let soma = 0, peso = 2;
+    for (let i = 42; i >= 0; i--) { soma += +c[i] * peso; peso = peso === 9 ? 2 : peso + 1; }
+    const dv = 11 - (soma % 11);
+    return (dv >= 10 ? 0 : dv) === +c[43];
+  }
+  function lerTextoNota(texto) {
+    const t = String(texto || '').replace(/\r/g, '');
+    const plano = semAcento(t);
+    const r = { chave: '', cnpj: '', numero: '', serie: '', emissao: '', fornecedor: '', valorTotal: null, itens: [] };
+    // chave de acesso: 44 números (às vezes em grupos de 4)
+    const cands = (t.match(/(?:\d[\s.]?){44,50}/g) || []).map(function (s) { return s.replace(/\D/g, ''); });
+    cands.forEach(function (c) { for (let i = 0; i + 44 <= c.length && !r.chave; i++) if (chaveValida(c.substr(i, 44))) r.chave = c.substr(i, 44); });
+    if (r.chave) { r.cnpj = r.chave.substr(6, 14); r.serie = String(+r.chave.substr(22, 3)); r.numero = String(+r.chave.substr(25, 9)); }
+    if (!r.cnpj) { const m = t.match(/\d{2}\.?\d{3}\.?\d{3}\s?\/\s?\d{4}\s?-\s?\d{2}/); if (m) r.cnpj = m[0].replace(/\D/g, ''); }
+    if (!r.numero) { const m = plano.match(/N[Ooº°]?\s*[.:]?\s*(\d{1,3}(?:\.\d{3})+|\d{3,9})\b/); if (m) r.numero = m[1].replace(/\D/g, '').replace(/^0+/, ''); }
+    const d = plano.match(/(\d{2})\/(\d{2})\/(\d{4})/); if (d) r.emissao = d[3] + '-' + d[2] + '-' + d[1];
+    const f = plano.match(/RECEBEMOS DE (.+?) OS PRODUTOS/); if (f) r.fornecedor = f[1].trim();
+    const vt = plano.match(/VALOR TOTAL DA NOTA[^\d]*([\d.]+,\d{2})/) || plano.match(/VALOR A PAGAR[^\d]*([\d.]+,\d{2})/) || plano.match(/\bTOTAL R?\$?\s*([\d.]+,\d{2})/);
+    if (vt) r.valorTotal = num(vt[1]);
+    // itens: ... DESCRIÇÃO ... UNID QTD V.UNIT V.TOTAL   (DANFE)   |   QTD UN X V.UNIT V.TOTAL (cupom)
+    const reDanfe = new RegExp('^(.*?)\\s(' + UNID + ')\\.?\\s+([\\d.]+(?:,\\d{1,4})?)\\s+([\\d.]+,\\d{2,10})\\s+([\\d.]+,\\d{2})\\b', 'i');
+    const reCupom = new RegExp('^(.*?)\\s([\\d.]+(?:,\\d{1,4})?)\\s*(' + UNID + ')\\.?\\s*[X×*]\\s*([\\d.]+,\\d{2,4})\\s+([\\d.]+,\\d{2})', 'i');
+    t.split('\n').forEach(function (l) {
+      const linha = semAcento(l).replace(/[|_]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (linha.length < 8) return;
+      let m = linha.match(reCupom), it = null;
+      if (m) it = { desc: m[1], unidade: m[3], qtd: num(m[2]), valorUnit: num(m[4]), total: num(m[5]) };
+      else if ((m = linha.match(reDanfe))) it = { desc: m[1], unidade: m[2], qtd: num(m[3]), valorUnit: num(m[4]), total: num(m[5]) };
+      if (!it || !it.qtd || !it.total) return;
+      // limpa a descrição: tira código no começo e NCM/CST/CFOP no fim
+      let desc = it.desc.replace(/^\d{1,4}\s+/, '').replace(/^\d{6,14}\s+/, '').replace(/^[\dA-Z]{0,3}\d{3,}\s+/, '');
+      desc = desc.replace(/(\s+\d{3,8}(?:\.\d{2})*){1,4}\s*$/, '').trim();
+      if (!/[A-Z]{3,}/.test(desc)) return;
+      const confere = Math.abs(it.qtd * it.valorUnit - it.total) <= Math.max(0.05, it.total * 0.02);
+      r.itens.push({ codigo: '', ean: '', descricao: desc, unidade: it.unidade.toUpperCase(), qtd: it.qtd, valorUnit: it.valorUnit, total: it.total, confere: confere });
+    });
+    return r;
+  }
+
+  /* ---------------- casar descrição × produto ---------------- */
+  const ABREV = { PIM: 'PIMENTA', CHOC: 'CHOCOLATE', MUSS: 'MUSSARELA', MUCARELA: 'MUSSARELA', MUZZARELA: 'MUSSARELA', MOZZARELLA: 'MUSSARELA', MUSSARELLA: 'MUSSARELA', REQ: 'REQUEIJAO', COND: 'CONDENSADO', LT: 'LEITE', AZT: 'AZEITONA', BERINJELA: 'BERINGELA', MANJERICAO: 'MANGERICAO', PEPPERONI: 'PEPERONE', PANCETTA: 'PANCETA', PORO: 'PORRO', CATUPIRI: 'CATUPIRY', BROCOLI: 'BROCOLIS', ACUC: 'ACUCAR', ACUCA: 'ACUCAR', DET: 'DETERGENTE', PAP: 'PAPEL', HIG: 'HIGIENICO', SAB: 'SABAO', AG: 'AGUA', SANIT: 'SANITARIA', REFIN: 'REFINADO', CRIST: 'CRISTAL', FGO: 'FRANGO', FRANG: 'FRANGO', PTO: 'PEITO', TOM: 'TOMATE', CEREJ: 'CEREJA', MOL: 'MOLHO', FAR: 'FARINHA', GUARD: 'GUARDANAPO', CANUD: 'CANUDO' };
+  const VAZIAS = ['DE', 'DA', 'DO', 'DAS', 'DOS', 'E', 'COM', 'EM', 'C', 'S', 'P', 'TIPO', 'A'];
+  function palavras(s) {
+    return semAcento(s).replace(/[^A-Z0-9 ]+/g, ' ').split(' ').filter(Boolean).map(function (w) { return ABREV[w] || w; })
+      .filter(function (w) { return VAZIAS.indexOf(w) < 0 && !/^\d+(ML|L|G|KG|M|UN)?$/.test(w); });
+  }
+  function dist1(a, b) { // distância de edição <= 1 (erro de digitação)
+    if (Math.abs(a.length - b.length) > 1) return false;
+    let i = 0, j = 0, e = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i++; j++; continue; }
+      if (++e > 1) return false;
+      if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+    }
+    return e + (a.length - i) + (b.length - j) <= 1;
+  }
+  function temPalavra(lista, w) {
+    return lista.some(function (x) { return x === w || (w.length >= 4 && x.length >= 4 && (x.indexOf(w) === 0 || w.indexOf(x) === 0)) || (w.length >= 5 && dist1(x, w)); });
+  }
+  // nota de 0 a 1: quanto do nome do produto aparece na descrição
+  function pontos(descricao, nomeProduto) {
+    const d = palavras(descricao), p = palavras(nomeProduto);
+    if (!p.length || !d.length) return 0;
+    const achou = p.filter(function (w) { return temPalavra(d, w); }).length;
+    // números do nome (ex.: AZEITE 500ML, SACO 30L) precisam bater
+    const nP = (semAcento(nomeProduto).match(/\d+\s*(ML|L|G|KG)?/g) || []).map(function (x) { return x.replace(/\s/g, ''); });
+    const dT = semAcento(descricao).replace(/(\d)\s*(LITROS?|LTS?)\b/g, '$1L').replace(/(\d)\s*(GRAMAS?|GRS?)\b/g, '$1G').replace(/(\d)\s*(QUILOS?|KILOS?|KGS)\b/g, '$1KG').replace(/\s/g, '');
+    if (nP.length && !nP.every(function (x) { return dT.indexOf(x) >= 0; })) return 0;
+    return achou / p.length + Math.min(p.length, 4) * 0.01;
+  }
+  function casarProduto(descricao, produtos, minimo) {
+    let melhor = null, mp = 0, segundo = 0;
+    produtos.forEach(function (p) {
+      const s = pontos(descricao, p.nome);
+      if (s > mp) { segundo = mp; mp = s; melhor = p; } else if (s > segundo) segundo = s;
+    });
+    if (!melhor || mp < (minimo == null ? 0.99 : minimo)) return null;
+    return { produto: melhor, pontos: mp, duvida: segundo >= mp - 0.005 };
+  }
+
+  /* ---------------- cotação (planilha ou PDF) ---------------- */
+  // linhas: [[célula, célula...]] (planilha) ou ['texto da linha'] (PDF)
+  function lerCotacao(linhas, produtos) {
+    const achados = [];
+    // planilha com cabeçalho: usa a coluna de preço e a de descrição
+    let cPreco = -1, cDesc = -1, iCab = -1;
+    for (let i = 0; i < Math.min(15, linhas.length); i++) {
+      if (!Array.isArray(linhas[i])) break;
+      const r = linhas[i].map(semAcento);
+      const pr = r.findIndex(function (x) { return /^(PRECO|VALOR|VLR|UNIT|P\.? ?UNIT|PRECO UNIT|VALOR UNIT)/.test(x) && !/TOTAL/.test(x); });
+      if (pr >= 0) { cPreco = pr; cDesc = r.findIndex(function (x) { return /DESCRI|PRODUTO|ITEM|MERCADORIA/.test(x); }); iCab = i; break; }
+    }
+    linhas.forEach(function (l, li) {
+      if (cPreco >= 0 && li > iCab && Array.isArray(l)) {
+        const preco = num(l[cPreco]), desc = cDesc >= 0 ? String(l[cDesc] || '') : l.filter(function (c, k) { return k !== cPreco && typeof c === 'string'; }).join(' ');
+        if (!desc.trim() || preco == null || preco <= 0) return;
+        const c = casarProduto(desc, produtos, 0.99);
+        if (c) achados.push({ produto_id: c.produto.id, produto: c.produto.nome, preco: preco, texto: desc });
+        return;
+      }
+      const cels = Array.isArray(l) ? l : [l];
+      let preco = null, texto = [];
+      cels.forEach(function (c) {
+        if (c == null || c === '') return;
+        if (typeof c === 'number') { if (c > 0) preco = c; return; }
+        const s = String(c).trim();
+        const precos = s.match(/(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}\b|(?:R\$\s*)\d+(?:\.\d{1,2})?\b/g);
+        if (precos && precos.length) preco = num(precos[precos.length - 1].replace(/R\$\s*/, ''));
+        texto.push(s.replace(/(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}\b/g, ' '));
+      });
+      const desc = texto.join(' ').trim();
+      if (!desc || preco == null) return;
+      const c = casarProduto(desc, produtos, 0.99);
+      if (c) achados.push({ produto_id: c.produto.id, produto: c.produto.nome, preco: preco, texto: desc });
+    });
+    // se o mesmo produto aparecer mais de uma vez, fica a primeira linha
+    const vistos = {};
+    return achados.filter(function (a) { if (vistos[a.produto_id]) return false; vistos[a.produto_id] = 1; return true; });
+  }
+  // agrupa os pedaços de texto do PDF em linhas (pela altura na página)
+  function linhasDoPDF(items) {
+    const grupos = [];
+    items.forEach(function (it) {
+      if (!it.str || !it.str.trim()) return;
+      const y = Math.round(it.transform[5]);
+      let g = grupos.find(function (x) { return Math.abs(x.y - y) <= 3; });
+      if (!g) { g = { y: y, partes: [] }; grupos.push(g); }
+      g.partes.push({ x: it.transform[4], s: it.str });
+    });
+    return grupos.sort(function (a, b) { return b.y - a.y; }).map(function (g) { return g.partes.sort(function (a, b) { return a.x - b.x; }).map(function (p) { return p.s; }).join(' '); });
+  }
+
+  /* ---------------- planilha de produtos ---------------- */
+  function lerPlanilhaProdutos(linhas) {
+    let cab = -1, cNome = 0, cUn = -1, cLocal = -1;
+    for (let i = 0; i < Math.min(5, linhas.length); i++) {
+      const r = (linhas[i] || []).map(semAcento);
+      const n = r.findIndex(function (x) { return /^(PRODUTO|DESCRICAO|NOME|ITEM)/.test(x); });
+      if (n >= 0) { cab = i; cNome = n; cUn = r.findIndex(function (x) { return /^(UN|UNID|UNIDADE|MEDIDA)/.test(x); }); cLocal = r.findIndex(function (x) { return /^(LOCAL|SETOR|ARMAZ|CATEG)/.test(x); }); break; }
+    }
+    const vistos = {}, itens = [];
+    for (let i = cab + 1; i < linhas.length; i++) {
+      const r = linhas[i] || [];
+      const nome = String(r[cNome] == null ? '' : r[cNome]).replace(/\s+/g, ' ').trim().toUpperCase();
+      if (!nome) continue;
+      const k = semAcento(nome);
+      if (vistos[k]) continue; vistos[k] = 1;
+      itens.push({ nome: nome, unidade: cUn >= 0 && r[cUn] ? String(r[cUn]).trim().toUpperCase() : '', local: cLocal >= 0 && r[cLocal] ? String(r[cLocal]).trim().toUpperCase() : '' });
+    }
+    return itens;
+  }
+
+  const api = { semAcento: semAcento, num: num, lerNFeXML: lerNFeXML, lerTextoNota: lerTextoNota, chaveValida: chaveValida,
+    casarProduto: casarProduto, pontos: pontos, lerCotacao: lerCotacao, linhasDoPDF: linhasDoPDF, lerPlanilhaProdutos: lerPlanilhaProdutos };
+  root.FTEstoque = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -2193,6 +2524,182 @@ window.FT_CONFIG = {
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 
+/* Forneria Toscana — dados do estoque e das compras (Supabase e memória da prévia) */
+(function (root) {
+  'use strict';
+  const FT = root.FT;
+  const porOrdem = function (a, b) { return (a.ordem || 0) - (b.ordem || 0) || a.nome.localeCompare(b.nome, 'pt-BR'); };
+  const porNome = function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); };
+  function limparProduto(p) {
+    const n = function (v) { return v === '' || v == null || isNaN(+v) ? null : +v; };
+    return { nome: FT.mai(p.nome), unidade: FT.mai(p.unidade || 'UN') || 'UN', local: p.local ? FT.mai(p.local) : null, ordem: +p.ordem || 0, estoque_minimo: n(p.estoque_minimo), ativo: p.ativo !== false, obs: p.obs ? FT.mai(p.obs) : null };
+  }
+  function limparFornecedor(f) {
+    const t = function (v) { return v ? FT.mai(v) : null; };
+    return { nome: FT.mai(f.nome), fantasia: t(f.fantasia), cnpj: f.cnpj ? String(f.cnpj).replace(/\D/g, '') || null : null, telefone: f.telefone ? String(f.telefone).replace(/\D/g, '') : null,
+      email: f.email ? String(f.email).trim().toLowerCase() : null, contato: t(f.contato), endereco: t(f.endereco), obs: t(f.obs), ativo: f.ativo !== false };
+  }
+  function limparVinculo(v) {
+    return { produto_id: v.produto_id, fornecedor_id: v.fornecedor_id, codigo_fornecedor: v.codigo_fornecedor || null, unidade_compra: v.unidade_compra ? FT.mai(v.unidade_compra) : null,
+      fator: +v.fator > 0 ? +v.fator : 1, ultimo_preco: v.ultimo_preco === '' || v.ultimo_preco == null ? null : +v.ultimo_preco };
+  }
+  FT.limparProduto = limparProduto; FT.limparFornecedor = limparFornecedor;
+
+  /* ---------------- Supabase ---------------- */
+  FT.estoqueSupabase = function (sb, ok) {
+    const agora = function () { return new Date().toISOString(); };
+    async function tudo(q) { const r = []; for (let i = 0; ; i += 1000) { const d = await ok(q().range(i, i + 999)); r.push.apply(r, d); if (d.length < 1000) break; } return r; }
+    return {
+      produtos: {
+        listar: async function () { return (await tudo(function () { return sb.from('produtos').select('*').order('ordem'); })).sort(porOrdem); },
+        salvar: async function (p) {
+          const d = Object.assign(limparProduto(p), { atualizado_em: agora() });
+          if (p.id) return ok(sb.from('produtos').update(d).eq('id', p.id).select().single());
+          return ok(sb.from('produtos').insert(d).select().single());
+        },
+        salvarVarios: async function (lista) { return ok(sb.from('produtos').insert(lista.map(limparProduto)).select()); },
+        reordenar: async function (lista) { for (let i = 0; i < lista.length; i++) await ok(sb.from('produtos').update({ ordem: lista[i].ordem }).eq('id', lista[i].id)); },
+        remover: async function (id) { return ok(sb.from('produtos').delete().eq('id', id)); }
+      },
+      fornecedores: {
+        listar: async function () { return (await ok(sb.from('fornecedores').select('*'))).sort(porNome); },
+        salvar: async function (f) {
+          const d = limparFornecedor(f);
+          if (f.id) return ok(sb.from('fornecedores').update(d).eq('id', f.id).select().single());
+          return ok(sb.from('fornecedores').insert(d).select().single());
+        },
+        remover: async function (id) { return ok(sb.from('fornecedores').delete().eq('id', id)); }
+      },
+      vinculos: {
+        listar: async function () { return tudo(function () { return sb.from('produto_fornecedores').select('*').order('id'); }); },
+        salvar: async function (v) { return ok(sb.from('produto_fornecedores').upsert(Object.assign(limparVinculo(v), { atualizado_em: agora() }), { onConflict: 'produto_id,fornecedor_id' }).select().single()); },
+        remover: async function (id) { return ok(sb.from('produto_fornecedores').delete().eq('id', id)); }
+      },
+      movimentar: async function (tipo, itens, ref, obs) { return ok(sb.rpc('estoque_movimentar', { p_tipo: tipo, p_itens: itens, p_referencia: ref || null, p_obs: obs ? FT.mai(obs) : null })); },
+      movimentos: async function (produtoId, n) {
+        let q = sb.from('estoque_movimentos').select('*').order('em', { ascending: false }).limit(n || 60);
+        if (produtoId) q = q.eq('produto_id', produtoId);
+        return ok(q);
+      },
+      contagens: {
+        aberta: async function () { const d = await ok(sb.from('contagens').select('*').eq('status', 'aberta').order('criado_em', { ascending: false }).limit(1)); return d[0] || null; },
+        salvar: async function (c) {
+          if (c.id) return ok(sb.from('contagens').update({ itens: c.itens, data: c.data, obs: c.obs || null }).eq('id', c.id).select().single());
+          return ok(sb.from('contagens').insert({ itens: c.itens || {}, data: c.data || FT.hoje(), obs: c.obs || null }).select().single());
+        },
+        finalizar: async function (id) { return ok(sb.rpc('finalizar_contagem', { p_id: id })); },
+        listar: async function () { return ok(sb.from('contagens').select('id,data,status,finalizada_em,itens').order('criado_em', { ascending: false }).limit(20)); },
+        remover: async function (id) { return ok(sb.from('contagens').delete().eq('id', id)); }
+      },
+      notas: {
+        registrar: async function (nota, movs) { return ok(sb.rpc('registrar_nota', { p_nota: nota, p_movs: movs })); },
+        listar: async function () { return ok(sb.from('notas_entrada').select('id,fornecedor_id,numero,serie,chave,emissao,valor_total,origem,itens,criado_em').order('criado_em', { ascending: false }).limit(50)); }
+      },
+      pedidos: {
+        salvar: async function (p) { return ok(sb.from('pedidos_compra').insert({ fornecedor_id: p.fornecedor_id, data: p.data || FT.hoje(), itens: p.itens, total: p.total || 0, cotacao_id: p.cotacao_id || null, obs: p.obs || null }).select().single()); },
+        listar: async function () { return ok(sb.from('pedidos_compra').select('*').order('criado_em', { ascending: false }).limit(60)); }
+      },
+      cotacoes: {
+        listar: async function () { return ok(sb.from('cotacoes').select('*').order('criado_em', { ascending: false }).limit(30)); },
+        salvar: async function (c) {
+          const d = { data: c.data || FT.hoje(), titulo: c.titulo ? FT.mai(c.titulo) : null, status: c.status || 'aberta', itens: c.itens || [], fornecedores: c.fornecedores || [], precos: c.precos || {}, decidida_em: c.decidida_em || null };
+          if (c.id) return ok(sb.from('cotacoes').update(d).eq('id', c.id).select().single());
+          return ok(sb.from('cotacoes').insert(d).select().single());
+        },
+        remover: async function (id) { return ok(sb.from('cotacoes').delete().eq('id', id)); }
+      }
+    };
+  };
+
+  /* ---------------- Memória (prévia) ---------------- */
+  FT.estoqueMemoria = function (inicial, espera, clonar) {
+    let seq = 1;
+    const id = function (p) { return p + (seq++) + '-' + Date.now().toString(36); };
+    const db = {
+      produtos: clonar(inicial.produtos || []), fornecedores: clonar(inicial.fornecedores || []), vinculos: clonar(inicial.vinculos || []),
+      movs: [], contagens: [], notas: [], pedidos: [], cotacoes: [], pedidoNum: 1
+    };
+    function movimentar(tipo, itens, ref, obs) {
+      let n = 0;
+      itens.forEach(function (it) {
+        const p = db.produtos.find(function (x) { return x.id === it.produto_id; }); if (!p) return;
+        const antes = +p.estoque || 0;
+        const q = tipo === 'contagem' ? +it.contado - antes : +it.quantidade;
+        const custo = it.custo == null || it.custo === '' ? null : +it.custo;
+        p.estoque = Math.round((antes + q) * 1000) / 1000;
+        if (custo != null && q > 0) { p.custo_medio = antes > 0 && p.custo_medio != null ? (antes * p.custo_medio + q * custo) / (antes + q) : custo; p.ultimo_custo = custo; }
+        db.movs.unshift({ id: seq++, produto_id: p.id, em: new Date().toISOString(), tipo: tipo, quantidade: q, saldo: p.estoque, custo: custo, referencia: ref || null, obs: it.obs || obs || null });
+        n++;
+      });
+      return n;
+    }
+    function salvarEm(lista, obj, limpo, pref) {
+      if (obj.id) { const i = lista.findIndex(function (x) { return x.id === obj.id; }); lista[i] = Object.assign({}, lista[i], limpo); return lista[i]; }
+      const novo = Object.assign({ id: id(pref), criado_em: new Date().toISOString() }, limpo); lista.push(novo); return novo;
+    }
+    return {
+      produtos: {
+        listar: function () { return espera(db.produtos.slice().sort(porOrdem)); },
+        salvar: function (p) { const l = limparProduto(p); if (!p.id) l.estoque = 0; return espera(salvarEm(db.produtos, p, l, 'pr')); },
+        salvarVarios: function (l) { return espera(l.map(function (p) { return salvarEm(db.produtos, {}, Object.assign(limparProduto(p), { estoque: 0 }), 'pr'); })); },
+        reordenar: function (l) { l.forEach(function (x) { const p = db.produtos.find(function (y) { return y.id === x.id; }); if (p) p.ordem = x.ordem; }); return espera(null); },
+        remover: function (pid) { db.produtos = db.produtos.filter(function (x) { return x.id !== pid; }); return espera(null); }
+      },
+      fornecedores: {
+        listar: function () { return espera(db.fornecedores.slice().sort(porNome)); },
+        salvar: function (f) {
+          const l = limparFornecedor(f);
+          if (l.cnpj && db.fornecedores.some(function (x) { return x.cnpj === l.cnpj && x.id !== f.id; })) return Promise.reject(new Error('Já existe um fornecedor com este CNPJ'));
+          return espera(salvarEm(db.fornecedores, f, l, 'fo'));
+        },
+        remover: function (fid) { db.fornecedores = db.fornecedores.filter(function (x) { return x.id !== fid; }); db.vinculos = db.vinculos.filter(function (v) { return v.fornecedor_id !== fid; }); return espera(null); }
+      },
+      vinculos: {
+        listar: function () { return espera(db.vinculos); },
+        salvar: function (v) {
+          const l = limparVinculo(v);
+          const ex = db.vinculos.find(function (x) { return x.produto_id === l.produto_id && x.fornecedor_id === l.fornecedor_id; });
+          if (ex) { Object.assign(ex, l); return espera(ex); }
+          const n = Object.assign({ id: id('v') }, l); db.vinculos.push(n); return espera(n);
+        },
+        remover: function (vid) { db.vinculos = db.vinculos.filter(function (x) { return x.id !== vid; }); return espera(null); }
+      },
+      movimentar: function (tipo, itens, ref, obs) { return espera(movimentar(tipo, itens, ref, obs)); },
+      movimentos: function (pid, n) { return espera(db.movs.filter(function (m) { return !pid || m.produto_id === pid; }).slice(0, n || 60)); },
+      contagens: {
+        aberta: function () { return espera(db.contagens.find(function (c) { return c.status === 'aberta'; }) || null); },
+        salvar: function (c) { return espera(salvarEm(db.contagens, c, { itens: c.itens || {}, data: c.data || FT.hoje(), obs: c.obs || null, status: c.status || 'aberta' }, 'ct')); },
+        finalizar: function (cid) {
+          const c = db.contagens.find(function (x) { return x.id === cid; });
+          if (!c || c.status !== 'aberta') return Promise.reject(new Error('Contagem já finalizada'));
+          const n = movimentar('contagem', Object.keys(c.itens).filter(function (k) { return c.itens[k] !== '' && c.itens[k] != null; }).map(function (k) { return { produto_id: k, contado: c.itens[k] }; }), 'CONTAGEM ' + FT.ddmmaaaa(c.data));
+          c.status = 'finalizada'; c.finalizada_em = new Date().toISOString(); return espera(n);
+        },
+        listar: function () { return espera(db.contagens.slice().reverse()); },
+        remover: function (cid) { db.contagens = db.contagens.filter(function (x) { return x.id !== cid; }); return espera(null); }
+      },
+      notas: {
+        registrar: function (nota, movs) {
+          if (nota.chave && db.notas.some(function (x) { return x.chave === nota.chave; })) return Promise.reject(new Error('NOTA_JA_LANCADA'));
+          const n = Object.assign({ id: id('nf'), criado_em: new Date().toISOString() }, nota); db.notas.unshift(n);
+          movimentar('entrada', movs, 'NOTA ' + (nota.numero || '') + (nota.fornecedor_nome ? ' · ' + nota.fornecedor_nome : ''));
+          return espera(n.id);
+        },
+        listar: function () { return espera(db.notas); }
+      },
+      pedidos: {
+        salvar: function (p) { const n = Object.assign({ id: id('pc'), numero: db.pedidoNum++, criado_em: new Date().toISOString(), data: FT.hoje() }, p); db.pedidos.unshift(n); return espera(n); },
+        listar: function () { return espera(db.pedidos); }
+      },
+      cotacoes: {
+        listar: function () { return espera(db.cotacoes.slice().reverse()); },
+        salvar: function (c) { return espera(salvarEm(db.cotacoes, c, { data: c.data || FT.hoje(), titulo: c.titulo ? FT.mai(c.titulo) : null, status: c.status || 'aberta', itens: c.itens || [], fornecedores: c.fornecedores || [], precos: c.precos || {}, decidida_em: c.decidida_em || null }, 'cq')); },
+        remover: function (cid) { db.cotacoes = db.cotacoes.filter(function (x) { return x.id !== cid; }); return espera(null); }
+      }
+    };
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 /* Forneria Toscana — onde os dados ficam guardados
  * Supabase (site oficial) ou memória (prévia). As telas só usam FT.store.
  */
@@ -2222,6 +2729,7 @@ window.FT_CONFIG = {
     }
     return {
       modo: 'supabase',
+      estoque: FT.estoqueSupabase(sb, ok),
       funcionarios: {
         listar: async function () { return (await ok(sb.from('funcionarios').select('*'))).sort(ordenarNome); },
         salvar: async function (f) {
@@ -2421,6 +2929,7 @@ window.FT_CONFIG = {
     }
     return {
       modo: 'previa',
+      estoque: FT.estoqueMemoria(inicial.estoque || {}, espera, clonar),
       funcionarios: {
         listar: function () { return espera(db.funcionarios.slice().sort(ordenarNome)); },
         salvar: function (f) {
@@ -2539,6 +3048,176 @@ window.FT_CONFIG = {
     };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* Forneria Toscana — peças comuns do Estoque e das Compras */
+(function () {
+  'use strict';
+  const FT = window.FT;
+  const E = FT.est = {
+    UNIDADES: ['UN', 'KG', 'G', 'L', 'ML', 'CX', 'PCT', 'FD', 'DZ', 'SC', 'BD', 'GL', 'LATA', 'POTE', 'BALDE', 'ROLO', 'MAÇO', 'BANDEJA', 'PAR'],
+    dados: null,
+    // carrega produtos, fornecedores e vínculos (com cache curto)
+    carregar: async function (forcar) {
+      if (E.dados && !forcar && Date.now() - E.dados.em < 15000) return E.dados;
+      const S = FT.store.estoque;
+      const r = await Promise.all([S.produtos.listar(), S.fornecedores.listar(), S.vinculos.listar()]);
+      const d = { em: Date.now(), produtos: r[0], fornecedores: r[1], vinculos: r[2], prod: {}, forn: {} };
+      d.produtos.forEach(function (p) { d.prod[p.id] = p; });
+      d.fornecedores.forEach(function (f) { d.forn[f.id] = f; });
+      E.dados = d; return d;
+    },
+    limpar: function () { E.dados = null; },
+    vinculosDoProduto: function (pid) { return E.dados.vinculos.filter(function (v) { return v.produto_id === pid; }); },
+    vinculosDoFornecedor: function (fid) { return E.dados.vinculos.filter(function (v) { return v.fornecedor_id === fid; }); },
+    nomeForn: function (fid) { const f = E.dados && E.dados.forn[fid]; return f ? (f.fantasia || f.nome) : '—'; },
+    qtd: function (v) {
+      if (v == null || v === '' || isNaN(+v)) return '—';
+      const n = +v; return n.toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+    },
+    lerQtd: function (s) { if (s == null || String(s).trim() === '') return null; const n = FT.lerValor(String(s)); return isFinite(n) ? n : null; },
+    opcoesUnidade: function (sel) {
+      const l = E.UNIDADES.slice(); if (sel && l.indexOf(sel) < 0) l.push(sel);
+      return l.map(function (u) { return '<option' + (u === sel ? ' selected' : '') + '>' + u + '</option>'; }).join('');
+    },
+    opcoesProdutos: function (sel, vazio) {
+      return (vazio != null ? '<option value="">' + FT.esc(vazio) + '</option>' : '') + E.dados.produtos.filter(function (p) { return p.ativo !== false || p.id === sel; }).slice().sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); })
+        .map(function (p) { return '<option value="' + FT.esc(p.id) + '"' + (p.id === sel ? ' selected' : '') + '>' + FT.esc(p.nome) + ' (' + FT.esc(p.unidade) + ')</option>'; }).join('');
+    },
+    opcoesFornecedores: function (sel, vazio) {
+      return (vazio != null ? '<option value="">' + FT.esc(vazio) + '</option>' : '') + E.dados.fornecedores.map(function (f) { return '<option value="' + FT.esc(f.id) + '"' + (f.id === sel ? ' selected' : '') + '>' + FT.esc(f.fantasia || f.nome) + '</option>'; }).join('');
+    },
+    cnpj: function (c) {
+      c = String(c || '').replace(/\D/g, '');
+      if (c.length === 14) return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+      if (c.length === 11) return FT.formatarCPF(c);
+      return c;
+    },
+    telefone: function (t) {
+      const d = String(t || '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '');
+      if (d.length === 11) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+      if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+      return d;
+    },
+    // garante o fornecedor da nota: acha pelo CNPJ ou cadastra sozinho
+    fornecedorDaNota: async function (emit) {
+      const cnpj = String(emit.cnpj || '').replace(/\D/g, '');
+      let f = cnpj ? E.dados.fornecedores.find(function (x) { return x.cnpj === cnpj; }) : null;
+      if (!f && emit.nome) f = E.dados.fornecedores.find(function (x) { return FT.semAcento(x.nome) === FT.semAcento(emit.nome); });
+      if (f) return { fornecedor: f, novo: false };
+      f = await FT.store.estoque.fornecedores.salvar({ nome: emit.nome || ('FORNECEDOR ' + E.cnpj(cnpj)), fantasia: emit.fantasia, cnpj: cnpj, telefone: emit.telefone, endereco: emit.endereco });
+      E.dados.fornecedores.push(f); E.dados.forn[f.id] = f;
+      return { fornecedor: f, novo: true };
+    }
+  };
+})();
+
+/* Forneria Toscana — gera PDFs de verdade (pedido de compra, decisão da cotação) com pdf-lib */
+(function () {
+  'use strict';
+  const FT = window.FT;
+  const PDFLIB = 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+
+  FT.carregarScript = function (url, global) {
+    if (window[global]) return Promise.resolve(window[global]);
+    return new Promise(function (ok, falha) {
+      const s = document.createElement('script'); s.src = url;
+      s.onload = function () { window[global] ? ok(window[global]) : falha(new Error('biblioteca não carregou')); };
+      s.onerror = function () { falha(new Error('sem internet para carregar a biblioteca')); };
+      document.head.appendChild(s);
+    });
+  };
+  FT.baixarArquivo = function (bytes, nome, tipo) {
+    const blob = bytes instanceof Blob ? bytes : new Blob([bytes], { type: tipo || 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  };
+
+  // tira caracteres que a fonte padrão do PDF não tem
+  function limpo(s) {
+    return String(s == null ? '' : s).replace(/[✓✔]/g, 'OK').replace(/[★☆]/g, '*').replace(/→/g, '->').replace(/[‘’]/g, "'").replace(/[“”]/g, '"')
+      .replace(/[^\x20-\x7E -ÿ·–—•€]/g, '');
+  }
+  let logoBytes = null;
+  async function logo() {
+    if (logoBytes !== null) return logoBytes;
+    try {
+      const img = document.querySelector('.login-logo .logo-escuro');
+      logoBytes = img ? new Uint8Array(await (await fetch(img.src)).arrayBuffer()) : false;
+    } catch (e) { logoBytes = false; }
+    return logoBytes;
+  }
+
+  /* doc = { titulo, subtitulo, info: [[rótulo, valor]...], blocos: [{ titulo, colunas: [{t, w (fração), a: 'r'|'c'}], linhas: [[...]], destaques: [índices], total: [...] }], rodape } */
+  FT.gerarPDF = async function (doc) {
+    const L = await FT.carregarScript(PDFLIB, 'PDFLib');
+    const pdf = await L.PDFDocument.create();
+    const f = await pdf.embedFont(L.StandardFonts.Helvetica), fb = await pdf.embedFont(L.StandardFonts.HelveticaBold);
+    const W = doc.paisagem ? 841.89 : 595.28, H = doc.paisagem ? 595.28 : 841.89, M = 36, LARG = W - 2 * M;
+    const preto = L.rgb(0.1, 0.1, 0.1), cinza = L.rgb(0.42, 0.42, 0.42), linha = L.rgb(0.8, 0.8, 0.78), fundo = L.rgb(0.95, 0.95, 0.93), verde = L.rgb(0.14, 0.34, 0.29), vinho = L.rgb(0.38, 0.07, 0.15);
+    let pg, y, nPag = 0;
+    const lb = await logo();
+    let logoImg = null; if (lb) { try { logoImg = await pdf.embedPng(lb); } catch (e) { logoImg = null; } }
+    function cortar(t, fonte, tam, larg) {
+      t = limpo(t);
+      if (fonte.widthOfTextAtSize(t, tam) <= larg) return t;
+      while (t.length > 1 && fonte.widthOfTextAtSize(t + '…', tam) > larg) t = t.slice(0, -1);
+      return t + '…';
+    }
+    function texto(t, x, yy, tam, fonte, cor, larg, alinhar) {
+      const s = larg ? cortar(t, fonte || f, tam, larg) : limpo(t);
+      let xx = x; const w = (fonte || f).widthOfTextAtSize(s, tam);
+      if (alinhar === 'r') xx = x + larg - w; else if (alinhar === 'c') xx = x + (larg - w) / 2;
+      pg.drawText(s, { x: xx, y: yy, size: tam, font: fonte || f, color: cor || preto });
+    }
+    function novaPagina() {
+      pg = pdf.addPage([W, H]); nPag++; y = H - M;
+      if (logoImg) { const esc = 120 / logoImg.width; pg.drawImage(logoImg, { x: M, y: y - logoImg.height * esc, width: 120, height: logoImg.height * esc }); }
+      texto(doc.titulo, M + 140, y - 16, 15, fb, vinho, LARG - 140, 'r');
+      if (doc.subtitulo) texto(doc.subtitulo, M + 140, y - 32, 9.5, f, cinza, LARG - 140, 'r');
+      y -= 56; pg.drawLine({ start: { x: M, y: y }, end: { x: W - M, y: y }, thickness: 1, color: vinho }); y -= 14;
+    }
+    function espaco(h) { if (y - h < M + 30) { novaPagina(); return true; } return false; }
+    novaPagina();
+    (doc.info || []).forEach(function (par, i) {
+      if (i % 2 === 0) espaco(28);
+      const x = M + (i % 2) * (LARG / 2);
+      texto(par[0], x, y, 7.5, fb, cinza, LARG / 2 - 8);
+      texto(par[1], x, y - 12, 10.5, f, preto, LARG / 2 - 8);
+      if (i % 2 === 1 || i === doc.info.length - 1) y -= 28;
+    });
+    if (doc.info && doc.info.length) y -= 4;
+    (doc.blocos || []).forEach(function (b) {
+      const cols = b.colunas, xs = []; let acc = M;
+      cols.forEach(function (c) { xs.push(acc); acc += c.w * LARG; });
+      const cab = function () {
+        pg.drawRectangle({ x: M, y: y - 5, width: LARG, height: 17, color: fundo });
+        cols.forEach(function (c, i) { texto(c.t, xs[i] + 4, y, 7.5, fb, cinza, c.w * LARG - 8, c.a); });
+        y -= 18;
+      };
+      espaco(60);
+      if (b.titulo) { texto(b.titulo, M, y, 11.5, fb, verde, LARG); y -= 16; }
+      cab();
+      b.linhas.forEach(function (l, li) {
+        if (espaco(16)) cab();
+        const forte = b.destaques && b.destaques.indexOf(li) >= 0;
+        cols.forEach(function (c, i) { texto(l[i], xs[i] + 4, y, 9, forte ? fb : f, preto, c.w * LARG - 8, c.a); });
+        y -= 5; pg.drawLine({ start: { x: M, y: y }, end: { x: W - M, y: y }, thickness: 0.5, color: linha }); y -= 11;
+      });
+      if (b.total) {
+        espaco(18);
+        cols.forEach(function (c, i) { if (b.total[i] != null && b.total[i] !== '') texto(b.total[i], xs[i] + 4, y, 10, fb, preto, c.w * LARG - 8, c.a); });
+        y -= 16;
+      }
+      if (b.nota) { espaco(14); texto(b.nota, M, y, 8, f, cinza, LARG); y -= 12; }
+      y -= 12;
+    });
+    if (doc.rodape) { espaco(40); y -= 10; doc.rodape.forEach(function (r) { texto(r, M, y, 9, f, cinza, LARG); y -= 13; }); }
+    const pags = pdf.getPages();
+    pags.forEach(function (p, i) { pg = p; texto('FORNERIA TOSCANA · GUARAREMA/SP · PÁGINA ' + (i + 1) + ' DE ' + pags.length, M, 20, 7.5, f, cinza, LARG, 'c'); });
+    return pdf.save();
+  };
+})();
 
 /* Forneria Toscana — Home: só o logo */
 (function () {
@@ -5267,6 +5946,1174 @@ window.FT_CONFIG = {
   };
 })();
 
+/* Forneria Toscana — Estoque › Produtos: cadastro, unidade, fornecedores e entrada manual */
+(function () {
+  'use strict';
+  const FT = window.FT, E = FT.est, $ = FT.$, esc = FT.esc;
+  const st = { busca: '', filtro: 'todos', editando: null };
+
+  function montar() {
+    $('#tela-est-produtos').innerHTML =
+      '<div class="cab-tela"><div><h1>Produtos do estoque</h1><p>Na ordem em que estão guardados (é a mesma ordem da contagem). Ajuste a unidade e o estoque mínimo direto na lista; clique no nome para editar e cadastrar os fornecedores.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="ep-importar">Importar planilha</button><button type="button" class="btn btn-sec" id="ep-entrada">Entrada manual</button><button type="button" class="btn" id="ep-novo">Novo produto</button></div></div>' +
+      '<input type="file" id="ep-arq" accept=".xls,.xlsx,.csv" hidden>' +
+      '<div class="barra"><input type="search" id="ep-busca" placeholder="Buscar produto…" aria-label="Buscar produto" class="ep-busca">' +
+      '<div class="segmentado" role="group" aria-label="Filtro"><button type="button" data-f="todos" aria-pressed="true">Todos</button><button type="button" data-f="baixo" aria-pressed="false">Abaixo do mínimo</button><button type="button" data-f="semforn" aria-pressed="false">Sem fornecedor</button><button type="button" data-f="inativos" aria-pressed="false">Inativos</button></div></div>' +
+      '<div class="kpis kpis-4" id="ep-kpis"></div>' +
+      '<div class="rolagem"><table class="lista ep-tab" id="ep-tab"></table></div>';
+    $('#ep-novo').addEventListener('click', function () { abrirProduto(null); });
+    $('#ep-entrada').addEventListener('click', function () { abrirEntrada(null); });
+    $('#ep-importar').addEventListener('click', function () { $('#ep-arq').click(); });
+    $('#ep-arq').addEventListener('change', importar);
+    $('#ep-busca').addEventListener('input', function (e) { st.busca = FT.semAcento(e.target.value); desenhar(); });
+    document.querySelector('#tela-est-produtos .segmentado').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-f]'); if (!b) return; st.filtro = b.dataset.f;
+      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); desenhar();
+    });
+    const tab = $('#ep-tab');
+    tab.addEventListener('click', function (e) {
+      const a = e.target.closest('[data-editar]'); if (a) { abrirProduto(a.dataset.editar); return; }
+      const en = e.target.closest('[data-entrada]'); if (en) abrirEntrada(en.dataset.entrada);
+    });
+    tab.addEventListener('change', async function (e) {
+      const el = e.target.closest('[data-campo]'); if (!el) return;
+      const p = E.dados.prod[el.dataset.id]; if (!p) return;
+      const novo = Object.assign({}, p);
+      if (el.dataset.campo === 'unidade') novo.unidade = el.value;
+      if (el.dataset.campo === 'minimo') novo.estoque_minimo = E.lerQtd(el.value);
+      try { const s = await FT.store.estoque.produtos.salvar(novo); Object.assign(p, s); el.classList.add('salvo'); setTimeout(function () { el.classList.remove('salvo'); }, 900); desenharKpis(); }
+      catch (x) { FT.aviso('Não foi possível salvar: ' + FT.textoErro(x), true); }
+    });
+    montarDialogos();
+  }
+
+  async function carregar(forcar) {
+    try { await E.carregar(forcar); desenhar(); }
+    catch (e) { FT.aviso('Não consegui carregar o estoque: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 10 foi rodado no Supabase.', true); }
+  }
+  function abaixo(p) { return p.estoque_minimo != null && +p.estoque < +p.estoque_minimo; }
+  function desenharKpis() {
+    const ps = E.dados.produtos.filter(function (p) { return p.ativo !== false; });
+    const valor = ps.reduce(function (s, p) { return s + (+p.estoque > 0 && p.custo_medio != null ? +p.estoque * +p.custo_medio : 0); }, 0);
+    $('#ep-kpis').innerHTML = [
+      { t: 'Produtos ativos', v: ps.length, s: E.dados.fornecedores.length + ' fornecedor(es) cadastrados' },
+      { t: 'Abaixo do mínimo', v: ps.filter(abaixo).length, s: 'Precisam ser comprados', alerta: ps.filter(abaixo).length > 0 },
+      { t: 'Sem fornecedor', v: ps.filter(function (p) { return !E.vinculosDoProduto(p.id).length; }).length, s: 'Cadastre para usar nas compras' },
+      { t: 'Valor em estoque', v: FT.moeda(valor), s: 'Pelo custo médio das notas' }
+    ].map(function (k) { return '<article class="kpi' + (k.alerta ? ' kpi-alerta' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p><p class="kpi-s">' + esc(k.s) + '</p></article>'; }).join('');
+  }
+  function desenhar() {
+    desenharKpis();
+    const lista = E.dados.produtos.filter(function (p) {
+      if (st.filtro === 'inativos') { if (p.ativo !== false) return false; } else if (p.ativo === false) return false;
+      if (st.filtro === 'baixo' && !abaixo(p)) return false;
+      if (st.filtro === 'semforn' && E.vinculosDoProduto(p.id).length) return false;
+      return !st.busca || FT.semAcento(p.nome).indexOf(st.busca) >= 0;
+    });
+    let localAnt = null, h = '<thead><tr><th class="num">#</th><th>Produto</th><th>Unidade</th><th class="num">Estoque</th><th class="num">Mínimo</th><th class="num">Último custo</th><th>Fornecedores</th><th></th></tr></thead><tbody>';
+    lista.forEach(function (p, i) {
+      if (p.local && p.local !== localAnt) h += '<tr class="ep-local"><td colspan="8">' + esc(p.local) + '</td></tr>';
+      localAnt = p.local;
+      const vs = E.vinculosDoProduto(p.id);
+      h += '<tr class="' + (abaixo(p) ? 'ep-baixo' : '') + '"><td class="num ep-pos">' + (E.dados.produtos.indexOf(p) + 1) + '</td>' +
+        '<td><button type="button" class="link ep-nome" data-editar="' + esc(p.id) + '">' + esc(p.nome) + '</button></td>' +
+        '<td><select class="ep-un" data-campo="unidade" data-id="' + esc(p.id) + '" aria-label="Unidade de ' + esc(p.nome) + '">' + E.opcoesUnidade(p.unidade) + '</select></td>' +
+        '<td class="num"><b>' + E.qtd(p.estoque) + '</b>' + (abaixo(p) ? ' <span class="chip-dif">baixo</span>' : '') + '</td>' +
+        '<td class="num"><input class="ep-min" data-campo="minimo" data-id="' + esc(p.id) + '" inputmode="decimal" value="' + (p.estoque_minimo != null ? E.qtd(p.estoque_minimo) : '') + '" placeholder="—" aria-label="Estoque mínimo de ' + esc(p.nome) + '"></td>' +
+        '<td class="num">' + (p.ultimo_custo != null ? FT.moeda(p.ultimo_custo) : '—') + '</td>' +
+        '<td>' + (vs.length ? vs.map(function (v) { return '<span class="tag">' + esc(E.nomeForn(v.fornecedor_id)) + '</span>'; }).join(' ') : '<span class="chip-cinza">nenhum</span>') + '</td>' +
+        '<td><button type="button" class="btn btn-sec btn-p" data-entrada="' + esc(p.id) + '">Entrada</button></td></tr>';
+    });
+    if (!lista.length) h += '<tr><td colspan="8" class="vazio-lista">' + (E.dados.produtos.length ? 'Nenhum produto neste filtro.' : 'Nenhum produto cadastrado. Use "Importar planilha" ou "Novo produto".') + '</td></tr>';
+    $('#ep-tab').innerHTML = h + '</tbody>';
+  }
+
+  /* ---------- diálogos ---------- */
+  function montarDialogos() {
+    const d = document.createElement('dialog'); d.id = 'dlg-prod'; d.setAttribute('aria-labelledby', 'h-prod');
+    d.innerHTML = '<form class="dlg form" id="pr-form" novalidate><h2 id="h-prod">Produto</h2>' +
+      '<label for="pr-nome">Nome<input id="pr-nome" required autocomplete="off"></label>' +
+      '<div class="grade3"><label for="pr-un">Unidade do estoque<select id="pr-un"></select></label><label for="pr-min">Estoque mínimo<input id="pr-min" inputmode="decimal" placeholder="opcional"></label>' +
+      '<label for="pr-local">Local / seção<input id="pr-local" list="pr-locais" placeholder="ex.: DESPENSA" autocomplete="off"><datalist id="pr-locais"></datalist></label></div>' +
+      '<label for="pr-pos">Posição na contagem<select id="pr-pos"></select></label>' +
+      '<label class="check"><input type="checkbox" id="pr-ativo" checked> Produto ativo</label>' +
+      '<div id="pr-forn-box"><h3 class="h3-dia">Fornecedores deste produto</h3><p class="sub">Unidade de compra e conversão: ex.: o fornecedor vende em CX e 1 CX = 12 UN no estoque.</p>' +
+      '<div class="rolagem"><table class="lista pr-forn" id="pr-forn"></table></div>' +
+      '<div class="pr-forn-add"><select id="pr-forn-sel" aria-label="Fornecedor"></select><button type="button" class="btn btn-sec btn-p" id="pr-forn-add">Adicionar fornecedor</button><a class="link" href="#fornecedores">cadastrar fornecedor novo</a></div>' +
+      '<h3 class="h3-dia">Últimas movimentações</h3><div class="rolagem pr-mov-rol"><table class="lista" id="pr-mov"></table></div></div>' +
+      '<p class="erro-form" id="pr-erro"></p><div class="dlg-acoes"><button type="button" class="btn btn-perigo" id="pr-excluir">Excluir</button><span class="espaco"></span><button class="btn btn-sec" type="button" id="pr-cancelar">Fechar</button><button class="btn" type="submit">Salvar</button></div></form>';
+    document.body.appendChild(d);
+    $('#pr-cancelar').addEventListener('click', function () { d.close(); });
+    $('#pr-form').addEventListener('submit', salvarProduto);
+    $('#pr-excluir').addEventListener('click', excluirProduto);
+    $('#pr-forn-add').addEventListener('click', addFornecedor);
+    $('#pr-forn').addEventListener('change', salvarVinculo);
+    $('#pr-forn').addEventListener('click', async function (e) {
+      const b = e.target.closest('[data-rem-v]'); if (!b) return;
+      await FT.store.estoque.vinculos.remover(b.dataset.remV); await E.carregar(true); desenharFornecedores(); desenhar();
+    });
+
+    const en = document.createElement('dialog'); en.id = 'dlg-entrada'; en.setAttribute('aria-labelledby', 'h-ent');
+    en.innerHTML = '<form class="dlg form" id="en-form" novalidate><h2 id="h-ent">Entrada manual no estoque</h2><p>Para compras sem nota ou ajustes de entrada. Para nota fiscal use Estoque › Entrada de nota.</p>' +
+      '<label for="en-prod">Produto<select id="en-prod"></select></label>' +
+      '<div class="grade3"><label for="en-qtd">Quantidade<input id="en-qtd" inputmode="decimal"></label><label for="en-un-forn">Unidade<select id="en-un-forn"></select></label><label for="en-custo">Valor pago por unidade (R$)<input id="en-custo" inputmode="decimal" placeholder="opcional"></label></div>' +
+      '<label for="en-forn">Fornecedor<select id="en-forn"></select></label>' +
+      '<label for="en-obs">Observação<input id="en-obs" autocomplete="off"></label><p class="dd-dif" id="en-res"></p>' +
+      '<p class="erro-form" id="en-erro"></p><div class="dlg-acoes"><button class="btn btn-sec" type="button" id="en-cancelar">Cancelar</button><button class="btn" type="submit">Dar entrada</button></div></form>';
+    document.body.appendChild(en);
+    $('#en-cancelar').addEventListener('click', function () { en.close(); });
+    $('#en-form').addEventListener('submit', salvarEntrada);
+    ['en-prod', 'en-forn'].forEach(function (id) { $('#' + id).addEventListener('change', unidadesEntrada); });
+    ['en-qtd', 'en-un-forn', 'en-custo'].forEach(function (id) { $('#' + id).addEventListener('input', resumoEntrada); });
+  }
+
+  function abrirProduto(id) {
+    const p = id ? E.dados.prod[id] : null; st.editando = p;
+    $('#h-prod').textContent = p ? p.nome : 'Novo produto';
+    $('#pr-nome').value = p ? p.nome : '';
+    $('#pr-un').innerHTML = E.opcoesUnidade(p ? p.unidade : 'UN');
+    $('#pr-min').value = p && p.estoque_minimo != null ? E.qtd(p.estoque_minimo) : '';
+    $('#pr-local').value = p && p.local ? p.local : '';
+    $('#pr-locais').innerHTML = Array.from(new Set(E.dados.produtos.map(function (x) { return x.local; }).filter(Boolean))).map(function (l) { return '<option value="' + esc(l) + '">'; }).join('');
+    const outros = E.dados.produtos.filter(function (x) { return !p || x.id !== p.id; });
+    const idx = p ? E.dados.produtos.indexOf(p) : -1;
+    const antes = idx > 0 ? E.dados.produtos[idx - 1].id : (idx === 0 ? '__inicio' : '__fim');
+    $('#pr-pos').innerHTML = '<option value="__inicio">No começo da lista</option>' + outros.map(function (x) { return '<option value="' + esc(x.id) + '"' + (x.id === antes ? ' selected' : '') + '>Depois de ' + esc(x.nome) + '</option>'; }).join('') + '<option value="__fim"' + (antes === '__fim' ? ' selected' : '') + '>No fim da lista</option>';
+    $('#pr-ativo').checked = !p || p.ativo !== false;
+    $('#pr-excluir').hidden = !p; $('#pr-forn-box').hidden = !p; $('#pr-erro').textContent = '';
+    if (p) { desenharFornecedores(); desenharMovimentos(p.id); }
+    $('#dlg-prod').showModal();
+  }
+  function desenharFornecedores() {
+    const p = st.editando, vs = E.vinculosDoProduto(p.id);
+    $('#pr-forn').innerHTML = '<thead><tr><th>Fornecedor</th><th>Código no fornecedor</th><th>Unid. de compra</th><th>1 unid. de compra =</th><th class="num">Último preço</th><th></th></tr></thead><tbody>' +
+      (vs.length ? vs.map(function (v) {
+        return '<tr data-v="' + esc(v.id) + '"><td><b>' + esc(E.nomeForn(v.fornecedor_id)) + '</b></td><td><input data-vc="codigo_fornecedor" value="' + esc(v.codigo_fornecedor || '') + '" placeholder="—" aria-label="Código"></td>' +
+          '<td><select data-vc="unidade_compra" aria-label="Unidade de compra">' + E.opcoesUnidade(v.unidade_compra || p.unidade) + '</select></td>' +
+          '<td class="pr-fator"><input data-vc="fator" inputmode="decimal" value="' + E.qtd(v.fator || 1) + '" aria-label="Conversão"> ' + esc(p.unidade) + '</td>' +
+          '<td class="num"><input data-vc="ultimo_preco" inputmode="decimal" value="' + (v.ultimo_preco != null ? FT.num2(v.ultimo_preco) : '') + '" placeholder="—" aria-label="Último preço"></td>' +
+          '<td><button type="button" class="link" data-rem-v="' + esc(v.id) + '">remover</button></td></tr>';
+      }).join('') : '<tr><td colspan="6" class="vazio-lista">Nenhum fornecedor. Adicione abaixo.</td></tr>') + '</tbody>';
+    const usados = vs.map(function (v) { return v.fornecedor_id; });
+    $('#pr-forn-sel').innerHTML = '<option value="">Escolha o fornecedor…</option>' + E.dados.fornecedores.filter(function (f) { return usados.indexOf(f.id) < 0; }).map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.fantasia || f.nome) + '</option>'; }).join('');
+  }
+  async function desenharMovimentos(pid) {
+    $('#pr-mov').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
+    const ms = await FT.store.estoque.movimentos(pid, 15);
+    const nomes = { contagem: 'CONTAGEM', entrada: 'ENTRADA', acerto: 'ACERTO', manual: 'ENTRADA MANUAL' };
+    $('#pr-mov').innerHTML = ms.length ? '<thead><tr><th>Quando</th><th>Tipo</th><th class="num">Quantidade</th><th class="num">Saldo</th><th>Referência</th></tr></thead><tbody>' +
+      ms.map(function (m) { return '<tr><td>' + FT.ddmmaaaa(FT.dataSP(m.em)) + ' ' + FT.horaSP(m.em) + '</td><td>' + nomes[m.tipo] + '</td><td class="num' + (m.quantidade < 0 ? ' neg' : '') + '">' + (m.quantidade > 0 ? '+' : '') + E.qtd(m.quantidade) + '</td><td class="num">' + E.qtd(m.saldo) + '</td><td>' + esc([m.referencia, m.obs].filter(Boolean).join(' · ')) + '</td></tr>'; }).join('') + '</tbody>'
+      : '<tbody><tr><td class="vazio-lista">Sem movimentações ainda.</td></tr></tbody>';
+  }
+  async function addFornecedor() {
+    const fid = $('#pr-forn-sel').value; if (!fid) return;
+    const p = st.editando;
+    try { await FT.store.estoque.vinculos.salvar({ produto_id: p.id, fornecedor_id: fid, unidade_compra: p.unidade, fator: 1 }); await E.carregar(true); desenharFornecedores(); desenhar(); }
+    catch (x) { $('#pr-erro').textContent = 'Não foi possível adicionar: ' + FT.textoErro(x); }
+  }
+  async function salvarVinculo(e) {
+    const tr = e.target.closest('[data-v]'); if (!tr) return;
+    const v = Object.assign({}, E.dados.vinculos.find(function (x) { return x.id === tr.dataset.v; }));
+    tr.querySelectorAll('[data-vc]').forEach(function (el) {
+      const k = el.dataset.vc;
+      v[k] = k === 'fator' ? (E.lerQtd(el.value) || 1) : k === 'ultimo_preco' ? E.lerQtd(el.value) : el.value;
+    });
+    try { await FT.store.estoque.vinculos.salvar(v); await E.carregar(true); }
+    catch (x) { $('#pr-erro').textContent = 'Não foi possível salvar o fornecedor: ' + FT.textoErro(x); }
+  }
+  function ordemPara(pos, ignorar) {
+    const l = E.dados.produtos.filter(function (x) { return x.id !== ignorar; });
+    if (pos === '__inicio') return (l.length ? (+l[0].ordem || 0) : 10) - 10;
+    if (pos === '__fim' || !pos) return (l.length ? (+l[l.length - 1].ordem || 0) : 0) + 10;
+    const i = l.findIndex(function (x) { return x.id === pos; });
+    const a = +l[i].ordem || 0, b = i + 1 < l.length ? +l[i + 1].ordem || 0 : a + 20;
+    return b - a > 1 ? Math.floor((a + b) / 2) : null; // null = precisa renumerar
+  }
+  async function salvarProduto(e) {
+    e.preventDefault();
+    const nome = FT.mai($('#pr-nome').value);
+    if (!nome) { $('#pr-erro').textContent = 'Informe o nome.'; return; }
+    const p = st.editando;
+    const repetido = E.dados.produtos.find(function (x) { return FT.semAcento(x.nome) === FT.semAcento(nome) && (!p || x.id !== p.id); });
+    if (repetido) { $('#pr-erro').textContent = 'Já existe um produto com este nome.'; return; }
+    const pos = $('#pr-pos').value;
+    let ordem = p ? p.ordem : null;
+    const idx = p ? E.dados.produtos.indexOf(p) : -1, antesAtual = idx > 0 ? E.dados.produtos[idx - 1].id : (idx === 0 ? '__inicio' : '__fim');
+    let renumerar = false;
+    if (!p || pos !== antesAtual) { ordem = ordemPara(pos, p && p.id); if (ordem == null) { renumerar = true; ordem = 0; } }
+    try {
+      const salvo = await FT.store.estoque.produtos.salvar(Object.assign({}, p || {}, { nome: nome, unidade: $('#pr-un').value, estoque_minimo: E.lerQtd($('#pr-min').value), local: $('#pr-local').value, ordem: ordem, ativo: $('#pr-ativo').checked }));
+      if (renumerar) {
+        const l = E.dados.produtos.filter(function (x) { return x.id !== salvo.id; });
+        const i = pos === '__inicio' ? 0 : pos === '__fim' ? l.length : l.findIndex(function (x) { return x.id === pos; }) + 1;
+        l.splice(i, 0, salvo);
+        await FT.store.estoque.produtos.reordenar(l.map(function (x, k) { return { id: x.id, ordem: (k + 1) * 10 }; }));
+      }
+      await E.carregar(true); desenhar();
+      if (!p) { abrirProduto(salvo.id); FT.aviso('Produto cadastrado. Agora adicione os fornecedores.'); }
+      else { $('#dlg-prod').close(); FT.aviso('Produto salvo.'); }
+    } catch (x) { $('#pr-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(x); }
+  }
+  async function excluirProduto() {
+    const p = st.editando; if (!p) return;
+    if (!window.confirm('Excluir ' + p.nome + '? O histórico de movimentações dele também será apagado. Para só esconder, desmarque "Produto ativo".')) return;
+    try { await FT.store.estoque.produtos.remover(p.id); await E.carregar(true); desenhar(); $('#dlg-prod').close(); }
+    catch (x) { $('#pr-erro').textContent = 'Não foi possível excluir: ' + FT.textoErro(x); }
+  }
+
+  /* ---------- entrada manual ---------- */
+  function abrirEntrada(pid) {
+    $('#en-prod').innerHTML = E.opcoesProdutos(pid, 'Escolha o produto…');
+    $('#en-forn').innerHTML = E.opcoesFornecedores('', 'Sem fornecedor');
+    $('#en-qtd').value = ''; $('#en-custo').value = ''; $('#en-obs').value = ''; $('#en-erro').textContent = '';
+    unidadesEntrada();
+    $('#dlg-entrada').showModal(); (pid ? $('#en-qtd') : $('#en-prod')).focus();
+  }
+  function unidadesEntrada() {
+    const p = E.dados.prod[$('#en-prod').value], fid = $('#en-forn').value;
+    if (!p) { $('#en-un-forn').innerHTML = '<option value="1">—</option>'; resumoEntrada(); return; }
+    let ops = '<option value="1">' + esc(p.unidade) + '</option>';
+    E.vinculosDoProduto(p.id).filter(function (v) { return !fid || v.fornecedor_id === fid; }).forEach(function (v) {
+      if (+v.fator !== 1 && v.unidade_compra) ops += '<option value="' + v.fator + '">' + esc(v.unidade_compra) + ' (' + E.qtd(v.fator) + ' ' + esc(p.unidade) + ')</option>';
+    });
+    $('#en-un-forn').innerHTML = ops; resumoEntrada();
+  }
+  function resumoEntrada() {
+    const p = E.dados.prod[$('#en-prod').value], q = E.lerQtd($('#en-qtd').value), fator = +$('#en-un-forn').value || 1;
+    $('#en-res').textContent = p && q ? 'Entra ' + E.qtd(q * fator) + ' ' + p.unidade + ' · estoque passa de ' + E.qtd(p.estoque) + ' para ' + E.qtd(+p.estoque + q * fator) + ' ' + p.unidade : '';
+  }
+  async function salvarEntrada(e) {
+    e.preventDefault();
+    const p = E.dados.prod[$('#en-prod').value], q = E.lerQtd($('#en-qtd').value), fator = +$('#en-un-forn').value || 1, c = E.lerQtd($('#en-custo').value);
+    if (!p) { $('#en-erro').textContent = 'Escolha o produto.'; return; }
+    if (!q || q <= 0) { $('#en-erro').textContent = 'Informe a quantidade.'; return; }
+    const fid = $('#en-forn').value;
+    try {
+      await FT.store.estoque.movimentar('manual', [{ produto_id: p.id, quantidade: q * fator, custo: c != null ? c / fator : null }], fid ? E.nomeForn(fid) : 'ENTRADA MANUAL', $('#en-obs').value);
+      if (fid && c != null) {
+        const v = E.vinculosDoProduto(p.id).find(function (x) { return x.fornecedor_id === fid; });
+        await FT.store.estoque.vinculos.salvar(Object.assign({ produto_id: p.id, fornecedor_id: fid, unidade_compra: p.unidade, fator: 1 }, v || {}, { ultimo_preco: fator === 1 && v && +v.fator !== 1 ? c * v.fator : c }));
+      }
+      await E.carregar(true); desenhar(); $('#dlg-entrada').close();
+      FT.aviso('Entrada de ' + E.qtd(q * fator) + ' ' + p.unidade + ' de ' + p.nome + ' registrada.');
+    } catch (x) { $('#en-erro').textContent = 'Não foi possível registrar: ' + FT.textoErro(x); }
+  }
+
+  /* ---------- importar planilha de produtos ---------- */
+  async function importar(e) {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (typeof XLSX === 'undefined') { FT.aviso('O leitor de planilhas não carregou. Confira a internet.', true); return; }
+    try {
+      const wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array' });
+      const linhas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: null });
+      const itens = window.FTEstoque.lerPlanilhaProdutos(linhas);
+      const existentes = {}; E.dados.produtos.forEach(function (p) { existentes[FT.semAcento(p.nome)] = 1; });
+      const novos = itens.filter(function (i) { return !existentes[FT.semAcento(i.nome)]; });
+      if (!novos.length) { FT.aviso('Todos os ' + itens.length + ' produtos da planilha já estão cadastrados.'); return; }
+      if (!window.confirm('Cadastrar ' + novos.length + ' produto(s) novo(s) no fim da lista, na ordem da planilha? (' + (itens.length - novos.length) + ' já existiam)')) return;
+      let base = E.dados.produtos.length ? Math.max.apply(null, E.dados.produtos.map(function (p) { return +p.ordem || 0; })) : 0;
+      await FT.store.estoque.produtos.salvarVarios(novos.map(function (n) { base += 10; return { nome: n.nome, unidade: n.unidade || 'UN', local: n.local, ordem: base }; }));
+      await E.carregar(true); desenhar(); FT.aviso(novos.length + ' produto(s) cadastrados.');
+    } catch (x) { FT.aviso('Não consegui ler a planilha: ' + FT.textoErro(x), true); }
+  }
+
+  let montado = false;
+  FT.telas['est-produtos'] = {
+    abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(true); }
+  };
+})();
+
+/* Forneria Toscana — Estoque › Contagem de estoque (na ordem em que os produtos estão guardados) */
+(function () {
+  'use strict';
+  const FT = window.FT, E = FT.est, $ = FT.$, esc = FT.esc;
+  const st = { c: null, so: false, salvo: true };
+
+  function montar() {
+    $('#tela-est-contagem').innerHTML =
+      '<div class="cab-tela"><div><h1>Contagem de estoque</h1><p>Os produtos aparecem na ordem em que estão guardados. Digite o que contou; a contagem vai sendo salva sozinha. Ao finalizar, o que foi contado vira o estoque.</p></div>' +
+      '<div class="acoes-linha"><span class="pilula" id="ct-estado"></span></div></div>' +
+      '<div id="ct-corpo"></div>';
+    $('#ct-corpo').addEventListener('input', function (e) {
+      const el = e.target.closest('[data-cont]'); if (!el) return;
+      const v = el.value.trim();
+      if (v === '') delete st.c.itens[el.dataset.cont]; else { const n = E.lerQtd(v); if (n != null) st.c.itens[el.dataset.cont] = n; }
+      linhaDif(el.dataset.cont); progresso(); st.salvo = false; estado(); salvarDepois();
+    });
+    $('#ct-corpo').addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return; const el = e.target.closest('[data-cont]'); if (!el) return;
+      e.preventDefault(); const l = Array.prototype.slice.call(document.querySelectorAll('#ct-corpo [data-cont]')); const i = l.indexOf(el);
+      if (l[i + 1]) { l[i + 1].focus(); l[i + 1].select(); }
+    });
+    $('#ct-corpo').addEventListener('click', function (e) {
+      if (e.target.closest('#ct-iniciar')) iniciar();
+      if (e.target.closest('#ct-finalizar')) confirmarFinal();
+      if (e.target.closest('#ct-descartar')) descartar();
+      const so = e.target.closest('#ct-so'); if (so) { st.so = so.checked; desenharLista(); }
+    });
+    const d = document.createElement('dialog'); d.id = 'dlg-ct-fim'; d.setAttribute('aria-labelledby', 'h-ct-fim');
+    d.innerHTML = '<div class="dlg"><h2 id="h-ct-fim">Finalizar contagem</h2><p id="ctf-sub"></p><div class="rolagem ct-dif-rol"><table class="lista" id="ctf-tab"></table></div><p class="erro-form" id="ctf-erro"></p>' +
+      '<div class="dlg-acoes"><button class="btn btn-sec" type="button" id="ctf-voltar">Voltar a contar</button><button class="btn" type="button" id="ctf-ok">Finalizar e atualizar o estoque</button></div></div>';
+    document.body.appendChild(d);
+    $('#ctf-voltar').addEventListener('click', function () { d.close(); });
+    $('#ctf-ok').addEventListener('click', finalizar);
+  }
+  const salvarDepois = FT.debounce(function () { salvar(); }, 900);
+  async function salvar() {
+    if (!st.c) return;
+    try { const r = await FT.store.estoque.contagens.salvar(st.c); st.c.id = r.id; st.salvo = true; }
+    catch (e) { st.erro = FT.textoErro(e); }
+    estado();
+  }
+  function estado() {
+    const el = $('#ct-estado'); if (!el) return;
+    el.className = 'pilula' + (st.erro ? ' erro' : st.salvo ? ' ok' : '');
+    el.textContent = !st.c ? '' : st.erro ? 'Não salvou: ' + st.erro : st.salvo ? '✓ Contagem salva' : 'Salvando…';
+  }
+  window.addEventListener('beforeunload', function (e) { if (st.c && !st.salvo) { e.preventDefault(); e.returnValue = ''; } });
+
+  async function carregar() {
+    try {
+      await E.carregar(true);
+      st.c = await FT.store.estoque.contagens.aberta();
+      if (st.c && (!st.c.itens || Array.isArray(st.c.itens))) st.c.itens = {};
+      st.salvo = true; st.erro = null; desenhar(); estado();
+    } catch (e) { FT.aviso('Não consegui carregar a contagem: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 10 foi rodado.', true); }
+  }
+  function ativos() { return E.dados.produtos.filter(function (p) { return p.ativo !== false; }); }
+  async function desenhar() {
+    if (!st.c) {
+      let hist = [];
+      try { hist = (await FT.store.estoque.contagens.listar()).filter(function (c) { return c.status === 'finalizada'; }).slice(0, 8); } catch (e) { /* sem histórico */ }
+      $('#ct-corpo').innerHTML = '<div class="painel ct-ini"><h2>Nenhuma contagem em andamento</h2><p>' + ativos().length + ' produtos para contar, na ordem em que estão guardados.</p>' +
+        '<button type="button" class="btn" id="ct-iniciar">Iniciar contagem</button></div>' +
+        (hist.length ? '<section class="painel"><h2>Contagens anteriores</h2><table class="lista"><thead><tr><th>Data</th><th class="num">Produtos contados</th><th>Finalizada em</th></tr></thead><tbody>' +
+          hist.map(function (c) { return '<tr><td>' + FT.ddmmaaaa(c.data) + '</td><td class="num">' + Object.keys(c.itens || {}).length + '</td><td>' + (c.finalizada_em ? FT.ddmmaaaa(FT.dataSP(c.finalizada_em)) + ' ' + FT.horaSP(c.finalizada_em) : '') + '</td></tr>'; }).join('') + '</tbody></table></section>' : '');
+      return;
+    }
+    $('#ct-corpo').innerHTML = '<div class="barra ct-barra"><div class="ct-prog"><b id="ct-prog-t"></b><span class="ct-barra-fundo"><span id="ct-prog-b"></span></span></div>' +
+      '<label class="check"><input type="checkbox" id="ct-so"' + (st.so ? ' checked' : '') + '> Mostrar só o que falta contar</label>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="ct-descartar">Descartar</button><button type="button" class="btn" id="ct-finalizar">Finalizar contagem</button></div></div>' +
+      '<p class="dica">Contagem de ' + FT.ddmmaaaa(st.c.data) + '. Campo em branco = não contado (o estoque desse produto não muda). Use Enter para ir ao próximo.</p>' +
+      '<div class="rolagem"><table class="lista ct-tab" id="ct-tab"></table></div>';
+    desenharLista(); progresso();
+  }
+  function desenharLista() {
+    let localAnt = null, h = '<thead><tr><th class="num">#</th><th>Produto</th><th class="num">No sistema</th><th class="num">Contado</th><th>Unid.</th><th class="num">Diferença</th></tr></thead><tbody>';
+    ativos().forEach(function (p, i) {
+      const v = st.c.itens[p.id];
+      if (st.so && v != null && v !== '') return;
+      if (p.local && p.local !== localAnt) h += '<tr class="ep-local"><td colspan="6">' + esc(p.local) + '</td></tr>';
+      localAnt = p.local;
+      h += '<tr id="ct-l-' + esc(p.id) + '"><td class="num ep-pos">' + (i + 1) + '</td><td><b>' + esc(p.nome) + '</b></td><td class="num">' + E.qtd(p.estoque) + '</td>' +
+        '<td class="num"><input class="ct-inp" data-cont="' + esc(p.id) + '" inputmode="decimal" value="' + (v != null && v !== '' ? E.qtd(v) : '') + '" aria-label="Contado de ' + esc(p.nome) + '"></td><td>' + esc(p.unidade) + '</td><td class="num ct-dif" id="ct-d-' + esc(p.id) + '"></td></tr>';
+    });
+    $('#ct-tab').innerHTML = h + '</tbody>';
+    ativos().forEach(function (p) { linhaDif(p.id); });
+  }
+  function linhaDif(pid) {
+    const el = document.getElementById('ct-d-' + pid); if (!el) return;
+    const p = E.dados.prod[pid], v = st.c.itens[pid];
+    if (v == null || v === '') { el.textContent = ''; el.className = 'num ct-dif'; return; }
+    const d = Math.round((v - (+p.estoque || 0)) * 1000) / 1000;
+    el.textContent = d === 0 ? '✓' : (d > 0 ? '+' : '') + E.qtd(d);
+    el.className = 'num ct-dif ' + (d === 0 ? 'ok' : d < 0 ? 'neg' : 'pos');
+  }
+  function progresso() {
+    const tot = ativos().length, feitos = ativos().filter(function (p) { const v = st.c.itens[p.id]; return v != null && v !== ''; }).length;
+    const t = $('#ct-prog-t'); if (!t) return;
+    t.textContent = feitos + ' de ' + tot + ' contados';
+    $('#ct-prog-b').style.width = (tot ? feitos / tot * 100 : 0) + '%';
+  }
+  async function iniciar() {
+    st.c = { itens: {}, data: FT.hoje() };
+    await salvar(); desenhar();
+    const p = document.querySelector('#ct-corpo [data-cont]'); if (p) p.focus();
+  }
+  async function descartar() {
+    if (!window.confirm('Descartar esta contagem? O que foi digitado será perdido e o estoque não muda.')) return;
+    try { if (st.c.id) await FT.store.estoque.contagens.remover(st.c.id); st.c = null; desenhar(); estado(); }
+    catch (x) { FT.aviso('Não foi possível descartar: ' + FT.textoErro(x), true); }
+  }
+  function confirmarFinal() {
+    const contados = ativos().filter(function (p) { const v = st.c.itens[p.id]; return v != null && v !== ''; });
+    if (!contados.length) { FT.aviso('Nenhum produto foi contado ainda.', true); return; }
+    const difs = contados.filter(function (p) { return Math.abs(st.c.itens[p.id] - (+p.estoque || 0)) > 0.0005; });
+    $('#ctf-sub').innerHTML = '<b>' + contados.length + '</b> produto(s) contado(s), <b>' + difs.length + '</b> com diferença. ' + (ativos().length - contados.length) + ' não contado(s) ficam como estão.';
+    $('#ctf-tab').innerHTML = difs.length ? '<thead><tr><th>Produto</th><th class="num">Sistema</th><th class="num">Contado</th><th class="num">Diferença</th></tr></thead><tbody>' + difs.map(function (p) {
+      const d = st.c.itens[p.id] - (+p.estoque || 0);
+      return '<tr><td>' + esc(p.nome) + '</td><td class="num">' + E.qtd(p.estoque) + ' ' + esc(p.unidade) + '</td><td class="num">' + E.qtd(st.c.itens[p.id]) + '</td><td class="num ' + (d < 0 ? 'neg' : '') + '">' + (d > 0 ? '+' : '') + E.qtd(d) + '</td></tr>';
+    }).join('') + '</tbody>' : '<tbody><tr><td class="vazio-lista">Tudo bate com o sistema.</td></tr></tbody>';
+    $('#ctf-erro').textContent = '';
+    $('#dlg-ct-fim').showModal();
+  }
+  async function finalizar() {
+    const b = $('#ctf-ok'); b.disabled = true;
+    try {
+      await salvar();
+      const n = await FT.store.estoque.contagens.finalizar(st.c.id);
+      $('#dlg-ct-fim').close(); st.c = null; E.limpar();
+      FT.aviso('Contagem finalizada: estoque de ' + n + ' produto(s) atualizado.');
+      await carregar();
+    } catch (x) { $('#ctf-erro').textContent = 'Não foi possível finalizar: ' + FT.textoErro(x); }
+    finally { b.disabled = false; }
+  }
+
+  let montado = false;
+  FT.telas['est-contagem'] = {
+    abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(); },
+    sair: function () { if (st.c && !st.salvo) salvar(); }
+  };
+})();
+
+/* Forneria Toscana — Estoque › Entrada de nota (XML da NF-e ou foto da nota) */
+(function () {
+  'use strict';
+  const FT = window.FT, E = FT.est, $ = FT.$, esc = FT.esc, P = function () { return window.FTEstoque; };
+  const TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  const st = { fila: [], nota: null };
+
+  function montar() {
+    $('#tela-est-notas').innerHTML =
+      '<div class="cab-tela"><div><h1>Entrada de nota</h1><p>Suba o XML da nota (o jeito mais seguro) ou tire uma foto da nota. O sistema reconhece o fornecedor (e cadastra se for novo), liga cada item ao produto do estoque e dá entrada nas quantidades.</p></div></div>' +
+      '<div class="nf-botoes"><label class="nf-bt" for="nf-xml"><b>XML da nota</b><span>Um ou vários arquivos .xml</span></label><input type="file" id="nf-xml" accept=".xml,text/xml" multiple hidden>' +
+      '<label class="nf-bt" for="nf-foto"><b>Foto da nota</b><span>Tire a foto bem de frente, com boa luz</span></label><input type="file" id="nf-foto" accept="image/*" capture="environment" hidden>' +
+      '<button type="button" class="nf-bt" id="nf-manual"><b>Lançar sem arquivo</b><span>Digite os itens</span></button></div>' +
+      '<div id="nf-msg" class="msg" hidden></div>' +
+      '<section class="painel nf-rev" id="nf-rev" hidden></section>' +
+      '<section class="painel"><h2>Últimas notas lançadas</h2><div class="rolagem"><table class="lista" id="nf-hist"></table></div></section>';
+    $('#nf-xml').addEventListener('change', lerXMLs);
+    $('#nf-foto').addEventListener('change', lerFoto);
+    $('#nf-manual').addEventListener('click', function () { abrirRevisao({ origem: 'manual', numero: '', serie: '', chave: '', emissao: FT.hoje(), valorTotal: null, emitente: {}, itens: [] }); });
+    const rev = $('#nf-rev');
+    rev.addEventListener('change', function (e) {
+      const sel = e.target.closest('[data-it-prod]'); if (sel) { const it = st.nota.itens[+sel.dataset.itProd]; it.produto_id = sel.value; it.confira = false; preencherFator(it); desenharItens(); return; }
+      if (e.target.id === 'nf-forn') { st.nota.fornecedor_id = e.target.value; $('#nf-forn-novo').hidden = e.target.value !== '__novo'; reCasar(); desenharItens(); }
+    });
+    rev.addEventListener('input', function (e) {
+      const el = e.target.closest('[data-it]'); if (!el) return;
+      const it = st.nota.itens[+el.dataset.i], k = el.dataset.it;
+      it[k] = k === 'descricao' || k === 'unidade' ? FT.mai(el.value) : E.lerQtd(el.value);
+      if ((k === 'qtd' || k === 'valorUnit') && it.qtd != null && it.valorUnit != null) it.total = FT.r2(it.qtd * it.valorUnit);
+      resumoItem(+el.dataset.i); totais();
+    });
+    rev.addEventListener('click', function (e) {
+      if (e.target.closest('#nf-add-item')) { st.nota.itens.push({ descricao: '', unidade: 'UN', qtd: null, valorUnit: null, total: null, produto_id: '', fator: 1 }); desenharItens(); }
+      const r = e.target.closest('[data-rem-it]'); if (r) { st.nota.itens.splice(+r.dataset.remIt, 1); desenharItens(); }
+      if (e.target.closest('#nf-cancelar')) proxima(true);
+      if (e.target.closest('#nf-confirmar')) confirmar();
+    });
+  }
+
+  async function carregar() {
+    try { await E.carregar(true); historico(); }
+    catch (e) { FT.aviso('Não consegui carregar o estoque: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 10 foi rodado.', true); }
+  }
+  async function historico() {
+    const ns = await FT.store.estoque.notas.listar();
+    $('#nf-hist').innerHTML = ns.length ? '<thead><tr><th>Lançada em</th><th>Fornecedor</th><th>Nota</th><th>Emissão</th><th>Origem</th><th class="num">Itens</th><th class="num">Valor</th></tr></thead><tbody>' +
+      ns.map(function (n) { return '<tr><td>' + FT.ddmmaaaa(FT.dataSP(n.criado_em)) + '</td><td>' + esc(E.nomeForn(n.fornecedor_id)) + '</td><td>' + esc(n.numero || '—') + '</td><td>' + (n.emissao ? FT.ddmmaaaa(String(n.emissao).slice(0, 10)) : '—') + '</td><td>' + { xml: 'XML', foto: 'FOTO', manual: 'MANUAL' }[n.origem] + '</td><td class="num">' + (n.itens || []).length + '</td><td class="num">' + (n.valor_total != null ? FT.moeda(n.valor_total) : '—') + '</td></tr>'; }).join('') + '</tbody>'
+      : '<tbody><tr><td class="vazio-lista">Nenhuma nota lançada ainda.</td></tr></tbody>';
+  }
+  function msg(t, erro) { const m = $('#nf-msg'); m.hidden = !t; m.className = 'msg' + (erro ? ' erro' : ''); m.innerHTML = t || ''; }
+
+  /* ---------- XML ---------- */
+  async function lerXMLs(e) {
+    const fs = Array.prototype.slice.call(e.target.files); e.target.value = '';
+    for (let i = 0; i < fs.length; i++) {
+      try { const n = P().lerNFeXML(await fs[i].text()); n.origem = 'xml'; n.arquivo = fs[i].name; st.fila.push(n); }
+      catch (x) { msg(esc(fs[i].name) + ': ' + esc(x.message), true); }
+    }
+    if (!st.nota) proxima();
+  }
+  function proxima(cancelou) {
+    st.nota = null; $('#nf-rev').hidden = true;
+    if (st.fila.length) abrirRevisao(st.fila.shift());
+    else if (cancelou) msg('');
+  }
+
+  /* ---------- FOTO ---------- */
+  function prepararImagem(file) {
+    return new Promise(function (ok, falha) {
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        const max = 2400, esc_ = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * esc_); c.height = Math.round(img.height * esc_);
+        const g = c.getContext('2d'); g.filter = 'grayscale(1) contrast(1.35)'; g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); ok({ canvas: c, previa: c.toDataURL('image/jpeg', 0.6) });
+      };
+      img.onerror = function () { falha(new Error('não consegui abrir a imagem')); };
+      img.src = url;
+    });
+  }
+  async function lerFoto(e) {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    msg('Lendo a foto… isso leva uns segundos (na primeira vez baixa o leitor, ~15 MB).');
+    try {
+      const T = await FT.carregarScript(TESSERACT, 'Tesseract');
+      const img = await prepararImagem(f);
+      const w = await T.createWorker('por', 1, { logger: function (m) { if (m.status === 'recognizing text') msg('Lendo a foto… ' + Math.round(m.progress * 100) + '%'); } });
+      const r = await w.recognize(img.canvas);
+      await w.terminate();
+      const n = P().lerTextoNota(r.data.text);
+      msg(n.itens.length ? 'Li ' + n.itens.length + ' item(ns) da foto. <b>Confira cada um com a nota</b> antes de confirmar.' : 'Não consegui ler os itens da foto. Digite os itens abaixo ou tente outra foto mais nítida (de frente, sem sombra).', !n.itens.length);
+      abrirRevisao({ origem: 'foto', numero: n.numero, serie: n.serie, chave: n.chave, emissao: n.emissao, valorTotal: n.valorTotal, emitente: { cnpj: n.cnpj, nome: n.fornecedor }, itens: n.itens, previa: img.previa, textoLido: r.data.text });
+    } catch (x) { msg('Não consegui ler a foto: ' + esc(FT.textoErro(x)) + '. Você pode lançar sem arquivo e digitar os itens.', true); }
+  }
+
+  /* ---------- revisão ---------- */
+  function abrirRevisao(n) {
+    st.nota = n;
+    const em = n.emitente || {};
+    let f = em.cnpj ? E.dados.fornecedores.find(function (x) { return x.cnpj === String(em.cnpj).replace(/\D/g, ''); }) : null;
+    if (!f && em.nome) f = E.dados.fornecedores.find(function (x) { return FT.semAcento(x.nome) === FT.semAcento(em.nome); });
+    n.fornecedor_id = f ? f.id : (em.nome || em.cnpj ? '__novo' : '');
+    reCasar();
+    const rev = $('#nf-rev'); rev.hidden = false;
+    rev.innerHTML = '<div class="nf-cab"><h2>' + { xml: 'Nota pelo XML', foto: 'Nota pela foto', manual: 'Entrada sem arquivo' }[n.origem] + (n.arquivo ? ' <small>' + esc(n.arquivo) + '</small>' : '') + (st.fila.length ? ' <span class="tag">mais ' + st.fila.length + ' na fila</span>' : '') + '</h2></div>' +
+      (n.previa ? '<details class="nf-foto"><summary>Ver a foto</summary><img src="' + n.previa + '" alt="Foto da nota"></details>' : '') +
+      '<div class="grade-nf"><label for="nf-forn">Fornecedor<select id="nf-forn">' + E.opcoesFornecedores(n.fornecedor_id, 'Escolha…') + '<option value="__novo"' + (n.fornecedor_id === '__novo' ? ' selected' : '') + '>+ Cadastrar fornecedor novo</option></select></label>' +
+      '<label for="nf-num">Número<input id="nf-num" value="' + esc(n.numero || '') + '"></label><label for="nf-emi">Emissão<input id="nf-emi" type="date" value="' + esc(n.emissao || '') + '"></label>' +
+      '<label for="nf-tot">Valor da nota (R$)<input id="nf-tot" inputmode="decimal" value="' + (n.valorTotal != null ? FT.num2(n.valorTotal) : '') + '"></label></div>' +
+      '<div class="grade-nf" id="nf-forn-novo"' + (n.fornecedor_id === '__novo' ? '' : ' hidden') + '><label for="nf-fn-nome">Nome do fornecedor novo<input id="nf-fn-nome" value="' + esc(em.nome || '') + '"></label><label for="nf-fn-cnpj">CNPJ<input id="nf-fn-cnpj" value="' + esc(E.cnpj(em.cnpj || '')) + '"></label>' +
+      '<p class="sub">' + (n.origem === 'xml' ? 'Veio na nota: será cadastrado sozinho ao confirmar.' : 'Será cadastrado ao confirmar.') + '</p></div>' +
+      (n.chave ? '<p class="sub">Chave: ' + esc(n.chave.replace(/(\d{4})/g, '$1 ')) + '</p>' : '') +
+      '<div class="rolagem"><table class="lista nf-itens" id="nf-itens"></table></div>' +
+      '<button type="button" class="btn btn-sec btn-p" id="nf-add-item">+ Adicionar item</button>' +
+      '<p class="nf-tot" id="nf-somas"></p><p class="erro-form" id="nf-erro"></p>' +
+      '<div class="dlg-acoes"><button type="button" class="btn btn-sec" id="nf-cancelar">' + (st.fila.length ? 'Pular esta nota' : 'Cancelar') + '</button><button type="button" class="btn" id="nf-confirmar">Confirmar entrada no estoque</button></div>';
+    desenharItens();
+    rev.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  // liga cada item ao produto: código já usado com este fornecedor > nome parecido
+  function reCasar() {
+    const n = st.nota, fid = n.fornecedor_id && n.fornecedor_id !== '__novo' ? n.fornecedor_id : null;
+    const ativos = E.dados.produtos.filter(function (p) { return p.ativo !== false; });
+    n.itens.forEach(function (it) {
+      if (it.manual) return;
+      it.produto_id = ''; it.sugerido = false; it.vinculo = null;
+      if (fid && it.codigo) {
+        const v = E.dados.vinculos.find(function (x) { return x.fornecedor_id === fid && x.codigo_fornecedor && x.codigo_fornecedor === it.codigo; });
+        if (v) { it.produto_id = v.produto_id; it.vinculo = v; }
+      }
+      if (!it.produto_id && it.descricao) {
+        const c = P().casarProduto(it.descricao, ativos);
+        if (c) { it.produto_id = c.produto.id; it.sugerido = true; }
+      }
+      preencherFator(it);
+    });
+  }
+  function preencherFator(it) {
+    const n = st.nota, fid = n.fornecedor_id && n.fornecedor_id !== '__novo' ? n.fornecedor_id : null;
+    const p = E.dados.prod[it.produto_id];
+    if (!p) { it.fator = 1; return; }
+    const v = fid ? E.dados.vinculos.find(function (x) { return x.fornecedor_id === fid && x.produto_id === p.id; }) : null;
+    if (v && (!v.unidade_compra || FT.semAcento(v.unidade_compra) === FT.semAcento(it.unidade))) { it.fator = +v.fator || 1; it.confira = false; }
+    else if (FT.semAcento(it.unidade) === FT.semAcento(p.unidade)) { it.fator = 1; it.confira = false; }
+    else {   // unidades diferentes e sem conversão salva: tenta achar na descrição (ex.: "CX 27", "C/12", "12X1L") e o usuário confere
+      const m = FT.semAcento(it.descricao || '').match(/(?:\b(?:CX|FD|PCT|PC|FARDO|CAIXA)\s*(?:C\/|COM)?\s*|\bC\/\s*)(\d{1,3})\b|\b(\d{1,3})\s*X\s*\d/);
+      it.fator = m ? +(m[1] || m[2]) : 1; it.confira = true;
+    }
+  }
+  function opcoesItem(it) {
+    return '<option value="">Escolha o produto…</option><option value="__ignorar"' + (it.produto_id === '__ignorar' ? ' selected' : '') + '>Não controlar no estoque</option><option value="__novo"' + (it.produto_id === '__novo' ? ' selected' : '') + '>+ Criar produto novo com este nome</option>' + E.opcoesProdutos(it.produto_id);
+  }
+  function desenharItens() {
+    const n = st.nota;
+    const ro = n.origem === 'xml';
+    $('#nf-itens').innerHTML = '<thead><tr><th>Item na nota</th><th>Unid.</th><th class="num">Qtd</th><th class="num">Valor unit.</th><th class="num">Total</th><th>Produto do estoque</th><th>Conversão</th><th>Entra no estoque</th><th></th></tr></thead><tbody>' +
+      (n.itens.length ? n.itens.map(function (it, i) {
+        const campo = function (k, v, cls) { return ro ? '<span>' + esc(v) + '</span>' : '<input class="' + (cls || '') + '" data-it="' + k + '" data-i="' + i + '" value="' + esc(v) + '" aria-label="' + k + '">'; };
+        const p = E.dados.prod[it.produto_id];
+        return '<tr class="' + (!it.produto_id ? 'conc-falta' : it.confira ? 'ct-conf' : '') + '"><td>' + campo('descricao', it.descricao || '', 'nf-desc') + (it.codigo ? '<small>cód. ' + esc(it.codigo) + '</small>' : '') + (it.confere === false ? '<small class="ct-nota">conta não fecha, confira</small>' : '') + '</td>' +
+          '<td>' + campo('unidade', it.unidade || '', 'nf-un') + '</td><td class="num">' + campo('qtd', it.qtd != null ? E.qtd(it.qtd) : '', 'nf-n') + '</td><td class="num">' + campo('valorUnit', it.valorUnit != null ? FT.num2(it.valorUnit) : '', 'nf-n') + '</td><td class="num">' + (it.total != null ? FT.num2(it.total) : '') + '</td>' +
+          '<td><select data-it-prod="' + i + '" aria-label="Produto do estoque">' + opcoesItem(it) + '</select>' + (it.sugerido ? '<small class="nf-sug">sugerido pelo nome</small>' : it.vinculo ? '<small class="nf-sug ok">pelo código do fornecedor</small>' : '') + '</td>' +
+          '<td class="nf-conv">' + (p || it.produto_id === '__novo' ? '1 ' + esc(it.unidade || 'UN') + ' = <input data-it="fator" data-i="' + i + '" inputmode="decimal" value="' + E.qtd(it.fator || 1) + '" aria-label="Conversão"> ' + esc(p ? p.unidade : it.unidade || 'UN') + (it.confira ? '<small class="ct-nota">confira</small>' : '') : '') + '</td>' +
+          '<td class="num" id="nf-ent-' + i + '"></td><td><button type="button" class="link" data-rem-it="' + i + '" aria-label="Remover item">✕</button></td></tr>';
+      }).join('') : '<tr><td colspan="9" class="vazio-lista">Nenhum item. Use "+ Adicionar item".</td></tr>') + '</tbody>';
+    n.itens.forEach(function (_, i) { resumoItem(i); });
+    totais();
+  }
+  function resumoItem(i) {
+    const it = st.nota.itens[i], el = document.getElementById('nf-ent-' + i); if (!el) return;
+    const p = E.dados.prod[it.produto_id];
+    if (it.produto_id === '__ignorar') { el.textContent = '—'; return; }
+    el.textContent = it.qtd != null && (p || it.produto_id === '__novo') ? E.qtd(it.qtd * (it.fator || 1)) + ' ' + (p ? p.unidade : it.unidade) : '';
+  }
+  function totais() {
+    const soma = st.nota.itens.reduce(function (s, it) { return s + (+it.total || 0); }, 0);
+    const vt = E.lerQtd($('#nf-tot') ? $('#nf-tot').value : null);
+    $('#nf-somas').innerHTML = 'Soma dos itens: <b>' + FT.moeda(soma) + '</b>' + (vt != null && Math.abs(vt - soma) > 0.05 ? ' · <span class="chip-parcial">diferente do valor da nota (' + FT.moeda(vt) + '): frete, impostos ou desconto</span>' : '');
+  }
+
+  async function confirmar() {
+    const n = st.nota, err = $('#nf-erro'); err.textContent = '';
+    if (!n.itens.length) { err.textContent = 'A nota não tem itens.'; return; }
+    const semProd = n.itens.filter(function (it) { return !it.produto_id; });
+    if (semProd.length) { err.textContent = semProd.length + ' item(ns) sem produto. Escolha o produto ou "Não controlar no estoque".'; return; }
+    const ruins = n.itens.filter(function (it) { return it.produto_id !== '__ignorar' && (!it.qtd || it.qtd <= 0); });
+    if (ruins.length) { err.textContent = 'Há item sem quantidade.'; return; }
+    const fsel = $('#nf-forn').value;
+    if (!fsel) { err.textContent = 'Escolha o fornecedor.'; return; }
+    const b = $('#nf-confirmar'); b.disabled = true;
+    try {
+      // fornecedor
+      let forn;
+      if (fsel === '__novo') {
+        const nome = FT.mai($('#nf-fn-nome').value); if (!nome) { err.textContent = 'Informe o nome do fornecedor novo.'; b.disabled = false; return; }
+        forn = (await E.fornecedorDaNota(Object.assign({}, n.emitente, { nome: nome, cnpj: $('#nf-fn-cnpj').value }))).fornecedor;
+      } else forn = E.dados.forn[fsel];
+      // produtos novos
+      let base = E.dados.produtos.length ? Math.max.apply(null, E.dados.produtos.map(function (p) { return +p.ordem || 0; })) : 0;
+      for (let i = 0; i < n.itens.length; i++) {
+        const it = n.itens[i];
+        if (it.produto_id !== '__novo') continue;
+        base += 10;
+        const novo = await FT.store.estoque.produtos.salvar({ nome: it.descricao, unidade: +it.fator === 1 ? it.unidade || 'UN' : 'UN', ordem: base });
+        E.dados.produtos.push(novo); E.dados.prod[novo.id] = novo; it.produto_id = novo.id;
+      }
+      // vínculos produto × fornecedor (código, unidade de compra, conversão, último preço)
+      const usados = n.itens.filter(function (it) { return it.produto_id !== '__ignorar'; });
+      for (let i = 0; i < usados.length; i++) {
+        const it = usados[i];
+        const v = E.dados.vinculos.find(function (x) { return x.fornecedor_id === forn.id && x.produto_id === it.produto_id; }) || {};
+        await FT.store.estoque.vinculos.salvar(Object.assign({}, v, { produto_id: it.produto_id, fornecedor_id: forn.id, codigo_fornecedor: it.codigo || v.codigo_fornecedor, unidade_compra: it.unidade || v.unidade_compra, fator: it.fator || 1, ultimo_preco: it.valorUnit != null ? it.valorUnit : v.ultimo_preco }));
+      }
+      const movs = usados.map(function (it) { return { produto_id: it.produto_id, quantidade: Math.round(it.qtd * (it.fator || 1) * 1000) / 1000, custo: it.valorUnit != null ? Math.round(it.valorUnit / (it.fator || 1) * 10000) / 10000 : null }; });
+      await FT.store.estoque.notas.registrar({
+        fornecedor_id: forn.id, fornecedor_nome: forn.fantasia || forn.nome, numero: $('#nf-num').value.trim(), serie: n.serie || '', chave: n.chave || '', emissao: $('#nf-emi').value || null,
+        valor_total: E.lerQtd($('#nf-tot').value), origem: n.origem,
+        itens: n.itens.map(function (it) { return { codigo: it.codigo || '', descricao: it.descricao, unidade: it.unidade, qtd: it.qtd, valor_unit: it.valorUnit, total: it.total, produto_id: it.produto_id === '__ignorar' ? null : it.produto_id, fator: it.fator || 1 }; })
+      }, movs);
+      await E.carregar(true);
+      msg('✓ Nota ' + esc($('#nf-num').value || '') + ' de ' + esc(forn.fantasia || forn.nome) + ' lançada: ' + movs.length + ' produto(s) com entrada no estoque.');
+      historico(); proxima();
+    } catch (x) {
+      const t = FT.textoErro(x);
+      err.textContent = /NOTA_JA_LANCADA/.test(t) ? 'Esta nota já foi lançada antes (mesma chave de acesso).' : 'Não foi possível lançar: ' + t;
+    } finally { b.disabled = false; }
+  }
+
+  let montado = false;
+  FT.telas['est-notas'] = { abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(); } };
+})();
+
+/* Forneria Toscana — Estoque › Acerto de estoque (perdas, vencidos, consumo, correções) e histórico */
+(function () {
+  'use strict';
+  const FT = window.FT, E = FT.est, $ = FT.$, esc = FT.esc;
+  const MOTIVOS = ['PERDA / QUEBRA', 'VENCIDO / ESTRAGADO', 'CONSUMO INTERNO', 'DEVOLUÇÃO AO FORNECEDOR', 'CORREÇÃO DE ERRO', 'OUTRO'];
+  const NOMES = { contagem: 'CONTAGEM', entrada: 'NOTA', acerto: 'ACERTO', manual: 'ENTRADA MANUAL' };
+
+  function montar() {
+    $('#tela-est-acerto').innerHTML =
+      '<div class="cab-tela"><div><h1>Acerto de estoque</h1><p>Tire do estoque o que se perdeu, venceu ou foi consumido, ou corrija um erro. Tudo fica registrado no histórico.</p></div></div>' +
+      '<form class="painel form ac-form" id="ac-form" novalidate>' +
+      '<label for="ac-prod">Produto<select id="ac-prod"></select></label>' +
+      '<div class="grade3"><label for="ac-tipo">O que fazer<select id="ac-tipo"><option value="saida">Tirar do estoque</option><option value="entrada">Somar ao estoque</option><option value="fixar">Corrigir para a quantidade certa</option></select></label>' +
+      '<label for="ac-qtd">Quantidade<input id="ac-qtd" inputmode="decimal"></label>' +
+      '<label for="ac-motivo">Motivo<select id="ac-motivo">' + MOTIVOS.map(function (m) { return '<option>' + m + '</option>'; }).join('') + '</select></label></div>' +
+      '<label for="ac-obs">Observação<input id="ac-obs" autocomplete="off" placeholder="ex.: caiu no chão, validade 05/10"></label>' +
+      '<p class="dd-dif" id="ac-res"></p><p class="erro-form" id="ac-erro"></p><div class="dlg-acoes"><button class="btn" type="submit">Registrar acerto</button></div></form>' +
+      '<section class="painel"><div class="ac-hist-cab"><h2>Histórico do estoque</h2><select id="ac-filtro" aria-label="Filtrar histórico"><option value="">Todas as movimentações</option><option value="acerto">Só acertos</option><option value="entrada">Só notas</option><option value="contagem">Só contagens</option><option value="manual">Só entradas manuais</option></select></div>' +
+      '<div class="rolagem"><table class="lista" id="ac-hist"></table></div></section>';
+    $('#ac-form').addEventListener('submit', salvar);
+    ['ac-prod', 'ac-tipo', 'ac-qtd'].forEach(function (id) { $('#' + id).addEventListener('input', resumo); });
+    $('#ac-filtro').addEventListener('change', historico);
+  }
+  async function carregar() {
+    try { await E.carregar(true); $('#ac-prod').innerHTML = E.opcoesProdutos('', 'Escolha o produto…'); resumo(); historico(); }
+    catch (e) { FT.aviso('Não consegui carregar o estoque: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 10 foi rodado.', true); }
+  }
+  function delta() {
+    const p = E.dados.prod[$('#ac-prod').value], q = E.lerQtd($('#ac-qtd').value), t = $('#ac-tipo').value;
+    if (!p || q == null) return null;
+    return t === 'saida' ? -q : t === 'entrada' ? q : q - (+p.estoque || 0);
+  }
+  function resumo() {
+    const p = E.dados.prod[$('#ac-prod').value], d = delta();
+    $('#ac-res').textContent = p ? 'Estoque atual: ' + E.qtd(p.estoque) + ' ' + p.unidade + (d != null ? ' → passa para ' + E.qtd(+p.estoque + d) + ' ' + p.unidade + ' (' + (d > 0 ? '+' : '') + E.qtd(d) + ')' : '') : '';
+  }
+  async function salvar(e) {
+    e.preventDefault();
+    const p = E.dados.prod[$('#ac-prod').value], d = delta(), err = $('#ac-erro'); err.textContent = '';
+    if (!p) { err.textContent = 'Escolha o produto.'; return; }
+    if (d == null || (Math.abs(d) < 0.0005 && $('#ac-tipo').value !== 'fixar')) { err.textContent = 'Informe a quantidade.'; return; }
+    if (Math.abs(d) < 0.0005) { err.textContent = 'O estoque já está com essa quantidade.'; return; }
+    const obs = [$('#ac-motivo').value, FT.mai($('#ac-obs').value)].filter(Boolean).join(': ');
+    try {
+      await FT.store.estoque.movimentar('acerto', [{ produto_id: p.id, quantidade: d, obs: obs }], 'ACERTO');
+      await E.carregar(true);
+      FT.aviso('Acerto registrado: ' + p.nome + ' ' + (d > 0 ? '+' : '') + E.qtd(d) + ' ' + p.unidade + '.');
+      $('#ac-qtd').value = ''; $('#ac-obs').value = ''; resumo(); historico();
+    } catch (x) { err.textContent = 'Não foi possível registrar: ' + FT.textoErro(x); }
+  }
+  async function historico() {
+    const f = $('#ac-filtro').value;
+    let ms = await FT.store.estoque.movimentos(null, 200);
+    if (f) ms = ms.filter(function (m) { return m.tipo === f; });
+    $('#ac-hist').innerHTML = ms.length ? '<thead><tr><th>Quando</th><th>Produto</th><th>Tipo</th><th class="num">Quantidade</th><th class="num">Saldo</th><th>Detalhe</th></tr></thead><tbody>' +
+      ms.slice(0, 100).map(function (m) {
+        const p = E.dados.prod[m.produto_id] || { nome: '—', unidade: '' };
+        return '<tr><td>' + FT.ddmmaaaa(FT.dataSP(m.em)) + ' ' + FT.horaSP(m.em) + '</td><td>' + esc(p.nome) + '</td><td>' + NOMES[m.tipo] + '</td><td class="num' + (m.quantidade < 0 ? ' neg' : '') + '">' + (m.quantidade > 0 ? '+' : '') + E.qtd(m.quantidade) + ' ' + esc(p.unidade) + '</td><td class="num">' + E.qtd(m.saldo) + '</td><td>' + esc([m.referencia !== 'ACERTO' ? m.referencia : '', m.obs].filter(Boolean).join(' · ')) + '</td></tr>';
+      }).join('') + '</tbody>' : '<tbody><tr><td class="vazio-lista">Nenhuma movimentação ainda.</td></tr></tbody>';
+  }
+  let montado = false;
+  FT.telas['est-acerto'] = { abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(); } };
+})();
+
+/* Forneria Toscana — Compras › Pedidos por fornecedor */
+(function () {
+  'use strict';
+  const FT = window.FT, E = FT.est, $ = FT.$, esc = FT.esc;
+  const st = { fid: null, qtd: {}, preco: {} };
+
+  // PDF do pedido (usado aqui e na cotação)
+  FT.pdfPedido = async function (ped) {
+    const f = E.dados.forn[ped.fornecedor_id] || {};
+    const bytes = await FT.gerarPDF({
+      titulo: 'PEDIDO DE COMPRA' + (ped.numero ? ' Nº ' + ped.numero : ''),
+      subtitulo: 'Emitido em ' + FT.ddmmaaaa(ped.data || FT.hoje()),
+      info: [['FORNECEDOR', f.fantasia || f.nome || '—'], ['CNPJ', E.cnpj(f.cnpj) || '—'], ['CONTATO', [f.contato, E.telefone(f.telefone)].filter(Boolean).join(' · ') || '—'], ['ENTREGAR EM', 'R. JOÃO BARBOSA DE OLIVEIRA, 1468 · GUARAREMA']],
+      blocos: [{
+        colunas: [{ t: 'ITEM', w: 0.07, a: 'c' }, { t: 'PRODUTO', w: 0.47 }, { t: 'QTD', w: 0.11, a: 'r' }, { t: 'UNID.', w: 0.09, a: 'c' }, { t: 'PREÇO UNIT.', w: 0.13, a: 'r' }, { t: 'TOTAL', w: 0.13, a: 'r' }],
+        linhas: ped.itens.map(function (it, i) { return [String(i + 1), it.nome, E.qtd(it.qtd), it.unidade, it.preco != null ? FT.moeda(it.preco) : '—', it.preco != null ? FT.moeda(it.qtd * it.preco) : '—']; }),
+        total: ['', ped.itens.length + ' ITEM(NS)', '', '', 'TOTAL', ped.total ? FT.moeda(ped.total) : '—'],
+        nota: ped.itens.some(function (it) { return it.preco == null; }) ? 'Itens sem preço: favor informar o valor na confirmação do pedido.' : ''
+      }],
+      rodape: [ped.obs ? 'OBSERVAÇÃO: ' + ped.obs : '', 'Favor confirmar o recebimento deste pedido e o prazo de entrega.'].filter(Boolean)
+    });
+    const nome = FT.semAcento(f.fantasia || f.nome || 'fornecedor').replace(/[^A-Z0-9]+/g, '_');
+    return { bytes: bytes, nome: 'PEDIDO_' + (ped.numero || '') + '_' + nome + '_' + (ped.data || FT.hoje()) + '.pdf' };
+  };
+
+  function montar() {
+    $('#tela-compras').innerHTML =
+      '<div class="cab-tela"><div><h1>Pedidos de compra</h1><p>Escolha o fornecedor, marque só as quantidades que vai comprar e gere o PDF do pedido para mandar a ele.</p></div></div>' +
+      '<div id="cp-forns" class="cp-forns"></div>' +
+      '<section class="painel cp-ped" id="cp-ped" hidden></section>' +
+      '<section class="painel"><h2>Pedidos gerados</h2><div class="rolagem"><table class="lista" id="cp-hist"></table></div></section>';
+    $('#cp-forns').addEventListener('click', function (e) { const b = e.target.closest('[data-forn]'); if (b) abrir(b.dataset.forn); });
+    const ped = $('#cp-ped');
+    ped.addEventListener('input', function (e) {
+      const el = e.target.closest('[data-q],[data-p]'); if (!el) return;
+      if (el.dataset.q) { const v = E.lerQtd(el.value); if (v) st.qtd[el.dataset.q] = v; else delete st.qtd[el.dataset.q]; }
+      else { const v = E.lerQtd(el.value); if (v != null) st.preco[el.dataset.p] = v; else delete st.preco[el.dataset.p]; }
+      linha(el.dataset.q || el.dataset.p); totais();
+    });
+    ped.addEventListener('click', function (e) {
+      const s = e.target.closest('[data-sug]'); if (s) { st.qtd[s.dataset.sug] = +s.dataset.v; const i = document.querySelector('[data-q="' + s.dataset.sug + '"]'); if (i) i.value = E.qtd(s.dataset.v); linha(s.dataset.sug); totais(); }
+      if (e.target.closest('#cp-sug-todos')) sugerirTodos();
+      if (e.target.closest('#cp-limpar')) { st.qtd = {}; desenharPedido(); }
+      if (e.target.closest('#cp-gerar')) gerar();
+      if (e.target.closest('#cp-fechar')) { ped.hidden = true; st.fid = null; desenharForns(); }
+    });
+    $('#cp-hist').addEventListener('click', async function (e) {
+      const b = e.target.closest('[data-pdf]'); if (!b) return;
+      const p = st.pedidos.find(function (x) { return x.id === b.dataset.pdf; });
+      try { const r = await FT.pdfPedido(p); FT.baixarArquivo(r.bytes, r.nome); } catch (x) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(x), true); }
+    });
+  }
+  async function carregar() {
+    try { await E.carregar(true); desenharForns(); historico(); if (st.fid) desenharPedido(); }
+    catch (e) { FT.aviso('Não consegui carregar as compras: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 10 foi rodado.', true); }
+  }
+  function abaixo(p) { return p.estoque_minimo != null && +p.estoque < +p.estoque_minimo; }
+  function desenharForns() {
+    const fs = E.dados.fornecedores;
+    $('#cp-forns').innerHTML = fs.length ? fs.map(function (f) {
+      const vs = E.vinculosDoFornecedor(f.id), baixos = vs.filter(function (v) { const p = E.dados.prod[v.produto_id]; return p && abaixo(p); }).length;
+      return '<button type="button" class="cp-forn' + (st.fid === f.id ? ' ativo' : '') + '" data-forn="' + esc(f.id) + '"><b>' + esc(f.fantasia || f.nome) + '</b><span>' + vs.length + ' produto(s)</span>' + (baixos ? '<span class="chip-dif">' + baixos + ' abaixo do mínimo</span>' : '') + '</button>';
+    }).join('') : '<p class="vazio-bloco">Nenhum fornecedor ainda. Cadastre em Cadastro › Fornecedores ou dê entrada numa nota.</p>';
+  }
+  function abrir(fid) { st.fid = fid; st.qtd = {}; st.preco = {}; desenharForns(); desenharPedido(); $('#cp-ped').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function itens() {
+    return E.vinculosDoFornecedor(st.fid).map(function (v) { return { v: v, p: E.dados.prod[v.produto_id] }; }).filter(function (x) { return x.p && x.p.ativo !== false; })
+      .sort(function (a, b) { return (a.p.ordem || 0) - (b.p.ordem || 0); });
+  }
+  function sugestao(x) {
+    if (!abaixo(x.p)) return null;
+    return Math.ceil(((+x.p.estoque_minimo) - (+x.p.estoque || 0)) / (+x.v.fator || 1));
+  }
+  function desenharPedido() {
+    const f = E.dados.forn[st.fid], l = itens(), ped = $('#cp-ped'); ped.hidden = false;
+    ped.innerHTML = '<div class="cp-cab"><h2>' + esc(f.fantasia || f.nome) + '</h2><button type="button" class="link" id="cp-fechar">fechar</button></div>' +
+      (l.length ? '<div class="acoes-linha"><button type="button" class="btn btn-sec btn-p" id="cp-sug-todos">Preencher com a sugestão (abaixo do mínimo)</button><button type="button" class="btn btn-sec btn-p" id="cp-limpar">Limpar</button></div>' +
+        '<div class="rolagem"><table class="lista cp-tab"><thead><tr><th>Produto</th><th class="num">Em estoque</th><th class="num">Mínimo</th><th class="num">Comprar</th><th>Unid.</th><th class="num">Preço unit.</th><th class="num">Total</th></tr></thead><tbody>' +
+        l.map(function (x) {
+          const id = x.p.id, s = sugestao(x), un = x.v.unidade_compra || x.p.unidade;
+          return '<tr class="' + (abaixo(x.p) ? 'ep-baixo' : '') + '"><td><b>' + esc(x.p.nome) + '</b>' + (+x.v.fator !== 1 ? '<small>1 ' + esc(un) + ' = ' + E.qtd(x.v.fator) + ' ' + esc(x.p.unidade) + '</small>' : '') + '</td>' +
+            '<td class="num">' + E.qtd(x.p.estoque) + ' ' + esc(x.p.unidade) + '</td><td class="num">' + (x.p.estoque_minimo != null ? E.qtd(x.p.estoque_minimo) : '—') + '</td>' +
+            '<td class="num"><input class="cp-q" data-q="' + esc(id) + '" inputmode="decimal" value="' + (st.qtd[id] ? E.qtd(st.qtd[id]) : '') + '" aria-label="Quantidade de ' + esc(x.p.nome) + '">' + (s ? '<button type="button" class="link cp-sug" data-sug="' + esc(id) + '" data-v="' + s + '">sugestão: ' + s + '</button>' : '') + '</td>' +
+            '<td>' + esc(un) + '</td><td class="num"><input class="cp-p" data-p="' + esc(id) + '" inputmode="decimal" value="' + (st.preco[id] != null ? FT.num2(st.preco[id]) : x.v.ultimo_preco != null ? FT.num2(x.v.ultimo_preco) : '') + '" placeholder="—" aria-label="Preço de ' + esc(x.p.nome) + '"></td>' +
+            '<td class="num" id="cp-t-' + esc(id) + '"></td></tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<label for="cp-obs">Observação no pedido<input id="cp-obs" autocomplete="off" placeholder="ex.: entregar até sexta"></label>' +
+        '<div class="cp-rod"><p id="cp-tot"></p><button type="button" class="btn" id="cp-gerar">Gerar PDF do pedido</button></div>'
+        : '<p class="vazio-bloco">Nenhum produto ligado a este fornecedor. Ligue os produtos em Estoque › Produtos (no cadastro de cada produto) ou dando entrada numa nota dele.</p>');
+    l.forEach(function (x) { if (st.preco[x.p.id] == null && x.v.ultimo_preco != null) st.preco[x.p.id] = +x.v.ultimo_preco; linha(x.p.id); });
+    totais();
+  }
+  function linha(id) { const el = document.getElementById('cp-t-' + id); if (el) el.textContent = st.qtd[id] && st.preco[id] != null ? FT.moeda(st.qtd[id] * st.preco[id]) : ''; }
+  function totais() {
+    const ids = Object.keys(st.qtd), t = ids.reduce(function (s, id) { return s + (st.preco[id] != null ? st.qtd[id] * st.preco[id] : 0); }, 0);
+    const el = $('#cp-tot'); if (el) el.innerHTML = ids.length ? '<b>' + ids.length + '</b> produto(s) · total estimado <b>' + FT.moeda(t) + '</b>' : 'Digite a quantidade dos produtos que vai comprar.';
+  }
+  function sugerirTodos() { itens().forEach(function (x) { const s = sugestao(x); if (s) st.qtd[x.p.id] = s; }); desenharPedido(); }
+  async function gerar() {
+    const l = itens().filter(function (x) { return st.qtd[x.p.id]; });
+    if (!l.length) { FT.aviso('Digite a quantidade de pelo menos um produto.', true); return; }
+    const b = $('#cp-gerar'); b.disabled = true;
+    try {
+      const its = l.map(function (x) { return { produto_id: x.p.id, nome: x.p.nome, unidade: x.v.unidade_compra || x.p.unidade, qtd: st.qtd[x.p.id], preco: st.preco[x.p.id] != null ? st.preco[x.p.id] : null, fator: +x.v.fator || 1 }; });
+      const total = FT.r2(its.reduce(function (s, it) { return s + (it.preco != null ? it.qtd * it.preco : 0); }, 0));
+      const ped = await FT.store.estoque.pedidos.salvar({ fornecedor_id: st.fid, itens: its, total: total, obs: FT.mai($('#cp-obs').value) || null });
+      // guarda o preço digitado como último preço do fornecedor
+      for (let i = 0; i < l.length; i++) { const x = l[i], pr = st.preco[x.p.id]; if (pr != null && pr !== +x.v.ultimo_preco) await FT.store.estoque.vinculos.salvar(Object.assign({}, x.v, { ultimo_preco: pr })); }
+      const r = await FT.pdfPedido(ped); FT.baixarArquivo(r.bytes, r.nome);
+      FT.aviso('Pedido Nº ' + ped.numero + ' gerado. O PDF foi baixado: é só mandar ao fornecedor.');
+      st.qtd = {}; await E.carregar(true); desenharPedido(); historico();
+    } catch (x) { FT.aviso('Não foi possível gerar o pedido: ' + FT.textoErro(x), true); }
+    finally { b.disabled = false; }
+  }
+  async function historico() {
+    st.pedidos = await FT.store.estoque.pedidos.listar();
+    $('#cp-hist').innerHTML = st.pedidos.length ? '<thead><tr><th>Nº</th><th>Data</th><th>Fornecedor</th><th class="num">Itens</th><th class="num">Total</th><th>Origem</th><th></th></tr></thead><tbody>' +
+      st.pedidos.map(function (p) { return '<tr><td>' + p.numero + '</td><td>' + FT.ddmmaaaa(String(p.data).slice(0, 10)) + '</td><td>' + esc(E.nomeForn(p.fornecedor_id)) + '</td><td class="num">' + p.itens.length + '</td><td class="num">' + FT.moeda(p.total) + '</td><td>' + (p.cotacao_id ? 'COTAÇÃO' : 'MANUAL') + '</td><td><button type="button" class="btn btn-sec btn-p" data-pdf="' + esc(p.id) + '">Baixar PDF</button></td></tr>'; }).join('') + '</tbody>'
+      : '<tbody><tr><td class="vazio-lista">Nenhum pedido gerado ainda.</td></tr></tbody>';
+  }
+  let montado = false;
+  FT.telas.compras = { abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(); } };
+})();
+
+/* Forneria Toscana — Compras › Cotação: compara fornecedores e gera os pedidos pelo mais barato */
+(function () {
+  'use strict';
+  const FT = window.FT, E = FT.est, $ = FT.$, esc = FT.esc;
+  const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.min.mjs';
+  const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/build/pdf.worker.min.mjs';
+  const st = { lista: [], c: null, salvo: true, impForn: null, pedidos: [] };
+
+  function vinc(fid, pid) { return E.dados.vinculos.find(function (v) { return v.fornecedor_id === fid && v.produto_id === pid; }); }
+  function fator(fid, pid) { const v = vinc(fid, pid); return v && +v.fator > 0 ? +v.fator : 1; }
+  function unCompra(fid, pid) { const v = vinc(fid, pid), p = E.dados.prod[pid]; return (v && v.unidade_compra) || (p ? p.unidade : 'UN'); }
+  function preco(fid, pid) { const m = st.c.precos[fid]; return m && m[pid] != null && m[pid] !== '' ? +m[pid] : null; }
+  // melhor fornecedor do produto: menor preço por unidade do estoque
+  function vencedor(pid) {
+    let melhor = null;
+    st.c.fornecedores.forEach(function (fid) {
+      const pr = preco(fid, pid); if (pr == null || pr <= 0) return;
+      const porUn = pr / fator(fid, pid);
+      if (!melhor || porUn < melhor.porUn - 1e-9) melhor = { fid: fid, preco: pr, porUn: porUn };
+    });
+    return melhor;
+  }
+  function qtdCompra(fid, it) { const f = fator(fid, it.produto_id); return f > 1 ? Math.ceil(it.qtd / f - 1e-9) : it.qtd; }
+
+  function montar() {
+    $('#tela-cotacao').innerHTML =
+      '<div class="cab-tela"><div><h1>Cotação</h1><p>Monte a lista do que vai comprar, preencha (ou importe da planilha/PDF do fornecedor) o preço de cada um, e o sistema escolhe o mais barato e gera um pedido para cada fornecedor.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn" id="cq-nova">Nova cotação</button></div></div>' +
+      '<section class="painel" id="cq-lista-box"><h2>Cotações</h2><div class="rolagem"><table class="lista" id="cq-lista"></table></div></section>' +
+      '<section class="painel cq-ed" id="cq-ed" hidden></section>' +
+      '<input type="file" id="cq-arq" accept=".xls,.xlsx,.csv,.pdf,application/pdf" hidden>';
+    $('#cq-nova').addEventListener('click', nova);
+    $('#cq-lista').addEventListener('click', function (e) {
+      const r = e.target.closest('[data-abrir]'); if (r) abrir(r.dataset.abrir);
+      const x = e.target.closest('[data-excluir]'); if (x) excluir(x.dataset.excluir);
+    });
+    $('#cq-arq').addEventListener('change', importarArquivo);
+    const ed = $('#cq-ed');
+    ed.addEventListener('input', function (e) {
+      const q = e.target.closest('[data-qtd]'); if (q) { const it = st.c.itens.find(function (x) { return x.produto_id === q.dataset.qtd; }); it.qtd = E.lerQtd(q.value) || 0; mudou(false); return; }
+      const p = e.target.closest('[data-pr]'); if (p) { const k = p.dataset.pr.split('|'); st.c.precos[k[0]] = st.c.precos[k[0]] || {}; const v = E.lerQtd(p.value); if (v == null) delete st.c.precos[k[0]][k[1]]; else st.c.precos[k[0]][k[1]] = v; mudou(false); return; }
+      if (e.target.id === 'cq-titulo') { st.c.titulo = e.target.value; mudou(false); }
+    });
+    ed.addEventListener('change', function (e) {
+      if (e.target.id === 'cq-add-prod' && e.target.value) { addProduto(e.target.value); }
+      if (e.target.id === 'cq-add-forn' && e.target.value) { if (st.c.fornecedores.indexOf(e.target.value) < 0) st.c.fornecedores.push(e.target.value); mudou(true); }
+    });
+    ed.addEventListener('click', function (e) {
+      const t = e.target;
+      if (t.closest('#cq-fechar')) { fechar(); return; }
+      if (t.closest('#cq-add-multi')) addVarios(function (p) { return E.vinculosDoProduto(p.id).length > 1; });
+      if (t.closest('#cq-add-baixo')) addVarios(function (p) { return p.estoque_minimo != null && +p.estoque < +p.estoque_minimo; });
+      if (t.closest('#cq-add-forns')) addFornsDosProdutos();
+      const rp = t.closest('[data-rem-prod]'); if (rp) { st.c.itens = st.c.itens.filter(function (x) { return x.produto_id !== rp.dataset.remProd; }); mudou(true); }
+      const rf = t.closest('[data-rem-forn]'); if (rf) { st.c.fornecedores = st.c.fornecedores.filter(function (x) { return x !== rf.dataset.remForn; }); mudou(true); }
+      const imp = t.closest('[data-imp]'); if (imp) { st.impForn = imp.dataset.imp; $('#cq-arq').click(); }
+      if (t.closest('#cq-decidir')) decidir();
+      const pp = t.closest('[data-ped-pdf]'); if (pp) baixarPedido(pp.dataset.pedPdf);
+      if (t.closest('#cq-pdf-dec')) baixarDecisao();
+      if (t.closest('#cq-reabrir')) { st.c.status = 'aberta'; st.c.decidida_em = null; st.pedidos = []; mudou(true); }
+    });
+  }
+  async function carregar() {
+    try { await E.carregar(true); st.lista = await FT.store.estoque.cotacoes.listar(); desenharLista(); if (st.c) desenharEditor(); }
+    catch (e) { FT.aviso('Não consegui carregar as cotações: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 10 foi rodado.', true); }
+  }
+  function desenharLista() {
+    $('#cq-lista').innerHTML = st.lista.length ? '<thead><tr><th>Data</th><th>Cotação</th><th class="num">Produtos</th><th class="num">Fornecedores</th><th>Situação</th><th></th></tr></thead><tbody>' +
+      st.lista.map(function (c) { return '<tr><td>' + FT.ddmmaaaa(String(c.data).slice(0, 10)) + '</td><td><button type="button" class="link" data-abrir="' + esc(c.id) + '">' + esc(c.titulo || 'COTAÇÃO') + '</button></td><td class="num">' + c.itens.length + '</td><td class="num">' + c.fornecedores.length + '</td><td>' + (c.status === 'decidida' ? '<span class="chip-ok">pedidos gerados</span>' : '<span class="chip-parcial">aberta</span>') + '</td><td><button type="button" class="link" data-excluir="' + esc(c.id) + '">excluir</button></td></tr>'; }).join('') + '</tbody>'
+      : '<tbody><tr><td class="vazio-lista">Nenhuma cotação ainda. Clique em "Nova cotação".</td></tr></tbody>';
+  }
+  async function nova() {
+    st.c = { titulo: 'COTAÇÃO ' + FT.ddmmaaaa(FT.hoje()), data: FT.hoje(), status: 'aberta', itens: [], fornecedores: [], precos: {} };
+    st.pedidos = [];
+    await salvar(); desenharEditor();
+  }
+  function abrir(id) { st.c = JSON.parse(JSON.stringify(st.lista.find(function (c) { return c.id === id; }))); st.pedidos = []; desenharEditor(); $('#cq-ed').scrollIntoView({ behavior: 'smooth' }); }
+  function fechar() { if (!st.salvo) salvar(); st.c = null; $('#cq-ed').hidden = true; $('#cq-lista-box').hidden = false; carregar(); }
+  async function excluir(id) {
+    if (!window.confirm('Excluir esta cotação? Os pedidos já gerados continuam salvos.')) return;
+    await FT.store.estoque.cotacoes.remover(id); if (st.c && st.c.id === id) { st.c = null; $('#cq-ed').hidden = true; }
+    carregar();
+  }
+  const salvarDepois = FT.debounce(function () { salvar(); }, 900);
+  async function salvar() {
+    try { const r = await FT.store.estoque.cotacoes.salvar(st.c); st.c.id = r.id; st.salvo = true; } catch (e) { FT.aviso('Não salvou a cotação: ' + FT.textoErro(e), true); }
+  }
+  function mudou(redesenhar) { st.salvo = false; salvarDepois(); if (redesenhar) desenharEditor(); else atualizarMelhores(); }
+  function addProduto(pid) {
+    if (!st.c.itens.some(function (x) { return x.produto_id === pid; })) {
+      st.c.itens.push({ produto_id: pid, qtd: 0 });
+      E.vinculosDoProduto(pid).forEach(function (v) { if (st.c.fornecedores.indexOf(v.fornecedor_id) < 0) st.c.fornecedores.push(v.fornecedor_id); });
+    }
+    mudou(true);
+  }
+  function addVarios(filtro) {
+    E.dados.produtos.filter(function (p) { return p.ativo !== false && filtro(p); }).forEach(function (p) {
+      if (st.c.itens.some(function (x) { return x.produto_id === p.id; })) return;
+      const sug = p.estoque_minimo != null && +p.estoque < +p.estoque_minimo ? Math.ceil((+p.estoque_minimo - (+p.estoque || 0)) * 1000) / 1000 : 0;
+      st.c.itens.push({ produto_id: p.id, qtd: sug });
+      E.vinculosDoProduto(p.id).forEach(function (v) { if (st.c.fornecedores.indexOf(v.fornecedor_id) < 0) st.c.fornecedores.push(v.fornecedor_id); });
+    });
+    mudou(true);
+  }
+  function addFornsDosProdutos() {
+    st.c.itens.forEach(function (it) { E.vinculosDoProduto(it.produto_id).forEach(function (v) { if (st.c.fornecedores.indexOf(v.fornecedor_id) < 0) st.c.fornecedores.push(v.fornecedor_id); }); });
+    mudou(true);
+  }
+  function ordenados() { return st.c.itens.slice().sort(function (a, b) { const pa = E.dados.prod[a.produto_id] || {}, pb = E.dados.prod[b.produto_id] || {}; return (pa.ordem || 0) - (pb.ordem || 0); }); }
+
+  function desenharEditor() {
+    const c = st.c, ed = $('#cq-ed'); ed.hidden = false; $('#cq-lista-box').hidden = true;
+    const decidida = c.status === 'decidida';
+    const fs = c.fornecedores.filter(function (f) { return E.dados.forn[f]; });
+    let h = '<div class="cp-cab"><input id="cq-titulo" class="cq-titulo" value="' + esc(c.titulo || '') + '" aria-label="Nome da cotação"' + (decidida ? ' disabled' : '') + '><button type="button" class="link" id="cq-fechar">‹ voltar às cotações</button></div>';
+    if (decidida) h += '<div class="msg cq-feita">✓ Pedidos gerados em ' + (c.decidida_em ? FT.ddmmaaaa(FT.dataSP(c.decidida_em)) : '') + '. <button type="button" class="btn btn-p" id="cq-pdf-dec">Baixar PDF da decisão</button> <button type="button" class="link" id="cq-reabrir">reabrir para editar</button><div id="cq-peds"></div></div>';
+    if (!decidida) h += '<div class="cq-add"><select id="cq-add-prod" aria-label="Adicionar produto"><option value="">+ Adicionar produto…</option>' + E.dados.produtos.filter(function (p) { return p.ativo !== false && !c.itens.some(function (x) { return x.produto_id === p.id; }); }).map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.nome) + '</option>'; }).join('') + '</select>' +
+      '<button type="button" class="btn btn-sec btn-p" id="cq-add-multi">+ Produtos com mais de 1 fornecedor</button><button type="button" class="btn btn-sec btn-p" id="cq-add-baixo">+ Produtos abaixo do mínimo</button>' +
+      '<select id="cq-add-forn" aria-label="Adicionar fornecedor"><option value="">+ Adicionar fornecedor…</option>' + E.dados.fornecedores.filter(function (f) { return fs.indexOf(f.id) < 0; }).map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.fantasia || f.nome) + '</option>'; }).join('') + '</select></div>';
+    if (!c.itens.length) { ed.innerHTML = h + '<p class="vazio-bloco">Adicione os produtos que quer cotar. Os fornecedores ligados a cada produto entram sozinhos.</p>'; return; }
+    h += '<div class="rolagem cq-rol"><table class="lista cq-tab"><thead><tr><th>Produto</th><th class="num">Quantidade</th>' +
+      fs.map(function (fid) { return '<th class="cq-fcol">' + esc(E.nomeForn(fid)) + (decidida ? '' : '<div class="cq-fbts"><button type="button" class="link" data-imp="' + esc(fid) + '">importar</button> · <button type="button" class="link" data-rem-forn="' + esc(fid) + '">tirar</button></div>') + '</th>'; }).join('') +
+      '<th>Mais barato</th>' + (decidida ? '' : '<th></th>') + '</tr></thead><tbody>';
+    ordenados().forEach(function (it) {
+      const p = E.dados.prod[it.produto_id]; if (!p) return;
+      h += '<tr><td><b>' + esc(p.nome) + '</b></td><td class="num"><input class="cq-q" data-qtd="' + esc(p.id) + '" inputmode="decimal" value="' + (it.qtd ? E.qtd(it.qtd) : '') + '"' + (decidida ? ' disabled' : '') + ' aria-label="Quantidade de ' + esc(p.nome) + '"> <small>' + esc(p.unidade) + '</small></td>' +
+        fs.map(function (fid) {
+          const pr = preco(fid, p.id), f = fator(fid, p.id), un = unCompra(fid, p.id);
+          return '<td class="cq-cel" id="cq-c-' + esc(fid) + '-' + esc(p.id) + '"><input class="cq-p" data-pr="' + esc(fid) + '|' + esc(p.id) + '" inputmode="decimal" value="' + (pr != null ? FT.num2(pr) : '') + '" placeholder="—"' + (decidida ? ' disabled' : '') + ' aria-label="Preço de ' + esc(p.nome) + ' em ' + esc(E.nomeForn(fid)) + '"><small>por ' + esc(un) + (f !== 1 ? ' (' + E.qtd(f) + ' ' + esc(p.unidade) + ')' : '') + (vinc(fid, p.id) ? (vinc(fid, p.id).ultimo_preco != null ? ' · último ' + FT.moeda(vinc(fid, p.id).ultimo_preco) : '') : ' · não fornece ainda') + '</small></td>';
+        }).join('') + '<td class="cq-melhor" id="cq-m-' + esc(p.id) + '"></td>' + (decidida ? '' : '<td><button type="button" class="link" data-rem-prod="' + esc(p.id) + '" aria-label="Tirar">✕</button></td>') + '</tr>';
+    });
+    h += '</tbody></table></div><p class="dica">Preço de cada fornecedor na unidade em que ele vende. A comparação é feita pelo preço por unidade do estoque (ex.: caixa com 12 ÷ 12). Na compra, a quantidade é arredondada para cima em caixas.</p>';
+    if (!decidida) h += '<div class="cp-rod"><p id="cq-resumo"></p><button type="button" class="btn" id="cq-decidir">Gerar pedidos pelo mais barato</button></div>';
+    ed.innerHTML = h;
+    atualizarMelhores();
+    if (decidida) desenharPedidos();
+  }
+  function atualizarMelhores() {
+    const fs = st.c.fornecedores.filter(function (f) { return E.dados.forn[f]; });
+    let total = 0, economia = 0, prontos = 0, semPreco = 0;
+    st.c.itens.forEach(function (it) {
+      const w = vencedor(it.produto_id), el = document.getElementById('cq-m-' + it.produto_id);
+      fs.forEach(function (fid) { const c = document.getElementById('cq-c-' + fid + '-' + it.produto_id); if (c) c.classList.toggle('vence', !!w && w.fid === fid); });
+      if (!el) return;
+      if (!w) { el.innerHTML = '<span class="chip-cinza">sem preço</span>'; if (it.qtd > 0) semPreco++; return; }
+      let pior = 0; fs.forEach(function (fid) { const pr = preco(fid, it.produto_id); if (pr != null) pior = Math.max(pior, pr / fator(fid, it.produto_id)); });
+      const q = qtdCompra(w.fid, it), sub = q * w.preco;
+      el.innerHTML = '<b>' + esc(E.nomeForn(w.fid)) + '</b><small>' + FT.moeda(w.porUn) + ' por ' + esc(E.dados.prod[it.produto_id].unidade) + (it.qtd > 0 ? ' · ' + FT.moeda(sub) : '') + '</small>';
+      if (it.qtd > 0) { prontos++; total += sub; economia += it.qtd * (pior - w.porUn); }
+    });
+    const r = $('#cq-resumo');
+    if (r) r.innerHTML = prontos ? '<b>' + prontos + '</b> produto(s) prontos · total <b>' + FT.moeda(total) + '</b>' + (economia > 0.005 ? ' · economia de <b>' + FT.moeda(economia) + '</b> contra o mais caro' : '') + (semPreco ? ' · <span class="chip-parcial">' + semPreco + ' sem preço</span>' : '') : 'Preencha as quantidades e os preços.';
+  }
+
+  /* ---------- importar preços (planilha ou PDF do fornecedor) ---------- */
+  async function importarArquivo(e) {
+    const f = e.target.files[0]; e.target.value = ''; if (!f || !st.impForn) return;
+    const fid = st.impForn, prods = st.c.itens.map(function (it) { return E.dados.prod[it.produto_id]; }).filter(Boolean);
+    try {
+      let linhas;
+      if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') {
+        const lib = await import(PDFJS); lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+        const doc = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+        linhas = [];
+        for (let i = 1; i <= doc.numPages; i++) { const tc = await (await doc.getPage(i)).getTextContent(); linhas = linhas.concat(window.FTEstoque.linhasDoPDF(tc.items)); }
+      } else {
+        if (typeof XLSX === 'undefined') throw new Error('o leitor de planilhas não carregou');
+        const wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array' });
+        linhas = [];
+        wb.SheetNames.forEach(function (n) { linhas = linhas.concat(XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: null })); });
+      }
+      const achados = window.FTEstoque.lerCotacao(linhas, prods);
+      st.c.precos[fid] = st.c.precos[fid] || {};
+      achados.forEach(function (a) { st.c.precos[fid][a.produto_id] = a.preco; });
+      const faltam = prods.filter(function (p) { return !achados.some(function (a) { return a.produto_id === p.id; }); });
+      mudou(true);
+      FT.aviso(E.nomeForn(fid) + ': ' + achados.length + ' preço(s) preenchido(s) do arquivo.' + (faltam.length ? ' Não achei: ' + faltam.map(function (p) { return p.nome; }).slice(0, 8).join(', ') + (faltam.length > 8 ? '…' : '') + '. Confira e complete à mão.' : ''), !achados.length);
+    } catch (x) { FT.aviso('Não consegui ler o arquivo: ' + FT.textoErro(x), true); }
+  }
+
+  /* ---------- decisão: um pedido por fornecedor ---------- */
+  function montarDecisao() {
+    const grupos = {};
+    ordenados().forEach(function (it) {
+      if (!(it.qtd > 0)) return;
+      const w = vencedor(it.produto_id); if (!w) return;
+      const p = E.dados.prod[it.produto_id];
+      (grupos[w.fid] = grupos[w.fid] || []).push({ produto_id: p.id, nome: p.nome, unidade: unCompra(w.fid, p.id), qtd: qtdCompra(w.fid, it), preco: w.preco, fator: fator(w.fid, p.id) });
+    });
+    return grupos;
+  }
+  async function decidir() {
+    if (!st.salvo) await salvar();
+    const grupos = montarDecisao(), fids = Object.keys(grupos);
+    if (!fids.length) { FT.aviso('Nenhum produto com quantidade e preço para comprar.', true); return; }
+    const sem = st.c.itens.filter(function (it) { return it.qtd > 0 && !vencedor(it.produto_id); });
+    if (sem.length && !window.confirm(sem.length + ' produto(s) com quantidade mas sem nenhum preço ficarão fora dos pedidos. Continuar?')) return;
+    const b = $('#cq-decidir'); b.disabled = true;
+    try {
+      st.pedidos = [];
+      for (let i = 0; i < fids.length; i++) {
+        const its = grupos[fids[i]], total = FT.r2(its.reduce(function (s, x) { return s + x.qtd * x.preco; }, 0));
+        st.pedidos.push(await FT.store.estoque.pedidos.salvar({ fornecedor_id: fids[i], itens: its, total: total, cotacao_id: st.c.id, obs: 'CONFORME COTAÇÃO DE ' + FT.ddmmaaaa(st.c.data) }));
+      }
+      // guarda os preços cotados como último preço (e liga o produto ao fornecedor, se ainda não era)
+      for (const fid of st.c.fornecedores) {
+        const m = st.c.precos[fid] || {};
+        for (const pid of Object.keys(m)) {
+          const v = vinc(fid, pid), p = E.dados.prod[pid]; if (!p) continue;
+          await FT.store.estoque.vinculos.salvar(Object.assign({ produto_id: pid, fornecedor_id: fid, unidade_compra: p.unidade, fator: 1 }, v || {}, { ultimo_preco: m[pid] }));
+        }
+      }
+      st.c.status = 'decidida'; st.c.decidida_em = new Date().toISOString();
+      await salvar(); await E.carregar(true);
+      desenharEditor();
+      await baixarDecisao();
+      FT.aviso(st.pedidos.length + ' pedido(s) gerado(s). O PDF da decisão foi baixado; baixe o pedido de cada fornecedor para enviar.');
+    } catch (x) { FT.aviso('Não foi possível gerar os pedidos: ' + FT.textoErro(x), true); }
+    finally { if (b) b.disabled = false; }
+  }
+  async function pedidosDaCotacao() {
+    if (!st.pedidos.length && st.c.id) st.pedidos = (await FT.store.estoque.pedidos.listar()).filter(function (p) { return p.cotacao_id === st.c.id; });
+    return st.pedidos;
+  }
+  async function desenharPedidos() {
+    const ps = await pedidosDaCotacao(), el = $('#cq-peds'); if (!el) return;
+    el.innerHTML = ps.length ? '<ul class="cq-ped-lista">' + ps.map(function (p) { return '<li><span><b>' + esc(E.nomeForn(p.fornecedor_id)) + '</b> · pedido Nº ' + p.numero + ' · ' + p.itens.length + ' item(ns) · ' + FT.moeda(p.total) + '</span><button type="button" class="btn btn-sec btn-p" data-ped-pdf="' + esc(p.id) + '">Baixar pedido</button></li>'; }).join('') + '</ul>' : '';
+  }
+  async function baixarPedido(id) {
+    const p = (await pedidosDaCotacao()).find(function (x) { return x.id === id; });
+    try { const r = await FT.pdfPedido(p); FT.baixarArquivo(r.bytes, r.nome); } catch (x) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(x), true); }
+  }
+  async function baixarDecisao() {
+    const ps = await pedidosDaCotacao();
+    const fs = st.c.fornecedores.filter(function (f) { return E.dados.forn[f]; });
+    const paisagem = fs.length > 4, w = Math.min(0.14, (paisagem ? 0.56 : 0.45) / Math.max(1, fs.length));
+    const comp = {
+      titulo: 'COMPARATIVO DE PREÇOS (POR UNIDADE DE COMPRA)',
+      colunas: [{ t: 'PRODUTO', w: 1 - 0.09 - 0.17 - w * fs.length }, { t: 'QTD', w: 0.09, a: 'r' }].concat(fs.map(function (fid) { return { t: E.nomeForn(fid), w: w, a: 'r' }; })).concat([{ t: 'ESCOLHIDO', w: 0.17 }]),
+      linhas: ordenados().filter(function (it) { return it.qtd > 0; }).map(function (it) {
+        const p = E.dados.prod[it.produto_id], v = vencedor(it.produto_id);
+        return [p.nome, E.qtd(it.qtd) + ' ' + p.unidade].concat(fs.map(function (fid) { const pr = preco(fid, p.id); return pr == null ? '—' : FT.num2(pr) + (v && v.fid === fid ? ' *' : ''); })).concat([v ? E.nomeForn(v.fid) : 'SEM PREÇO']);
+      }),
+      nota: '* = mais barato (comparado pelo preço por unidade do estoque).'
+    };
+    const blocos = [comp].concat(ps.map(function (p) {
+      return { titulo: 'PEDIDO Nº ' + p.numero + ' · ' + E.nomeForn(p.fornecedor_id), colunas: [{ t: 'PRODUTO', w: 0.5 }, { t: 'QTD', w: 0.12, a: 'r' }, { t: 'UNID.', w: 0.1, a: 'c' }, { t: 'PREÇO', w: 0.14, a: 'r' }, { t: 'TOTAL', w: 0.14, a: 'r' }],
+        linhas: p.itens.map(function (it) { return [it.nome, E.qtd(it.qtd), it.unidade, FT.moeda(it.preco), FT.moeda(it.qtd * it.preco)]; }), total: ['', '', '', 'TOTAL', FT.moeda(p.total)] };
+    }));
+    const total = ps.reduce(function (s, p) { return s + +p.total; }, 0);
+    try {
+      const bytes = await FT.gerarPDF({ paisagem: paisagem, titulo: 'DECISÃO DE COMPRA', subtitulo: (st.c.titulo || 'COTAÇÃO') + ' · ' + FT.ddmmaaaa(st.c.data), info: [['FORNECEDORES COTADOS', String(fs.length)], ['PEDIDOS GERADOS', ps.length + ' · TOTAL ' + FT.moeda(total)]], blocos: blocos });
+      FT.baixarArquivo(bytes, 'DECISAO_DE_COMPRA_' + st.c.data + '.pdf');
+    } catch (x) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(x), true); }
+  }
+
+  let montado = false;
+  FT.telas.cotacao = { abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(); }, sair: function () { if (st.c && !st.salvo) salvar(); } };
+})();
+
+/* Forneria Toscana — Cadastro › Fornecedores */
+(function () {
+  'use strict';
+  const FT = window.FT, E = FT.est, $ = FT.$, esc = FT.esc;
+  let editando = null;
+
+  function montar() {
+    $('#tela-fornecedores').innerHTML =
+      '<div class="cab-tela"><div><h1>Fornecedores</h1><p>Cadastre à mão ou deixe o sistema cadastrar sozinho ao dar entrada numa nota (pelo CNPJ). Os produtos de cada fornecedor são ligados no cadastro do produto ou pela nota.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn" id="fo2-novo">Novo fornecedor</button></div></div>' +
+      '<div class="rolagem"><table class="lista" id="fo2-tab"></table></div>';
+    $('#fo2-novo').addEventListener('click', function () { abrir(null); });
+    $('#fo2-tab').addEventListener('click', function (e) { const tr = e.target.closest('[data-id]'); if (tr) abrir(tr.dataset.id); });
+    const d = document.createElement('dialog'); d.id = 'dlg-forn'; d.setAttribute('aria-labelledby', 'h-forn');
+    d.innerHTML = '<form class="dlg form" id="fn-form" novalidate><h2 id="h-forn">Fornecedor</h2>' +
+      '<div class="grade2"><label for="fn-nome">Razão social / nome<input id="fn-nome" required autocomplete="off"></label><label for="fn-fant">Nome fantasia<input id="fn-fant" autocomplete="off"></label></div>' +
+      '<div class="grade2"><label for="fn-cnpj">CNPJ ou CPF<input id="fn-cnpj" inputmode="numeric" autocomplete="off"></label><label for="fn-tel">Telefone / WhatsApp<input id="fn-tel" inputmode="tel" autocomplete="off"></label></div>' +
+      '<div class="grade2"><label for="fn-contato">Vendedor / contato<input id="fn-contato" autocomplete="off"></label><label for="fn-email">E-mail<input id="fn-email" type="email" autocomplete="off"></label></div>' +
+      '<label for="fn-end">Endereço<input id="fn-end" autocomplete="off"></label><label for="fn-obs">Observação (prazo, dia de entrega, pedido mínimo…)<input id="fn-obs" autocomplete="off"></label>' +
+      '<div id="fn-prods"></div><p class="erro-form" id="fn-erro"></p>' +
+      '<div class="dlg-acoes"><button type="button" class="btn btn-perigo" id="fn-excluir">Excluir</button><span class="espaco"></span><button class="btn btn-sec" type="button" id="fn-cancelar">Cancelar</button><button class="btn" type="submit">Salvar</button></div></form>';
+    document.body.appendChild(d);
+    $('#fn-cancelar').addEventListener('click', function () { d.close(); });
+    $('#fn-form').addEventListener('submit', salvar);
+    $('#fn-excluir').addEventListener('click', excluir);
+  }
+  async function carregar() {
+    try { await E.carregar(true); desenhar(); }
+    catch (e) { FT.aviso('Não consegui carregar os fornecedores: ' + FT.textoErro(e) + '. Confira se o SQL da atualização 10 foi rodado.', true); }
+  }
+  function desenhar() {
+    const fs = E.dados.fornecedores;
+    $('#fo2-tab').innerHTML = '<thead><tr><th>Fornecedor</th><th>CNPJ</th><th>Telefone</th><th>Contato</th><th class="num">Produtos</th></tr></thead><tbody>' +
+      (fs.length ? fs.map(function (f) {
+        return '<tr data-id="' + esc(f.id) + '" tabindex="0"><td><b>' + esc(f.fantasia || f.nome) + '</b>' + (f.fantasia ? '<small>' + esc(f.nome) + '</small>' : '') + '</td><td>' + esc(E.cnpj(f.cnpj) || '—') + '</td><td>' + esc(E.telefone(f.telefone) || '—') + '</td><td>' + esc(f.contato || '—') + '</td><td class="num">' + E.vinculosDoFornecedor(f.id).length + '</td></tr>';
+      }).join('') : '<tr><td colspan="5" class="vazio-lista">Nenhum fornecedor ainda. Cadastre aqui ou importe uma nota em Estoque › Entrada de nota.</td></tr>') + '</tbody>';
+  }
+  function abrir(id) {
+    const f = id ? E.dados.forn[id] : null; editando = f;
+    $('#h-forn').textContent = f ? (f.fantasia || f.nome) : 'Novo fornecedor';
+    $('#fn-nome').value = f ? f.nome : ''; $('#fn-fant').value = f ? f.fantasia || '' : ''; $('#fn-cnpj').value = f ? E.cnpj(f.cnpj) : '';
+    $('#fn-tel').value = f ? E.telefone(f.telefone) : ''; $('#fn-contato').value = f ? f.contato || '' : ''; $('#fn-email').value = f ? f.email || '' : '';
+    $('#fn-end').value = f ? f.endereco || '' : ''; $('#fn-obs').value = f ? f.obs || '' : '';
+    $('#fn-excluir').hidden = !f; $('#fn-erro').textContent = '';
+    const vs = f ? E.vinculosDoFornecedor(f.id) : [];
+    $('#fn-prods').innerHTML = f ? '<h3 class="h3-dia">Produtos deste fornecedor (' + vs.length + ')</h3><p class="sub">' + (vs.length ? vs.map(function (v) { return esc((E.dados.prod[v.produto_id] || {}).nome || '—'); }).join(' · ') : 'Nenhum. Ligue no cadastro do produto (Estoque › Produtos) ou dando entrada numa nota.') + '</p>' : '';
+    $('#dlg-forn').showModal(); $('#fn-nome').focus();
+  }
+  async function salvar(e) {
+    e.preventDefault();
+    const nome = FT.mai($('#fn-nome').value), cnpj = $('#fn-cnpj').value.replace(/\D/g, '');
+    if (!nome) { $('#fn-erro').textContent = 'Informe o nome.'; return; }
+    if (cnpj && cnpj.length !== 14 && cnpj.length !== 11) { $('#fn-erro').textContent = 'CNPJ deve ter 14 números (ou CPF 11).'; return; }
+    if (cnpj && E.dados.fornecedores.some(function (x) { return x.cnpj === cnpj && (!editando || x.id !== editando.id); })) { $('#fn-erro').textContent = 'Já existe um fornecedor com este CNPJ.'; return; }
+    try {
+      await FT.store.estoque.fornecedores.salvar({ id: editando && editando.id, nome: nome, fantasia: $('#fn-fant').value, cnpj: cnpj, telefone: $('#fn-tel').value, contato: $('#fn-contato').value, email: $('#fn-email').value, endereco: $('#fn-end').value, obs: $('#fn-obs').value });
+      await E.carregar(true); desenhar(); $('#dlg-forn').close(); FT.aviso('Fornecedor salvo.');
+    } catch (x) { $('#fn-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(x); }
+  }
+  async function excluir() {
+    if (!editando || !window.confirm('Excluir ' + (editando.fantasia || editando.nome) + '? Os produtos deixam de estar ligados a ele.')) return;
+    try { await FT.store.estoque.fornecedores.remover(editando.id); await E.carregar(true); desenhar(); $('#dlg-forn').close(); }
+    catch (x) { $('#fn-erro').textContent = 'Não foi possível excluir: ' + FT.textoErro(x); }
+  }
+  let montado = false;
+  FT.telas.fornecedores = { abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(); } };
+})();
+
 /* Forneria Toscana — tela Ponto eletrônico: lista de funcionários → espelho de ponto de cada um,
  * feriados e relatório mensal para a contabilidade */
 (function () {
@@ -5729,7 +7576,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'indicadores', 'produtos', 'pagamento', 'folha', 'escala', 'fluxo', 'analise', 'ponto', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'indicadores', 'produtos', 'pagamento', 'folha', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
