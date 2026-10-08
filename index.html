@@ -931,7 +931,7 @@ table.lista.vp-dias .num { min-width: 64px; }
         <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-cad"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10.5" r="2.3"/><path d="M5.5 16.5c.6-1.9 1.9-2.8 3.5-2.8s2.9.9 3.5 2.8M15 9.5h3.5M15 13h3.5"/></svg><span>Cadastro</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="menu-itens" id="mg-cad" hidden>
           <a href="#funcionarios"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16.5 14.2c2.7-.3 4.6 1.4 5.2 4.3"/></svg>Funcionários</a>
-          <a href="#usuarios"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>Usuários do ponto</a>
+          <a href="#usuarios"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14.5v2.5"/></svg>Usuários do portal</a>
           <a href="#fornecedores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/></svg>Fornecedores</a>
         </div>
       </div>
@@ -1207,11 +1207,11 @@ window.FT_CONFIG = {
   FT.telas = FT.telas || {};
   if (typeof module !== 'undefined' && module.exports) module.exports = FT;
 
-  /* ---------- assinatura eletrônica (app do ponto e pastas) ---------- */
+  /* ---------- assinatura eletrônica (Portal do Colaborador e pastas) ---------- */
   FT.TERMO_VERSAO = 1;
   FT.termoAssinatura = function (nome, cpf) {
     return [
-      'Eu, ' + nome + ', CPF ' + FT.formatarCPF(cpf) + ', concordo em receber os meus holerites, espelhos de ponto e outros documentos do trabalho em formato digital, pelo app de ponto da Forneria Toscana, e em assiná-los eletronicamente, sem papel.',
+      'Eu, ' + nome + ', CPF ' + FT.formatarCPF(cpf) + ', concordo em receber os meus holerites, espelhos de ponto e outros documentos do trabalho em formato digital, pelo Portal do Colaborador da Forneria Toscana, e em assiná-los eletronicamente, sem papel.',
       'Reconheço que a assinatura feita no app (com o meu CPF, a minha senha pessoal e o desenho da minha assinatura) me identifica e vale como a minha assinatura nesses documentos, nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020.',
       'Comprometo-me a guardar a minha senha em segredo e a avisar o gerente se outra pessoa souber dela. Posso pedir, a qualquer momento, uma cópia dos documentos que assinei.'
     ];
@@ -5157,7 +5157,7 @@ window.FT_CONFIG = {
  * - holerite do sistema: guardado como página HTML no momento do envio
  * - holerite da contabilidade: PDF importado (um PDF com todos ou um por funcionário),
  *   separado por funcionário pelas páginas (nome ou CPF escrito no PDF)
- * O funcionário vê os dois em ponto.html → MEUS HOLERITES (CPF + senha do ponto). */
+ * O funcionário vê os dois em ponto.html → MEUS HOLERITES (CPF + senha do portal). */
 (function () {
   'use strict';
   const FT = window.FT, $ = FT.$, esc = FT.esc;
@@ -5303,7 +5303,7 @@ window.FT_CONFIG = {
     const A = api(), p = A.pessoa(fid);
     H.envio = { fid: fid };
     $('#h-envio').textContent = 'Enviar holerite · ' + p.nome;
-    $('#env-sub').textContent = 'Referência: ' + A.nomeMes(A.estado().mes) + '. O funcionário vê os holerites no link do ponto, em "HOLERITES E ESPELHO DE PONTO", entrando com o CPF e a senha do ponto.';
+    $('#env-sub').textContent = 'Referência: ' + A.nomeMes(A.estado().mes) + '. O funcionário vê os holerites no link do portal, em "HOLERITES E ESPELHO DE PONTO", entrando com o CPF e a senha do portal.';
     $('#env-erro').textContent = ''; $('#env-aviso').textContent = '';
     infoContab();
     $('#dlg-envio').showModal();
@@ -5314,7 +5314,7 @@ window.FT_CONFIG = {
       $('#env-tel').value = formatarTel(f.telefone || '');
       const acessos = await FT.store.acessos.listar();
       const a = acessos.find(function (x) { return String(x.funcionario_id) === String(fid); });
-      $('#env-aviso').innerHTML = !a ? '⚠ ' + esc(p.nome.split(' ')[0]) + ' ainda não tem acesso ao ponto. Crie em <a href="#usuarios">Usuários do ponto</a>; sem o acesso, não dá para abrir o holerite.'
+      $('#env-aviso').innerHTML = !a ? '⚠ ' + esc(p.nome.split(' ')[0]) + ' ainda não tem acesso ao ponto. Crie em <a href="#usuarios">Usuários do portal</a>; sem o acesso, não dá para abrir o holerite.'
         : !a.ativo ? '⚠ O acesso ao ponto de ' + esc(p.nome.split(' ')[0]) + ' está desativado.' : '';
     } catch (e) { /* segue sem telefone */ }
   }
@@ -5330,7 +5330,7 @@ window.FT_CONFIG = {
       if (tel !== telNumeros(H.envio.telOriginal)) await FT.store.holerites.salvarTelefone(H.envio.fid, tel);
       await FT.store.holerites.enviar(H.envio.fid, st.mes, docHolerite(H.envio.fid));
       const texto = 'OLÁ, ' + p.nome.split(' ')[0] + '! SEU HOLERITE DE ' + A.nomeMes(st.mes) + ' JÁ ESTÁ DISPONÍVEL.\n' +
-        'ACESSE ' + linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO). CONFIRA E ASSINE DIGITALMENTE.\nFORNERIA TOSCANA';
+        'ACESSE O PORTAL DO COLABORADOR: ' + linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PORTAL). CONFIRA E ASSINE DIGITALMENTE.\nFORNERIA TOSCANA';
       const num = tel ? (tel.length <= 11 ? '55' + tel : tel) : '';
       const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(texto);
       if (janela) janela.location.href = url; else window.location.href = url;
@@ -5485,7 +5485,7 @@ window.FT_CONFIG = {
   FT.holerites = { carregarStatus: carregarStatus, abrirEnvio: abrirEnvio, importarContab: importarContab, _identificar: identificar };
 })();
 
-/* Forneria Toscana — tela Usuários do ponto (acesso por CPF e senha) */
+/* Forneria Toscana — tela Usuários do portal (acesso por CPF e senha) */
 (function () {
   'use strict';
   const FT = window.FT;
@@ -5499,8 +5499,8 @@ window.FT_CONFIG = {
 
   function montar() {
     $('#tela-usuarios').innerHTML =
-      '<div class="cab-tela"><div><h1>Usuários do ponto</h1><p>Cada funcionário entra no ponto com o próprio CPF e uma senha. Ele só consegue bater ponto: não vê vendas, salários nem as outras telas.</p></div></div>' +
-      '<div class="painel link-ponto"><div><h3>Endereço do ponto para os funcionários</h3><p class="sub">Mande este link para a equipe salvar na tela inicial do celular.</p>' +
+      '<div class="cab-tela"><div><h1>Usuários do portal</h1><p>Cada funcionário entra no Portal do Colaborador com o próprio CPF e uma senha. Lá ele bate o ponto e vê/assina os próprios holerites e espelhos de ponto: não vê vendas, salários dos outros nem as telas do sistema.</p></div></div>' +
+      '<div class="painel link-ponto"><div><h3>Endereço do Portal do Colaborador</h3><p class="sub">Mande este link para a equipe salvar na tela inicial do celular.</p>' +
       '<code id="us-link"></code></div><button type="button" class="btn" id="us-copiar">Copiar link</button></div>' +
       '<div class="painel senha-padrao"><div><h3>Senha padrão (provisória)</h3><p class="sub">Usada para criar os acessos e para resetar a senha de quem esquecer. No primeiro acesso o funcionário é obrigado a trocar por uma senha só dele.</p></div>' +
       '<div class="sp-campos"><input id="us-padrao" type="text" autocomplete="off" placeholder="ex.: forneria2026" aria-label="Senha padrão"><button type="button" class="btn" id="us-padrao-salvar">Salvar senha padrão</button></div><p class="dica" id="us-padrao-msg"></p></div>' +
@@ -7340,7 +7340,7 @@ window.FT_CONFIG = {
   function montar() {
     $('#tela-ponto').innerHTML =
       '<div class="cab-tela"><div><h1>Ponto eletrônico</h1><p>Clique num funcionário para ver o espelho de ponto do mês. As entradas marcam o dia trabalhado no Pagamento 10% automaticamente.</p></div>' +
-      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-feriados">Feriados</button><button type="button" class="btn btn-sec" id="pt-copiar-link">Copiar link do ponto</button><button type="button" class="btn btn-sec" id="pt-manual">Lançar ponto manual</button></div></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pt-feriados">Feriados</button><button type="button" class="btn btn-sec" id="pt-copiar-link">Copiar link do portal</button><button type="button" class="btn btn-sec" id="pt-manual">Lançar ponto manual</button></div></div>' +
       '<div class="painel agora"><h3>Trabalhando agora</h3><div id="pt-agora" class="es-pessoas"></div></div>' +
       '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="pt-ant" aria-label="Mês anterior">‹</button>' +
       '<div class="nav-semana-t"><span>Mês</span><b id="pt-rotulo"></b></div>' +
@@ -7576,7 +7576,7 @@ window.FT_CONFIG = {
       return h;
   }
 
-  /* ---------- fechamento: libera o espelho de cada um no app do ponto ---------- */
+  /* ---------- fechamento: libera o espelho de cada um no Portal do Colaborador ---------- */
   const CSS_ESP = 'html{-webkit-text-size-adjust:100%}body{margin:0;padding:14px;background:#efeee9;font:12px/1.35 Arial,Helvetica,sans-serif;color:#000;text-transform:uppercase}' +
     '.barra{max-width:200mm;margin:0 auto 10px;display:flex;justify-content:flex-end}.barra button{font:700 13px Arial;padding:10px 16px;border-radius:8px;border:0;background:#23574a;color:#fff;cursor:pointer}' +
     '.folha{max-width:200mm;margin:0 auto;background:#fff;padding:5mm;box-sizing:border-box;overflow-x:auto}' +
@@ -7610,7 +7610,7 @@ window.FT_CONFIG = {
       $('#fp-tab').addEventListener('change', function (e) { if (e.target.id === 'fp-todos') $('#fp-tab').querySelectorAll('[data-fp]').forEach(function (c) { c.checked = e.target.checked; }); });
     }
     const pend = lista.filter(function (id) { return espelhoDe(id).totais.semSaida; }).length;
-    $('#fp-sub').innerHTML = 'Mês: <b>' + nomeMes(st.mes) + '</b>. Cada funcionário passa a ver o próprio espelho de ponto no app (link do ponto → "HOLERITES E ESPELHO DE PONTO"). Pode liberar de novo depois de um ajuste: o espelho é atualizado.' +
+    $('#fp-sub').innerHTML = 'Mês: <b>' + nomeMes(st.mes) + '</b>. Cada funcionário passa a ver o próprio espelho de ponto no app (link do portal → "HOLERITES E ESPELHO DE PONTO"). Pode liberar de novo depois de um ajuste: o espelho é atualizado.' +
       (pend ? '<br><span class="chip-parcial">atenção</span> ' + pend + ' funcionário(s) com turno sem saída. Ajuste antes de liberar.' : '');
     $('#fp-tab').innerHTML = '<thead><tr><th><input type="checkbox" id="fp-todos" checked aria-label="Marcar todos"></th><th>Funcionário</th><th class="num">Dias</th><th class="num">Horas</th><th>Acesso ao app</th><th>Situação</th></tr></thead><tbody>' +
       lista.map(function (id) {
@@ -7640,7 +7640,7 @@ window.FT_CONFIG = {
   // depois de liberar: um botão por funcionário para avisar no WhatsApp
   function mensagemEspelho(id) {
     return 'OLÁ, ' + nome(id).split(' ')[0] + '! O SEU ESPELHO DE PONTO DE ' + nomeMes(st.mes) + ' JÁ ESTÁ DISPONÍVEL.\n' +
-      'ACESSE ' + FT.linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO). CONFIRA E ASSINE DIGITALMENTE.\nFORNERIA TOSCANA';
+      'ACESSE O PORTAL DO COLABORADOR: ' + FT.linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PORTAL). CONFIRA E ASSINE DIGITALMENTE.\nFORNERIA TOSCANA';
   }
   function avisosWhatsApp(ids) {
     $('#fp-sub').innerHTML = '✓ Espelhos de <b>' + nomeMes(st.mes) + '</b> liberados no app. Agora avise cada funcionário no WhatsApp (abre a conversa com a mensagem pronta):';
@@ -7797,7 +7797,7 @@ window.FT_CONFIG = {
 })();
 
 /* Forneria Toscana — RH e DP › Pastas dos colaboradores
- * Holerites e espelhos de ponto assinados no app do ponto, numa pasta por colaborador.
+ * Holerites e espelhos de ponto assinados no Portal do Colaborador, numa pasta por colaborador.
  * O que foi assinado fica congelado no banco; aqui só se lê, gera o PDF assinado (com certificado) e baixa.
  */
 (function () {
@@ -7811,14 +7811,14 @@ window.FT_CONFIG = {
   /* ---------------- tela ---------------- */
   function montar() {
     $('#tela-pastas').innerHTML =
-      '<div class="cab-tela"><div><h1>Pastas dos colaboradores</h1><p>Holerites e espelhos de ponto assinados digitalmente pelos colaboradores no app do ponto. A cópia assinada fica guardada e não pode ser alterada nem apagada.</p></div>' +
+      '<div class="cab-tela"><div><h1>Pastas dos colaboradores</h1><p>Holerites e espelhos de ponto assinados digitalmente pelos colaboradores no Portal do Colaborador. A cópia assinada fica guardada e não pode ser alterada nem apagada.</p></div>' +
       '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pa-atualizar">Atualizar</button><button type="button" class="btn" id="pa-zip-todas">Baixar todas as pastas (ZIP)</button></div></div>' +
       '<div class="kpis kpis-4" id="pa-kpis"></div>' +
       '<div class="pa-filtros"><label class="pa-busca"><span class="sr">Buscar colaborador</span><input id="pa-busca" type="search" placeholder="Buscar colaborador" autocomplete="off"></label>' +
       '<label><span class="sr">Mês</span><select id="pa-mes"></select></label>' +
       '<div class="segmentado" role="group" aria-label="Mostrar"><button type="button" data-so="" aria-pressed="true">Todos</button><button type="button" data-so="pend" aria-pressed="false">Com pendência</button></div></div>' +
       '<div class="pa-corpo"><nav class="pa-lista" id="pa-lista" aria-label="Colaboradores"></nav><section class="pa-pasta" id="pa-pasta" aria-live="polite"></section></div>' +
-      '<p class="pa-nota">Os documentos chegam aqui quando o colaborador assina no app do ponto (Holerites e espelho de ponto). Se um holerite ou espelho for reenviado depois de assinado, a versão assinada antiga continua guardada e o colaborador precisa assinar a nova.</p>';
+      '<p class="pa-nota">Os documentos chegam aqui quando o colaborador assina no Portal do Colaborador (Holerites e espelho de ponto). Se um holerite ou espelho for reenviado depois de assinado, a versão assinada antiga continua guardada e o colaborador precisa assinar a nova.</p>';
     $('#pa-atualizar').addEventListener('click', function () { carregar(true); });
     $('#pa-zip-todas').addEventListener('click', function (e) { baixarZip(null, e.currentTarget); });
     $('#pa-busca').addEventListener('input', function (e) { st.busca = FT.semAcento(e.target.value.trim()); desenharLista(); });
@@ -7956,8 +7956,8 @@ window.FT_CONFIG = {
   function mensagemCobranca(p, docs) {
     const pend = docs.filter(function (d) { return d.situacao === 'pendente'; }).map(function (d) { return FT.NOMES_DOC[d.tipo].toUpperCase() + ' DE ' + nomeMes(d.mes).toUpperCase(); });
     const link = FT.linkPonto ? FT.linkPonto() : '';
-    return 'OLÁ, ' + String(p.nome).split(' ')[0] + '! FALTA VOCÊ ASSINAR ' + (pend.length > 1 ? 'ESTES DOCUMENTOS' : 'ESTE DOCUMENTO') + ' NO APP DO PONTO:\n- ' + pend.join('\n- ') +
-      '\nACESSE ' + link + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO). CONFIRA E ASSINE.\nFORNERIA TOSCANA';
+    return 'OLÁ, ' + String(p.nome).split(' ')[0] + '! FALTA VOCÊ ASSINAR ' + (pend.length > 1 ? 'ESTES DOCUMENTOS' : 'ESTE DOCUMENTO') + ' NO PORTAL DO COLABORADOR:\n- ' + pend.join('\n- ') +
+      '\nACESSE O PORTAL DO COLABORADOR: ' + link + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PORTAL). CONFIRA E ASSINE.\nFORNERIA TOSCANA';
   }
 
   async function acaoPasta(e) {
@@ -8078,6 +8078,29 @@ window.FT_CONFIG = {
     } finally { f.remove(); }
   }
 
+  // procura no PDF da contabilidade os campos "ASSINATURA DO FUNCIONÁRIO" e a data "___/___/___" (posições em pontos do PDF)
+  const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/pdf.min.mjs';
+  let pdfjs = null;
+  async function camposAssinatura(bytes) {
+    try {
+      if (!pdfjs) { pdfjs = await import(PDFJS); pdfjs.GlobalWorkerOptions.workerSrc = PDFJS.replace('pdf.min.mjs', 'pdf.worker.min.mjs'); }
+      const doc = await pdfjs.getDocument({ data: bytes.slice(), standardFontDataUrl: PDFJS.replace('legacy/build/pdf.min.mjs', 'standard_fonts/') }).promise;
+      const r = [];
+      for (let n = 1; n <= doc.numPages; n++) {
+        const pg = await doc.getPage(n), tc = await pg.getTextContent(), ass = [], datas = [];
+        const itens = tc.items.filter(function (it) { return it.str && it.transform; });
+        itens.forEach(function (it) {
+          const t = FT.semAcento(it.str), x = it.transform[4], y = it.transform[5], h = Math.abs(it.transform[3]) || 8, w = it.width || h * it.str.length * 0.5;
+          if (/ASSINATURA( DO| DA)? ?(FUNCIONARIO|EMPREGADO|COLABORADOR|EMPREGADA|FUNCIONARIA)|^\s*ASSINATURA\s*$/.test(t)) ass.push({ x: x, y: y, w: w, h: h });
+          const m = /_{2,}\s*\/\s*_{2,}\s*\/\s*_{2,}/.exec(it.str);
+          if (m) { const cw = w / Math.max(1, it.str.length); datas.push({ x: x + m.index * cw, y: y, w: m[0].length * cw, h: h }); }
+        });
+        r.push({ ass: ass, datas: datas });
+      }
+      return r;
+    } catch (e) { console.warn('campos do PDF', e); return null; }
+  }
+
   async function base(L, pdf) {
     const f = await pdf.embedFont(L.StandardFonts.Helvetica), fb = await pdf.embedFont(L.StandardFonts.HelveticaBold), fm = await pdf.embedFont(L.StandardFonts.Courier);
     let logo = null; try { const lb = await FT.pdfLogo(); if (lb) logo = await pdf.embedPng(lb); } catch (e) { logo = null; }
@@ -8148,9 +8171,12 @@ window.FT_CONFIG = {
     let pdf, nOrig;
     const quando = dataHoraSP(a.assinado_em, true);
     const carimbo = 'ASSINADO ELETRONICAMENTE POR ' + String(a.funcionario_nome).toUpperCase() + ' EM ' + quando + ' (BRASÍLIA) · CÓDIGO ' + a.codigo + ' · CERTIFICADO NA ÚLTIMA PÁGINA';
+    let campos = null;
     if (a.conteudo_pdf) {
-      pdf = await L.PDFDocument.load(FT.base64Bytes(a.conteudo_pdf), { ignoreEncryption: true });
+      const orig = FT.base64Bytes(a.conteudo_pdf);
+      pdf = await L.PDFDocument.load(orig, { ignoreEncryption: true });
       nOrig = pdf.getPageCount();
+      campos = await camposAssinatura(orig) || [];
     } else {
       pdf = await L.PDFDocument.create();
       const pags = await htmlParaPaginas(a.conteudo_html, { png: a.assinatura_png, data: FT.ddmmaaaa(FT.dataSP(a.assinado_em)) }), MM = 2.8346, esc = 190 * MM / 718;
@@ -8161,6 +8187,35 @@ window.FT_CONFIG = {
       nOrig = pags.length;
     }
     const fx = await base(L, pdf);
+    // holerite da contabilidade: assinatura no campo "assinatura do funcionário" (ou num quadro no rodapé) e data preenchida
+    if (campos) {
+      let img = null; try { img = await pdf.embedPng(FT.base64Bytes(a.assinatura_png.split(',')[1])); } catch (e) { img = null; }
+      const dataTxt = FT.ddmmaaaa(FT.dataSP(a.assinado_em)), tinta = L.rgb(0.07, 0.14, 0.25);
+      pdf.getPages().slice(0, nOrig).forEach(function (pg, i) {
+        const c = campos[i] || { ass: [], datas: [] }, w = pg.getWidth();
+        const desenhar = function (cx, base, larg, alt) {
+          if (!img) return;
+          const e = Math.min(larg / img.width, alt / img.height);
+          pg.drawImage(img, { x: cx - img.width * e / 2, y: base, width: img.width * e, height: img.height * e });
+        };
+        if (c.ass.length) {
+          // a linha fica logo acima do texto "ASSINATURA DO FUNCIONÁRIO": a assinatura vai em cima dela
+          c.ass.forEach(function (f) { desenhar(f.x + f.w / 2, f.y + f.h + 1, Math.max(150, f.w * 1.3), 34); });
+          c.datas.forEach(function (d) {
+            pg.drawRectangle({ x: d.x - 1, y: d.y - 2, width: d.w + 2, height: d.h + 3, color: L.rgb(1, 1, 1) });
+            const tam = Math.min(10, Math.max(7, d.h)); pg.drawText(dataTxt, { x: d.x + (d.w - fx.f.widthOfTextAtSize(dataTxt, tam)) / 2, y: d.y, size: tam, font: fx.f, color: tinta });
+          });
+        } else {
+          // PDF sem campo de assinatura: quadro no canto de baixo
+          const bw = 180, bh = 58, x0 = w - bw - 24, y0 = 26;
+          pg.drawRectangle({ x: x0, y: y0, width: bw, height: bh, color: L.rgb(1, 1, 1), borderColor: L.rgb(0.6, 0.65, 0.6), borderWidth: 0.6, opacity: 0.95 });
+          desenhar(x0 + bw / 2, y0 + 16, bw - 20, 34);
+          pg.drawLine({ start: { x: x0 + 10, y: y0 + 14 }, end: { x: x0 + bw - 10, y: y0 + 14 }, thickness: 0.5, color: L.rgb(0.4, 0.4, 0.4) });
+          const leg = FT.pdfLimpo('ASSINATURA DO FUNCIONÁRIO · ' + dataTxt);
+          pg.drawText(leg, { x: x0 + (bw - fx.f.widthOfTextAtSize(leg, 6)) / 2, y: y0 + 5, size: 6, font: fx.f, color: L.rgb(0.35, 0.35, 0.35) });
+        }
+      });
+    }
     pdf.getPages().slice(0, nOrig).forEach(function (pg, i) {
       const w = pg.getWidth();
       const t = FT.pdfLimpo(carimbo + ' · PÁG. ' + (i + 1) + '/' + nOrig);
@@ -8175,10 +8230,10 @@ window.FT_CONFIG = {
       doc: [['DOCUMENTO', FT.NOMES_DOC[a.tipo] + ' de ' + nomeMes(a.mes)], ['ARQUIVO ORIGINAL', a.arquivo_nome || (a.tipo === 'espelho' ? 'Espelho de ponto gerado pelo sistema' : 'Holerite gerado pelo sistema')], ['PÁGINAS DO DOCUMENTO', String(nOrig)]],
       nome: String(a.funcionario_nome).toUpperCase(), cpf: a.funcionario_cpf, png: a.assinatura_png, hash: a.hash, codigo: a.codigo,
       provas: [['DATA E HORA', quando + ' (horário de Brasília, relógio do servidor)'], ['ENDEREÇO IP', a.ip || 'não informado'], ['APARELHO', ua],
-        ['AUTENTICAÇÃO', 'CPF + senha pessoal do app de ponto, confirmada no momento da assinatura'],
+        ['AUTENTICAÇÃO', 'CPF + senha pessoal do Portal do Colaborador, confirmada no momento da assinatura'],
         ['TERMO DE ADESÃO', termo ? 'aceito em ' + dataHoraSP(termo.aceito_em, true) : 'aceito na primeira assinatura']],
       texto: [
-        'Este documento foi assinado eletronicamente pelo(a) colaborador(a) acima no app de ponto da Forneria Toscana, depois de abri-lo e confirmar que leu o conteúdo. A identificação foi feita pelo CPF e pela senha pessoal do app, e a assinatura foi desenhada na tela do aparelho.',
+        'Este documento foi assinado eletronicamente pelo(a) colaborador(a) acima no Portal do Colaborador da Forneria Toscana, depois de abri-lo e confirmar que leu o conteúdo. A identificação foi feita pelo CPF e pela senha pessoal do app, e a assinatura foi desenhada na tela do aparelho.',
         'A assinatura eletrônica tem validade nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020, conforme o termo de adesão aceito pelo(a) colaborador(a).',
         'O código SHA-256 identifica exatamente o conteúdo que foi assinado: qualquer alteração no documento gera um código diferente. A cópia assinada fica guardada no sistema da Forneria Toscana e não pode ser alterada nem apagada.'
       ]
@@ -8196,8 +8251,8 @@ window.FT_CONFIG = {
       doc: [['COLABORADOR(A)', t.nome], ['CPF', FT.formatarCPF(t.cpf)]],
       nome: String(t.nome).toUpperCase(), cpf: t.cpf, png: t.assinatura_png,
       provas: [['ACEITO EM', dataHoraSP(t.aceito_em, true) + ' (horário de Brasília)'], ['ENDEREÇO IP', t.ip || 'não informado'], ['APARELHO', String(t.user_agent || '—')],
-        ['AUTENTICAÇÃO', 'CPF + senha pessoal do app de ponto']],
-      texto: FT.termoAssinatura(t.nome, t.cpf).concat(['Termo aceito no app de ponto da Forneria Toscana, junto com a primeira assinatura de documento do(a) colaborador(a).'])
+        ['AUTENTICAÇÃO', 'CPF + senha pessoal do Portal do Colaborador']],
+      texto: FT.termoAssinatura(t.nome, t.cpf).concat(['Termo aceito no Portal do Colaborador da Forneria Toscana, junto com a primeira assinatura de documento do(a) colaborador(a).'])
     });
     pdf.setTitle('Termo de adesão - ' + t.nome);
     return pdf.save();

@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1d3a32">
-<title>Ponto Forneria Toscana</title>
+<title>Portal do Colaborador · Forneria Toscana</title>
+<meta name="apple-mobile-web-app-title" content="Portal Forneria">
+<meta name="application-name" content="Portal Forneria">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -102,6 +104,8 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 .ass-dica { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 12px; color: #7a8379; pointer-events: none; }
 .ass-limpar { position: absolute; top: 8px; right: 8px; border: 1px solid #ccd3cb; background: #fff; color: #23574a; border-radius: 8px; padding: 6px 10px; font: 700 12px var(--f-body); text-transform: uppercase; cursor: pointer; }
 #doc-senha { text-transform: none; }
+.doc-nav { display: grid; gap: 10px; }
+.doc-nav .btn-sec.destaque { background: var(--accent); color: #fff; border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -114,8 +118,8 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 <main>
   <!-- 1. ENTRAR = BATER ENTRADA -->
   <form class="cartao" id="tela-login" novalidate>
-    <h1>Ponto eletrônico</h1>
-    <p class="sub">Entre com o seu CPF e senha. A entrada é registrada na hora.</p>
+    <h1>Portal do Colaborador</h1>
+    <p class="sub">Entre com o seu CPF e senha para bater o ponto ou ver os seus holerites e espelhos de ponto.</p>
     <label for="cpf">CPF<input id="cpf" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00"></label>
     <label for="senha">Senha<input id="senha" type="password" autocomplete="current-password"></label>
     <div class="aviso-gps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
@@ -150,12 +154,12 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
     <p class="msg-ponto" id="msg-hol" role="status" hidden></p>
     <p class="hol-resumo" id="hol-resumo" hidden></p>
     <ul class="hol-lista" id="hol-lista"></ul>
-    <button class="btn btn-sec" id="btn-hol-sair" type="button">Sair</button>
+    <button class="btn btn-sec" id="btn-hol-sair" type="button">Sair do portal</button>
   </section>
 
   <!-- 4b. VER E ASSINAR UM DOCUMENTO -->
   <section class="cartao cartao-doc" id="tela-doc" hidden>
-    <div class="doc-topo"><button class="btn-voltar" id="doc-voltar" type="button">‹ Voltar</button><div><b id="doc-titulo"></b><small id="doc-sub"></small></div></div>
+    <div class="doc-topo"><button class="btn-voltar" id="doc-voltar" type="button" aria-label="Voltar para meus documentos">‹ Documentos</button><div><b id="doc-titulo"></b><small id="doc-sub"></small></div></div>
     <div class="doc-visor" id="doc-visor"></div>
     <button class="btn btn-sec" id="doc-abrir" type="button">Abrir em tela cheia</button>
     <div class="doc-ok" id="doc-assinado" hidden></div>
@@ -168,10 +172,14 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
       </div>
       <label class="check"><input type="checkbox" id="doc-li"> Li este documento e confirmo as informações</label>
       <div class="ass-caixa" id="ass-caixa"><canvas id="ass-canvas" aria-label="Espaço para assinar com o dedo"></canvas><span class="ass-linha"></span><span class="ass-dica">Assine aqui com o dedo</span><button class="ass-limpar" id="ass-limpar" type="button">Limpar</button></div>
-      <label for="doc-senha">Confirme com a sua senha do ponto<input id="doc-senha" type="password" autocomplete="current-password"></label>
+      <label for="doc-senha">Confirme com a sua senha do portal<input id="doc-senha" type="password" autocomplete="current-password"></label>
       <p class="msg-ponto" id="msg-doc" role="status" hidden></p>
       <button class="btn" id="btn-assinar" type="submit">Assinar documento</button>
     </form>
+    <div class="doc-nav">
+      <button class="btn" id="doc-proximo" type="button" hidden>Assinar o próximo documento</button>
+      <button class="btn btn-sec" id="doc-inicio" type="button">⌂ Voltar para meus documentos</button>
+    </div>
   </section>
 
   <!-- 3. SAÍDA REGISTRADA -->
@@ -180,7 +188,7 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
     <button class="btn btn-sec" id="btn-concluir" type="button">Concluir</button>
   </section>
 </main>
-<p class="rodape">Esqueceu a senha ou não consegue bater o ponto? Fale com o gerente.</p>
+<p class="rodape">Portal do Colaborador · Forneria Toscana. Esqueceu a senha ou não consegue entrar? Fale com o gerente.</p>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -352,11 +360,11 @@ window.FT_CONFIG = {
   FT.telas = FT.telas || {};
   if (typeof module !== 'undefined' && module.exports) module.exports = FT;
 
-  /* ---------- assinatura eletrônica (app do ponto e pastas) ---------- */
+  /* ---------- assinatura eletrônica (Portal do Colaborador e pastas) ---------- */
   FT.TERMO_VERSAO = 1;
   FT.termoAssinatura = function (nome, cpf) {
     return [
-      'Eu, ' + nome + ', CPF ' + FT.formatarCPF(cpf) + ', concordo em receber os meus holerites, espelhos de ponto e outros documentos do trabalho em formato digital, pelo app de ponto da Forneria Toscana, e em assiná-los eletronicamente, sem papel.',
+      'Eu, ' + nome + ', CPF ' + FT.formatarCPF(cpf) + ', concordo em receber os meus holerites, espelhos de ponto e outros documentos do trabalho em formato digital, pelo Portal do Colaborador da Forneria Toscana, e em assiná-los eletronicamente, sem papel.',
       'Reconheço que a assinatura feita no app (com o meu CPF, a minha senha pessoal e o desenho da minha assinatura) me identifica e vale como a minha assinatura nesses documentos, nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020.',
       'Comprometo-me a guardar a minha senha em segredo e a avisar o gerente se outra pessoa souber dela. Posso pedir, a qualquer momento, uma cópia dos documentos que assinei.'
     ];
@@ -590,6 +598,20 @@ window.FT_CONFIG = {
     res.className = 'hol-resumo' + (pend ? '' : ' ok');
     res.textContent = pend ? (pend === 1 ? 'Você tem 1 documento para assinar.' : 'Você tem ' + pend + ' documentos para assinar.') + ' Toque em cada um, confira e assine.' : '✓ Todos os seus documentos estão assinados.';
   }
+  function voltarDocumentos() { doc = null; $('#doc-visor').innerHTML = ''; mostrar('tela-holerites'); window.scrollTo(0, 0); }
+  // primeiro documento que ainda falta assinar (fora o que está aberto)
+  function proximoPendente() {
+    if (!lista) return null;
+    for (const h of lista.itens) for (const t of TIPOS) if (h[t] && !h['ass_' + t] && !(doc && doc.mes === h.mes && doc.tipo === t)) return { mes: h.mes, tipo: t };
+    return null;
+  }
+  function contarPendentes() { let n = 0; if (lista) lista.itens.forEach(function (h) { TIPOS.forEach(function (t) { if (h[t] && !h['ass_' + t]) n++; }); }); return n; }
+  function navDoc(assinado) {
+    const n = contarPendentes(), px = $('#doc-proximo');
+    px.hidden = !assinado || !n;
+    px.textContent = n === 1 ? 'Próximo documento (falta 1)' : 'Próximo documento (faltam ' + n + ')';
+    $('#doc-inicio').classList.toggle('destaque', assinado && !n);
+  }
   function itemDe(mes) { return lista && lista.itens.find(function (h) { return h.mes === mes; }); }
 
   /* ---------- VER E ASSINAR UM DOCUMENTO ---------- */
@@ -650,6 +672,7 @@ window.FT_CONFIG = {
   function prepararAssinatura() {
     const h = itemDe(doc.mes), ass = h && h['ass_' + doc.tipo];
     $('#doc-assinado').hidden = !ass; $('#doc-form').hidden = !!ass;
+    navDoc(!!ass);
     if (ass) { $('#doc-assinado').innerHTML = '<b>✓ Documento assinado</b><span>Assinado por você em ' + FT.esc(dataHora(ass)) + '.</span><small>A cópia assinada fica guardada na sua pasta na Forneria.</small>'; return; }
     $('#doc-termo').hidden = !!lista.termo;
     $('#doc-termo-txt').innerHTML = FT.termoAssinatura(String(lista.nome).toUpperCase(), cred.cpf).map(function (t) { return '<p>' + FT.esc(t) + '</p>'; }).join('');
@@ -664,7 +687,7 @@ window.FT_CONFIG = {
     if (!$('#doc-li').checked) { msg('#msg-doc', 'Marque que você leu o documento.', 'erro'); return; }
     if (!pad.temAssinatura()) { msg('#msg-doc', 'Faça a sua assinatura com o dedo no quadro.', 'erro'); return; }
     const senha = $('#doc-senha').value;
-    if (!senha) { msg('#msg-doc', 'Digite a sua senha do ponto para confirmar.', 'erro'); return; }
+    if (!senha) { msg('#msg-doc', 'Digite a sua senha do portal para confirmar.', 'erro'); return; }
     const b = $('#btn-assinar'); b.disabled = true;
     try {
       msg('#msg-doc', 'Assinando…', 'info');
@@ -679,7 +702,8 @@ window.FT_CONFIG = {
       const h = itemDe(doc.mes); if (h) h['ass_' + doc.tipo] = r.assinado_em;
       desenharLista();
       $('#doc-form').hidden = true; $('#doc-assinado').hidden = false;
-      $('#doc-assinado').innerHTML = '<b>✓ Documento assinado!</b><span>Em ' + FT.esc(dataHora(r.assinado_em)) + ' · código ' + FT.esc(r.codigo) + '</span><small>A cópia assinada foi guardada na sua pasta na Forneria. Pode voltar para os outros documentos.</small>';
+      $('#doc-assinado').innerHTML = '<b>✓ Documento assinado!</b><span>Em ' + FT.esc(dataHora(r.assinado_em)) + ' · código ' + FT.esc(r.codigo) + '</span><small>A cópia assinada foi guardada na sua pasta na Forneria.</small>';
+      navDoc(true);
       $('#doc-assinado').scrollIntoView({ behavior: 'smooth', block: 'center' });
     } catch (x) { msg('#msg-doc', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
     finally { b.disabled = false; }
@@ -745,7 +769,9 @@ window.FT_CONFIG = {
     $('#btn-saida').addEventListener('click', sair);
     $('#btn-holerites').addEventListener('click', verHolerites);
     $('#hol-lista').addEventListener('click', function (e) { const b = e.target.closest('[data-tipo]'); if (b) abrirDocumento(b.dataset.mes, b.dataset.tipo, b); });
-    $('#doc-voltar').addEventListener('click', function () { doc = null; $('#doc-visor').innerHTML = ''; mostrar('tela-holerites'); window.scrollTo(0, 0); });
+    $('#doc-voltar').addEventListener('click', voltarDocumentos);
+    $('#doc-inicio').addEventListener('click', voltarDocumentos);
+    $('#doc-proximo').addEventListener('click', function (e) { const x = proximoPendente(); if (x) abrirDocumento(x.mes, x.tipo, e.currentTarget); else voltarDocumentos(); });
     $('#doc-abrir').addEventListener('click', abrirTelaCheia);
     $('#doc-form').addEventListener('submit', assinar);
     pad.iniciar();
