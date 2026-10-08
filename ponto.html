@@ -65,6 +65,43 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
 .hol-bts .btn-esp { grid-column: 1 / -1; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
 .hol-bts .btn { font-size: 13px; padding: 12px 8px; }
 .hol-vazio { color: var(--ink-3); text-align: center; padding: 16px 0; }
+/* documentos e assinatura */
+.hol-resumo { border-radius: 12px; padding: 12px 14px; font-size: 14.5px; font-weight: 600; background: var(--ruim-bg); color: var(--ruim); }
+.hol-resumo.ok { background: var(--bom-bg); color: var(--bom); }
+.doc-linha { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; font: 600 14px var(--f-body); text-transform: uppercase; letter-spacing: .03em;
+  background: var(--cartao); color: var(--ink); border: 1.5px solid var(--linha); border-radius: 10px; padding: 12px; cursor: pointer; }
+.doc-linha:active { background: var(--info-bg); }
+.pill { flex: none; font-style: normal; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; border-radius: 999px; padding: 5px 10px; }
+.pill.pend { background: var(--brasa); color: #fff; }
+.pill.ok { background: var(--bom-bg); color: var(--bom); }
+.hol-docs { display: grid; gap: 8px; }
+.cartao-doc { max-width: 820px; }
+.doc-topo { display: flex; gap: 10px; align-items: center; }
+.doc-topo div { display: grid; gap: 2px; }
+.doc-topo b { font: 700 18px/1.2 var(--f-display); }
+.doc-topo small { color: var(--ink-3); font-size: 12.5px; }
+.btn-voltar { flex: none; border: 1.5px solid var(--linha); background: transparent; color: var(--accent); border-radius: 10px; padding: 9px 12px; font: 700 14px var(--f-body); text-transform: uppercase; cursor: pointer; }
+.doc-visor { border: 1.5px solid var(--linha); border-radius: 12px; overflow: hidden; background: #fff; min-height: 160px; display: grid; }
+.doc-folha { position: relative; overflow: hidden; }
+.doc-visor iframe { position: absolute; top: 0; left: 0; transform-origin: 0 0; border: 0; display: block; background: #fff; pointer-events: none; }
+.doc-visor canvas { width: 100%; height: auto; display: block; border-bottom: 1px solid #ddd; }
+.doc-visor .carregando { place-self: center; color: #666; font-size: 14px; padding: 30px; }
+.doc-ok { display: grid; gap: 4px; border-radius: 12px; padding: 14px; background: var(--bom-bg); color: var(--bom); font-size: 14px; }
+.doc-ok b { font-size: 16px; }
+.doc-ok small { color: var(--ink-2); font-size: 12.5px; }
+.doc-form { display: grid; gap: 12px; border-top: 2px solid var(--linha); padding-top: 14px; }
+.doc-form h2 { margin: 0; font: 700 18px/1.2 var(--f-display); }
+.termo { border: 1.5px solid var(--linha); border-radius: 12px; padding: 12px; background: var(--info-bg); display: grid; gap: 8px; font-size: 13px; color: var(--ink-2); text-transform: none; }
+.termo b { text-transform: uppercase; color: var(--ink); font-size: 13.5px; }
+.termo p { margin: 0; line-height: 1.45; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; font-weight: 600; color: var(--ink); letter-spacing: .02em; cursor: pointer; }
+.check input { width: 24px; height: 24px; flex: none; margin: 0; accent-color: var(--accent); }
+.ass-caixa { position: relative; border: 2px dashed var(--accent); border-radius: 12px; background: #fff; height: 190px; touch-action: none; }
+.ass-caixa canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+.ass-linha { position: absolute; left: 16px; right: 16px; bottom: 44px; border-bottom: 1.5px solid #9aa39a; pointer-events: none; }
+.ass-dica { position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 12px; color: #7a8379; pointer-events: none; }
+.ass-limpar { position: absolute; top: 8px; right: 8px; border: 1px solid #ccd3cb; background: #fff; color: #23574a; border-radius: 8px; padding: 6px 10px; font: 700 12px var(--f-body); text-transform: uppercase; cursor: pointer; }
+#doc-senha { text-transform: none; }
 </style>
 </head>
 <body>
@@ -111,8 +148,30 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
   <section class="cartao" id="tela-holerites" hidden>
     <div class="estado"><span class="nome" id="hol-nome"></span><span class="tit">Holerites e espelho de ponto</span></div>
     <p class="msg-ponto" id="msg-hol" role="status" hidden></p>
+    <p class="hol-resumo" id="hol-resumo" hidden></p>
     <ul class="hol-lista" id="hol-lista"></ul>
     <button class="btn btn-sec" id="btn-hol-sair" type="button">Sair</button>
+  </section>
+
+  <!-- 4b. VER E ASSINAR UM DOCUMENTO -->
+  <section class="cartao cartao-doc" id="tela-doc" hidden>
+    <div class="doc-topo"><button class="btn-voltar" id="doc-voltar" type="button">‹ Voltar</button><div><b id="doc-titulo"></b><small id="doc-sub"></small></div></div>
+    <div class="doc-visor" id="doc-visor"></div>
+    <button class="btn btn-sec" id="doc-abrir" type="button">Abrir em tela cheia</button>
+    <div class="doc-ok" id="doc-assinado" hidden></div>
+    <form class="doc-form" id="doc-form" novalidate hidden>
+      <h2>Assinar este documento</h2>
+      <div class="termo" id="doc-termo" hidden>
+        <b>Termo de adesão à assinatura eletrônica</b>
+        <div id="doc-termo-txt"></div>
+        <label class="check"><input type="checkbox" id="doc-aceito"> Li e aceito o termo de adesão</label>
+      </div>
+      <label class="check"><input type="checkbox" id="doc-li"> Li este documento e confirmo as informações</label>
+      <div class="ass-caixa" id="ass-caixa"><canvas id="ass-canvas" aria-label="Espaço para assinar com o dedo"></canvas><span class="ass-linha"></span><span class="ass-dica">Assine aqui com o dedo</span><button class="ass-limpar" id="ass-limpar" type="button">Limpar</button></div>
+      <label for="doc-senha">Confirme com a sua senha do ponto<input id="doc-senha" type="password" autocomplete="current-password"></label>
+      <p class="msg-ponto" id="msg-doc" role="status" hidden></p>
+      <button class="btn" id="btn-assinar" type="submit">Assinar documento</button>
+    </form>
   </section>
 
   <!-- 3. SAÍDA REGISTRADA -->
@@ -292,6 +351,24 @@ window.FT_CONFIG = {
 
   FT.telas = FT.telas || {};
   if (typeof module !== 'undefined' && module.exports) module.exports = FT;
+
+  /* ---------- assinatura eletrônica (app do ponto e pastas) ---------- */
+  FT.TERMO_VERSAO = 1;
+  FT.termoAssinatura = function (nome, cpf) {
+    return [
+      'Eu, ' + nome + ', CPF ' + FT.formatarCPF(cpf) + ', concordo em receber os meus holerites, espelhos de ponto e outros documentos do trabalho em formato digital, pelo app de ponto da Forneria Toscana, e em assiná-los eletronicamente, sem papel.',
+      'Reconheço que a assinatura feita no app (com o meu CPF, a minha senha pessoal e o desenho da minha assinatura) me identifica e vale como a minha assinatura nesses documentos, nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020.',
+      'Comprometo-me a guardar a minha senha em segredo e a avisar o gerente se outra pessoa souber dela. Posso pedir, a qualquer momento, uma cópia dos documentos que assinei.'
+    ];
+  };
+  FT.NOMES_DOC = { sistema: 'Holerite Forneria', contab: 'Holerite contabilidade', espelho: 'Espelho de ponto' };
+  // SHA-256 (hex) de texto ou bytes — o mesmo cálculo que o servidor faz
+  FT.sha256 = async function (dado) {
+    const bytes = typeof dado === 'string' ? new TextEncoder().encode(dado) : dado;
+    const h = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(h)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  };
+  FT.base64Bytes = function (b64) { const bin = atob(b64); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* Forneria Toscana — página do funcionário para bater ponto (celular) */
@@ -311,14 +388,17 @@ window.FT_CONFIG = {
     TURNO_NAO_ENCONTRADO: 'Não encontrei a sua entrada. Entre de novo com CPF e senha.',
     SENHA_CURTA: 'A senha nova precisa ter pelo menos 4 caracteres.',
     SENHA_IGUAL: 'A senha nova precisa ser diferente da senha provisória.',
-    NAO_ENCONTRADO: 'Holerite não encontrado. Fale com o gerente.'
+    NAO_ENCONTRADO: 'Documento não encontrado. Fale com o gerente.',
+    DOCUMENTO_ALTERADO: 'O gerente atualizou este documento agora há pouco. Volte e abra de novo para ver a versão nova.',
+    ASSINATURA_INVALIDA: 'Não consegui ler a sua assinatura. Toque em "Limpar" e assine de novo.',
+    TERMO_PENDENTE: 'Antes da primeira assinatura, leia e aceite o termo de adesão.'
   };
   let cred = null; // CPF e senha só enquanto a tela de holerites está aberta
 
   function lerTurno() { try { return JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { return null; } }
   function gravarTurno(t) { try { if (t) localStorage.setItem(CHAVE, JSON.stringify(t)); else localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento */ } }
 
-  function mostrar(id) { if (id !== 'tela-holerites') cred = null; ['tela-login', 'tela-troca', 'tela-turno', 'tela-fim', 'tela-holerites'].forEach(function (t) { $('#' + t).hidden = t !== id; }); }
+  function mostrar(id) { if (id !== 'tela-holerites' && id !== 'tela-doc') cred = null; ['tela-login', 'tela-troca', 'tela-turno', 'tela-fim', 'tela-holerites', 'tela-doc'].forEach(function (t) { $('#' + t).hidden = t !== id; }); }
   function msg(id, texto, tipo) { const el = $(id); el.textContent = texto || ''; el.className = 'msg-ponto' + (tipo ? ' ' + tipo : ''); el.hidden = !texto; }
   function dataHora(ts) { return FT.ddmmaaaa(FT.dataSP(ts)) + ' às ' + FT.horaSP(ts); }
 
@@ -487,34 +567,170 @@ window.FT_CONFIG = {
       mostrar('tela-login'); msg('#msg-login', textoErro(r), 'erro'); return;
     }
     $('#senha').value = ''; msg('#msg-login', ''); $('#btn-troca').textContent = 'Salvar senha e bater ponto';
-    $('#hol-nome').textContent = 'OLÁ, ' + String(r.nome).split(' ')[0] + '!';
-    $('#hol-lista').innerHTML = r.itens.length ? r.itens.map(function (h) {
-      const info = [h.enviado_em ? 'Holerite enviado em ' + FT.ddmmaaaa(FT.dataSP(h.enviado_em)) : '', h.espelho_em ? 'Ponto fechado em ' + FT.ddmmaaaa(FT.dataSP(h.espelho_em)) : ''].filter(Boolean).join(' · ');
-      return '<li><b>' + nomeMes(h.mes) + '</b><small>' + info + '</small><div class="hol-bts">' +
-        (h.sistema ? '<button type="button" class="btn" data-mes="' + h.mes + '" data-tipo="sistema">Holerite Forneria</button>' : '') +
-        (h.contab ? '<button type="button" class="btn" data-mes="' + h.mes + '" data-tipo="contab">Holerite contabilidade</button>' : '') +
-        (h.espelho ? '<button type="button" class="btn btn-esp" data-mes="' + h.mes + '" data-tipo="espelho">Espelho de ponto</button>' : '') + '</div></li>';
-    }).join('') : '<li class="hol-vazio">Nada liberado ainda.</li>';
+    cred = c; lista = r;
+    desenharLista();
     mostrar('tela-holerites'); cred = c;
     msg('#msg-hol', aviso || '', aviso ? 'ok' : '');
   }
-  async function abrirArquivo(mes, tipo, botao) {
+  let lista = null, doc = null;
+  const TIPOS = ['sistema', 'contab', 'espelho'];
+  function desenharLista() {
+    const r = lista; let pend = 0;
+    $('#hol-nome').textContent = 'OLÁ, ' + String(r.nome).split(' ')[0] + '!';
+    $('#hol-lista').innerHTML = r.itens.length ? r.itens.map(function (h) {
+      const info = [h.enviado_em ? 'Holerite enviado em ' + FT.ddmmaaaa(FT.dataSP(h.enviado_em)) : '', h.espelho_em ? 'Ponto fechado em ' + FT.ddmmaaaa(FT.dataSP(h.espelho_em)) : ''].filter(Boolean).join(' · ');
+      return '<li><b>' + nomeMes(h.mes) + '</b><small>' + info + '</small><div class="hol-docs">' + TIPOS.filter(function (t) { return h[t]; }).map(function (t) {
+        const ass = h['ass_' + t]; if (!ass) pend++;
+        return '<button type="button" class="doc-linha" data-mes="' + h.mes + '" data-tipo="' + t + '"><span>' + FT.NOMES_DOC[t] + '</span>' +
+          (ass ? '<em class="pill ok">✓ Assinado ' + FT.ddmm(FT.dataSP(ass)) + '</em>' : '<em class="pill pend">' + (h['ant_' + t] ? 'Atualizado · assinar' : 'Assinar') + '</em>') + '</button>';
+      }).join('') + '</div></li>';
+    }).join('') : '<li class="hol-vazio">Nada liberado ainda.</li>';
+    const res = $('#hol-resumo');
+    res.hidden = !r.itens.length;
+    res.className = 'hol-resumo' + (pend ? '' : ' ok');
+    res.textContent = pend ? (pend === 1 ? 'Você tem 1 documento para assinar.' : 'Você tem ' + pend + ' documentos para assinar.') + ' Toque em cada um, confira e assine.' : '✓ Todos os seus documentos estão assinados.';
+  }
+  function itemDe(mes) { return lista && lista.itens.find(function (h) { return h.mes === mes; }); }
+
+  /* ---------- VER E ASSINAR UM DOCUMENTO ---------- */
+  async function abrirDocumento(mes, tipo, botao) {
     if (!cred) { mostrar('tela-login'); return; }
-    const janela = window.open('', '_blank');   // abre já no toque (senão o celular bloqueia)
     botao.disabled = true; msg('#msg-hol', 'Abrindo…', 'info');
     try {
       const r = await rpc('holerite_abrir', { p_cpf: cred.cpf, p_senha: cred.senha, p_mes: mes, p_tipo: tipo });
-      if (!r.ok) { if (janela) janela.close(); msg('#msg-hol', textoErro(r), 'erro'); return; }
-      let blob;
-      if (tipo === 'contab') { const bin = atob(r.pdf); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); blob = new Blob([u], { type: 'application/pdf' }); }
-      else blob = new Blob([r.html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      if (janela) janela.location.href = url;
-      else { const a = document.createElement('a'); a.href = url; a.download = (tipo === 'espelho' ? 'espelho_ponto_' : 'holerite_') + mes + (tipo === 'contab' ? '.pdf' : '.html'); document.body.appendChild(a); a.click(); a.remove(); }
+      if (!r.ok) { msg('#msg-hol', textoErro(r), 'erro'); return; }
+      const bytes = tipo === 'contab' ? FT.base64Bytes(r.pdf) : null;
+      doc = { mes: mes, tipo: tipo, html: r.html, bytes: bytes, hash: await FT.sha256(bytes || r.html) };
       msg('#msg-hol', '');
-    } catch (x) { if (janela) janela.close(); msg('#msg-hol', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
+      $('#doc-titulo').textContent = FT.NOMES_DOC[tipo];
+      $('#doc-sub').textContent = nomeMes(mes);
+      mostrar('tela-doc'); window.scrollTo(0, 0);
+      mostrarDoc();
+      prepararAssinatura();
+    } catch (x) { msg('#msg-hol', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
     finally { botao.disabled = false; }
   }
+  function mostrarDoc() {
+    const v = $('#doc-visor');
+    if (doc.html != null) {
+      // mostra a folha inteira (largura de A4) reduzida para caber na tela, como um PDF
+      v.innerHTML = '<div class="doc-folha"></div>';
+      const caixa = v.firstChild, f = document.createElement('iframe'), L = 800;
+      f.setAttribute('sandbox', 'allow-same-origin'); f.title = FT.NOMES_DOC[doc.tipo]; f.setAttribute('scrolling', 'no');
+      const ajustar = function () {
+        try {
+          const esc = Math.min(1, (v.clientWidth || 360) / L), h = Math.max(300, f.contentDocument.documentElement.scrollHeight);
+          f.style.height = h + 'px'; f.style.transform = 'scale(' + esc + ')'; caixa.style.height = Math.ceil(h * esc) + 'px';
+        } catch (e) { f.style.height = '70vh'; }
+      };
+      f.style.width = L + 'px'; f.addEventListener('load', ajustar);
+      f.srcdoc = doc.html + '<style>.barra{display:none!important}</style>'; caixa.appendChild(f);
+      window.addEventListener('resize', ajustar, { once: true });
+    } else { v.innerHTML = '<span class="carregando">Carregando o PDF…</span>'; desenharPDF(v, doc.bytes); }
+  }
+  let pdfjs = null;
+  async function desenharPDF(v, bytes) {
+    try {
+      if (!pdfjs) { pdfjs = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/pdf.min.mjs'); pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/pdf.worker.min.mjs'; }
+      const pdf = await pdfjs.getDocument({ data: bytes.slice(), standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/standard_fonts/', cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/cmaps/', cMapPacked: true }).promise;
+      const larg = Math.min(1600, (v.clientWidth || 360) * Math.min(window.devicePixelRatio || 1, 2.5));
+      v.innerHTML = '';
+      for (let n = 1; n <= pdf.numPages; n++) {
+        const pg = await pdf.getPage(n), vp0 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: larg / vp0.width });
+        const c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height); v.appendChild(c);
+        await pg.render({ canvasContext: c.getContext('2d'), viewport: vp, canvas: c }).promise;
+      }
+    } catch (e) { v.innerHTML = '<span class="carregando">Não consegui mostrar o PDF aqui. Toque em "Abrir em tela cheia".</span>'; }
+  }
+  function abrirTelaCheia() {
+    const blob = doc.bytes ? new Blob([doc.bytes], { type: 'application/pdf' }) : new Blob([doc.html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob), j = window.open(url, '_blank');
+    if (!j) { const a = document.createElement('a'); a.href = url; a.download = (doc.tipo === 'espelho' ? 'espelho_ponto_' : 'holerite_') + doc.mes + (doc.bytes ? '.pdf' : '.html'); document.body.appendChild(a); a.click(); a.remove(); }
+  }
+  function prepararAssinatura() {
+    const h = itemDe(doc.mes), ass = h && h['ass_' + doc.tipo];
+    $('#doc-assinado').hidden = !ass; $('#doc-form').hidden = !!ass;
+    if (ass) { $('#doc-assinado').innerHTML = '<b>✓ Documento assinado</b><span>Assinado por você em ' + FT.esc(dataHora(ass)) + '.</span><small>A cópia assinada fica guardada na sua pasta na Forneria.</small>'; return; }
+    $('#doc-termo').hidden = !!lista.termo;
+    $('#doc-termo-txt').innerHTML = FT.termoAssinatura(String(lista.nome).toUpperCase(), cred.cpf).map(function (t) { return '<p>' + FT.esc(t) + '</p>'; }).join('');
+    $('#doc-aceito').checked = false; $('#doc-li').checked = false; $('#doc-senha').value = ''; msg('#msg-doc', '');
+    pad.limpar();
+    requestAnimationFrame(pad.ajustar);
+  }
+  async function assinar(e) {
+    e.preventDefault();
+    if (!doc || !cred) { mostrar('tela-login'); return; }
+    if (!lista.termo && !$('#doc-aceito').checked) { msg('#msg-doc', 'Marque que você leu e aceita o termo de adesão.', 'erro'); return; }
+    if (!$('#doc-li').checked) { msg('#msg-doc', 'Marque que você leu o documento.', 'erro'); return; }
+    if (!pad.temAssinatura()) { msg('#msg-doc', 'Faça a sua assinatura com o dedo no quadro.', 'erro'); return; }
+    const senha = $('#doc-senha').value;
+    if (!senha) { msg('#msg-doc', 'Digite a sua senha do ponto para confirmar.', 'erro'); return; }
+    const b = $('#btn-assinar'); b.disabled = true;
+    try {
+      msg('#msg-doc', 'Assinando…', 'info');
+      const r = await rpc('documento_assinar', { p_cpf: cred.cpf, p_senha: senha, p_mes: doc.mes, p_tipo: doc.tipo, p_hash: doc.hash,
+        p_assinatura: pad.imagem(), p_aceite_termo: !lista.termo && $('#doc-aceito').checked, p_user_agent: navigator.userAgent });
+      if (!r.ok) {
+        if (r.erro === 'TERMO_PENDENTE') { lista.termo = false; $('#doc-termo').hidden = false; }
+        msg('#msg-doc', r.erro === 'CPF_OU_SENHA' ? 'Senha incorreta. Confira e tente de novo.' : textoErro(r), 'erro'); return;
+      }
+      $('#doc-senha').value = '';
+      lista.termo = true;
+      const h = itemDe(doc.mes); if (h) h['ass_' + doc.tipo] = r.assinado_em;
+      desenharLista();
+      $('#doc-form').hidden = true; $('#doc-assinado').hidden = false;
+      $('#doc-assinado').innerHTML = '<b>✓ Documento assinado!</b><span>Em ' + FT.esc(dataHora(r.assinado_em)) + ' · código ' + FT.esc(r.codigo) + '</span><small>A cópia assinada foi guardada na sua pasta na Forneria. Pode voltar para os outros documentos.</small>';
+      $('#doc-assinado').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (x) { msg('#msg-doc', 'Sem conexão com o sistema. Confira a internet e tente de novo.', 'erro'); }
+    finally { b.disabled = false; }
+  }
+
+  /* quadro de assinatura com o dedo (ou mouse) */
+  const pad = (function () {
+    let cv = null, ctx = null, tracos = [], atual = null, comp = 0;
+    function ajustar() {
+      cv = $('#ass-canvas'); const r = cv.getBoundingClientRect(); if (!r.width) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+      cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+      ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); redesenhar();
+    }
+    function estilo(c) { c.lineWidth = 2.6; c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = '#13233f'; }
+    function redesenhar() {
+      if (!ctx) return; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); estilo(ctx);
+      tracos.forEach(function (t) { linha(ctx, t); });
+    }
+    function linha(c, t) {
+      if (!t.length) return; c.beginPath(); c.moveTo(t[0][0], t[0][1]);
+      if (t.length === 1) c.lineTo(t[0][0] + 0.1, t[0][1] + 0.1);
+      for (let i = 1; i < t.length - 1; i++) { const mx = (t[i][0] + t[i + 1][0]) / 2, my = (t[i][1] + t[i + 1][1]) / 2; c.quadraticCurveTo(t[i][0], t[i][1], mx, my); }
+      if (t.length > 1) c.lineTo(t[t.length - 1][0], t[t.length - 1][1]);
+      c.stroke();
+    }
+    function ponto(e) { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+    function iniciar() {
+      cv = $('#ass-canvas');
+      cv.addEventListener('pointerdown', function (e) { if (!ctx) ajustar(); e.preventDefault(); cv.setPointerCapture(e.pointerId); atual = [ponto(e)]; tracos.push(atual); redesenhar(); });
+      cv.addEventListener('pointermove', function (e) {
+        if (!atual) return; e.preventDefault();
+        const p = ponto(e), u = atual[atual.length - 1]; comp += Math.hypot(p[0] - u[0], p[1] - u[1]); atual.push(p); redesenhar();
+      });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (ev) { cv.addEventListener(ev, function () { atual = null; }); });
+      $('#ass-limpar').addEventListener('click', function () { tracos = []; comp = 0; redesenhar(); });
+      window.addEventListener('resize', function () { if (!$('#tela-doc').hidden) ajustar(); });
+    }
+    // imagem final: fundo transparente, 900 px de largura, recortada na assinatura
+    function imagem() {
+      const r = cv.getBoundingClientRect(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      tracos.forEach(function (t) { t.forEach(function (p) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }); });
+      const m = 8; x0 = Math.max(0, x0 - m); y0 = Math.max(0, y0 - m); x1 = Math.min(r.width, x1 + m); y1 = Math.min(r.height, y1 + m);
+      const esc = Math.min(3, 900 / Math.max(1, x1 - x0));
+      const c = document.createElement('canvas'); c.width = Math.max(1, Math.round((x1 - x0) * esc)); c.height = Math.max(1, Math.round((y1 - y0) * esc));
+      const g = c.getContext('2d'); g.setTransform(esc, 0, 0, esc, -x0 * esc, -y0 * esc); estilo(g); g.lineWidth = 2.6;
+      tracos.forEach(function (t) { linha(g, t); });
+      return c.toDataURL('image/png');
+    }
+    return { iniciar: iniciar, ajustar: ajustar, limpar: function () { tracos = []; comp = 0; atual = null; redesenhar(); }, temAssinatura: function () { return comp > 60; }, imagem: imagem };
+  })();
 
   async function rpc(nome, args) {
     const r = await sb.rpc(nome, args);
@@ -528,7 +744,11 @@ window.FT_CONFIG = {
     $('#tela-login').addEventListener('submit', entrar);
     $('#btn-saida').addEventListener('click', sair);
     $('#btn-holerites').addEventListener('click', verHolerites);
-    $('#hol-lista').addEventListener('click', function (e) { const b = e.target.closest('[data-tipo]'); if (b) abrirArquivo(b.dataset.mes, b.dataset.tipo, b); });
+    $('#hol-lista').addEventListener('click', function (e) { const b = e.target.closest('[data-tipo]'); if (b) abrirDocumento(b.dataset.mes, b.dataset.tipo, b); });
+    $('#doc-voltar').addEventListener('click', function () { doc = null; $('#doc-visor').innerHTML = ''; mostrar('tela-holerites'); window.scrollTo(0, 0); });
+    $('#doc-abrir').addEventListener('click', abrirTelaCheia);
+    $('#doc-form').addEventListener('submit', assinar);
+    pad.iniciar();
     $('#btn-hol-sair').addEventListener('click', function () { mostrar('tela-login'); });
     $('#tela-troca').addEventListener('submit', trocarSenha);
     $('#btn-troca-voltar').addEventListener('click', function () { pendente = null; $('#btn-troca').textContent = 'Salvar senha e bater ponto'; mostrar('tela-login'); });

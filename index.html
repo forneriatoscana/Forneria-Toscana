@@ -819,6 +819,50 @@ table.lista.vp-dias th, table.lista.vp-dias td { padding-left: 9px; padding-righ
 .vp-tabelas > *, .vp-sec { min-width: 0; }
 table.lista.vp-dias .num { min-width: 64px; }
 
+/* ---------- Pastas dos colaboradores ---------- */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pa-filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pa-filtros input, .pa-filtros select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; }
+.pa-busca input { width: 260px; max-width: 100%; }
+.pa-corpo { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+.pa-lista { display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 6px; max-height: calc(100vh - 160px); overflow: auto; position: sticky; top: 12px; }
+.pa-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: transparent; color: var(--ink); padding: 9px 10px; border-radius: 8px; cursor: pointer; font: inherit; }
+.pa-item:hover { background: var(--surface-2); }
+.pa-item.ativo { background: var(--accent-soft); }
+.pa-item svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--accent); stroke-width: 1.7; stroke-linejoin: round; }
+.pa-item.ativo svg { fill: color-mix(in srgb, var(--accent) 18%, transparent); }
+.pa-item span { display: grid; min-width: 0; flex: 1; }
+.pa-item b { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pa-item small { font-size: 11.5px; color: var(--ink-3); }
+.pa-pend { font-style: normal; background: var(--aviso-ink); color: var(--surface); font-size: 11px; font-weight: 700; border-radius: 999px; min-width: 22px; padding: 2px 7px; text-align: center; }
+.pa-ok { font-style: normal; color: var(--accent); font-weight: 700; }
+.pa-pasta { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
+.pa-cab { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; }
+.pa-cab h2 { margin: 0; font-size: 20px; }
+.pa-cab p { margin: 4px 0 0; color: var(--ink-3); font-size: 13px; }
+.pa-termo { display: flex; gap: 12px; align-items: center; border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); }
+.pa-termo > span { font-size: 20px; }
+.pa-termo div { display: grid; flex: 1; min-width: 0; }
+.pa-termo b { font-size: 13.5px; }
+.pa-termo small { color: var(--ink-3); font-size: 12px; }
+.pa-mes h3 { margin: 4px 0 8px; font-size: 14px; letter-spacing: .04em; color: var(--accent); }
+.pa-tab td small { display: inline; color: var(--ink-3); font-size: 11.5px; }
+.pa-tab td b + small { display: block; }
+.pa-tab .pa-cod { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: nowrap; }
+.pa-tab .pa-acoes { white-space: nowrap; }
+.pa-tab tr.pa-antiga td { color: var(--ink-3); }
+.pa-nota { color: var(--ink-3); font-size: 12.5px; margin: 0; }
+@media (max-width: 900px) {
+  .pa-corpo { grid-template-columns: minmax(0, 1fr); }
+  .pa-tab td small { display: block; }
+  .pa-tab .pa-acoes { white-space: normal; }
+  .pa-tab .pa-acoes .btn { margin: 2px 0; }
+  .pa-termo { flex-wrap: wrap; }
+  .pa-lista { position: static; max-height: 320px; }
+  .pa-pasta { padding: 14px; }
+  .pa-tab th:nth-child(3), .pa-tab td:nth-child(3) { display: none; }
+}
+
 </style>
 </head>
 <body>
@@ -880,6 +924,7 @@ table.lista.vp-dias .num { min-width: 64px; }
         <div class="menu-itens" id="mg-rh" hidden>
           <a href="#escala"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h3M13 14h3M8 17.5h3"/></svg>Escala</a>
           <a href="#ponto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg>Ponto eletrônico</a>
+          <a href="#pastas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4.2l2 2.2h8.8A1.5 1.5 0 0 1 21 9.7v8.8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/><path d="M9 14.5l2 2 4-4"/></svg>Pastas dos colaboradores</a>
         </div>
       </div>
       <div class="menu-grupo" data-grupo="cad">
@@ -984,6 +1029,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     <section id="tela-cotacao" class="tela" hidden></section>
     <section id="tela-fornecedores" class="tela" hidden></section>
     <section id="tela-ponto" class="tela" hidden></section>
+    <section id="tela-pastas" class="tela" hidden></section>
     <section id="tela-funcionarios" class="tela" hidden></section>
     <section id="tela-usuarios" class="tela" hidden></section>
     <section id="tela-importar" class="tela" hidden></section>
@@ -1160,6 +1206,24 @@ window.FT_CONFIG = {
 
   FT.telas = FT.telas || {};
   if (typeof module !== 'undefined' && module.exports) module.exports = FT;
+
+  /* ---------- assinatura eletrônica (app do ponto e pastas) ---------- */
+  FT.TERMO_VERSAO = 1;
+  FT.termoAssinatura = function (nome, cpf) {
+    return [
+      'Eu, ' + nome + ', CPF ' + FT.formatarCPF(cpf) + ', concordo em receber os meus holerites, espelhos de ponto e outros documentos do trabalho em formato digital, pelo app de ponto da Forneria Toscana, e em assiná-los eletronicamente, sem papel.',
+      'Reconheço que a assinatura feita no app (com o meu CPF, a minha senha pessoal e o desenho da minha assinatura) me identifica e vale como a minha assinatura nesses documentos, nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020.',
+      'Comprometo-me a guardar a minha senha em segredo e a avisar o gerente se outra pessoa souber dela. Posso pedir, a qualquer momento, uma cópia dos documentos que assinei.'
+    ];
+  };
+  FT.NOMES_DOC = { sistema: 'Holerite Forneria', contab: 'Holerite contabilidade', espelho: 'Espelho de ponto' };
+  // SHA-256 (hex) de texto ou bytes — o mesmo cálculo que o servidor faz
+  FT.sha256 = async function (dado) {
+    const bytes = typeof dado === 'string' ? new TextEncoder().encode(dado) : dado;
+    const h = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(h)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  };
+  FT.base64Bytes = function (b64) { const bin = atob(b64); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
 })(typeof window !== 'undefined' ? window : globalThis);
 
 /* Forneria Toscana — leitura das planilhas
@@ -2864,6 +2928,19 @@ window.FT_CONFIG = {
         },
         salvarTelefone: async function (fid, tel) { return ok(sb.from('funcionarios').update({ telefone: tel || null }).eq('id', fid)); }
       },
+      // pastas dos colaboradores: documentos assinados no app (somente leitura)
+      docs: {
+        pasta: async function () { return ok(sb.from('vw_documentos_pasta').select('*')); },
+        assinaturas: async function () { return ok(sb.from('vw_documentos_assinados').select('*').order('assinado_em')); },
+        termos: async function () { return ok(sb.from('assinatura_termo').select('funcionario_id,versao,nome,cpf,aceito_em,ip,user_agent')); },
+        assinatura: async function (id) { return ok(sb.from('documentos_assinados').select('*').eq('id', id).single()); },
+        termo: async function (fid) { return ok(sb.from('assinatura_termo').select('*').eq('funcionario_id', fid).maybeSingle()); },
+        conteudo: async function (fid, mes, tipo) {
+          const col = tipo === 'contab' ? 'contab_pdf,contab_nome' : tipo === 'espelho' ? 'espelho_html' : 'holerite_html';
+          const r = await ok(sb.from('holerites_envio').select(col).eq('funcionario_id', fid).eq('mes', mes).maybeSingle());
+          return r ? { html: r.holerite_html || r.espelho_html || null, pdf: r.contab_pdf || null, nome: r.contab_nome || null } : null;
+        }
+      },
       produtos: {
         // quantidade vendida por produto e dia
         carregar: async function (de, ate) {
@@ -2936,11 +3013,18 @@ window.FT_CONFIG = {
       funcionarios: clonar(inicial.funcionarios || []),
       config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {}, folhas: {},
       acessos: clonar(inicial.acessos || []), pontos: clonar(inicial.pontos || []),
-      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), produtos: clonar(inicial.produtos || []), holerites: {}, fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
+      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), produtos: clonar(inicial.produtos || []), holerites: clonar(inicial.holerites || {}), assinaturas: clonar(inicial.assinaturas || []), termos: clonar(inicial.termos || {}), fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
       pontoConfig: { id: 1, lat: -23.4028019, lng: -46.0428557, raio_m: 100, precisao_max_m: 100 },
       ind: clonar(inicial.indicadores || { vendasDia: [], pedidosDia: [], maoObraDia: [] })
     };
     let seq = 1000;
+    const hashCache = {};
+    async function hashMem(h, t) {
+      const c = t === 'contab' ? h.contab_pdf : t === 'espelho' ? h.espelho_html : h.holerite_html; if (!c) return null;
+      const k = t + ':' + c.length + ':' + c.slice(0, 64) + c.slice(-64);
+      return hashCache[k] = hashCache[k] || await FT.sha256(t === 'contab' ? FT.base64Bytes(c) : c);
+    }
+    function assinaturaMem(fid, mes, t, hash) { return db.assinaturas.filter(function (a) { return a.funcionario_id === fid && a.mes === mes && a.tipo === t && a.hash === hash; }).pop(); }
     const espera = function (x) { return new Promise(function (r) { setTimeout(function () { r(clonar(x)); }, 30); }); };
     function substituirMO(inicio, fim, itens) {
       const fora = function (r) { return r.data < inicio || r.data > fim; };
@@ -3024,13 +3108,41 @@ window.FT_CONFIG = {
       },
       holerites: {
         _r: function (fid, mes) { const k = fid + '|' + mes; return db.holerites[k] = db.holerites[k] || { funcionario_id: fid, mes: mes }; },
-        status: function (mes) { return espera(Object.values(db.holerites).filter(function (h) { return h.mes === mes; }).map(function (h) { return { funcionario_id: h.funcionario_id, mes: h.mes, tem_sistema: !!h.holerite_html, tem_contab: !!h.contab_pdf, contab_nome: h.contab_nome, contab_em: h.contab_em, enviado_em: h.enviado_em, visto_em: h.visto_em, tem_espelho: !!h.espelho_html, espelho_em: h.espelho_em, espelho_visto_em: h.espelho_visto_em }; })); },
+        status: async function (mes) {
+          const l = Object.values(db.holerites).filter(function (h) { return h.mes === mes; });
+          const r = [];
+          for (const h of l) {
+            const ass = {};
+            for (const t of ['sistema', 'contab', 'espelho']) { const x = await hashMem(h, t); ass[t] = !!(x && assinaturaMem(h.funcionario_id, h.mes, t, x)); }
+            r.push({ funcionario_id: h.funcionario_id, mes: h.mes, tem_sistema: !!h.holerite_html, tem_contab: !!h.contab_pdf, contab_nome: h.contab_nome, contab_em: h.contab_em, enviado_em: h.enviado_em, visto_em: h.visto_em, tem_espelho: !!h.espelho_html, espelho_em: h.espelho_em, espelho_visto_em: h.espelho_visto_em, ass_sistema: ass.sistema, ass_contab: ass.contab, ass_espelho: ass.espelho });
+          }
+          return espera(r);
+        },
         contab: function (fid, mes) { const h = db.holerites[fid + '|' + mes]; return espera(h ? { contab_pdf: h.contab_pdf, contab_nome: h.contab_nome } : null); },
         sistema: function (fid, mes) { const h = db.holerites[fid + '|' + mes]; return espera(h ? { holerite_html: h.holerite_html } : null); },
         salvarContab: function (fid, mes, b64, nome) { Object.assign(this._r(fid, mes), { contab_pdf: b64, contab_nome: nome, contab_em: b64 ? new Date().toISOString() : null }); return espera(null); },
         enviar: function (fid, mes, html) { Object.assign(this._r(fid, mes), { holerite_html: html, enviado_em: new Date().toISOString() }); return espera(null); },
         liberarEspelho: function (fid, mes, html) { Object.assign(this._r(fid, mes), { espelho_html: html, espelho_em: new Date().toISOString() }); return espera(null); },
         salvarTelefone: function (fid, tel) { const f = db.funcionarios.find(function (x) { return x.id === fid; }); if (f) f.telefone = tel || null; return espera(null); }
+      },
+      docs: {
+        pasta: async function () {
+          const r = [];
+          for (const h of Object.values(db.holerites)) {
+            for (const t of ['sistema', 'contab', 'espelho']) {
+              const disp = t === 'espelho' ? (h.espelho_em && h.espelho_html ? h.espelho_em : null) : (h.enviado_em && (t === 'contab' ? h.contab_pdf : h.holerite_html) ? h.enviado_em : null);
+              if (!disp) continue;
+              const x = await hashMem(h, t), a = assinaturaMem(h.funcionario_id, h.mes, t, x);
+              r.push({ funcionario_id: h.funcionario_id, mes: h.mes, tipo: t, disponivel_em: disp, hash: x, contab_nome: h.contab_nome, assinatura_id: a ? a.id : null, assinado_em: a ? a.assinado_em : null, codigo: a ? a.codigo : null });
+            }
+          }
+          return espera(r);
+        },
+        assinaturas: function () { return espera(db.assinaturas.map(function (a) { const c = Object.assign({}, a); delete c.conteudo_html; delete c.conteudo_pdf; delete c.assinatura_png; return c; })); },
+        termos: function () { return espera(Object.values(db.termos).map(function (t) { const c = Object.assign({}, t); delete c.assinatura_png; return c; })); },
+        assinatura: function (id) { return espera(db.assinaturas.find(function (a) { return a.id === id; }) || null); },
+        termo: function (fid) { return espera(db.termos[fid] || null); },
+        conteudo: function (fid, mes, tipo) { const h = db.holerites[fid + '|' + mes]; return espera(h ? { html: tipo === 'espelho' ? h.espelho_html : tipo === 'sistema' ? h.holerite_html : null, pdf: tipo === 'contab' ? h.contab_pdf : null, nome: h.contab_nome } : null); }
       },
       produtos: { carregar: function (de, ate) { return espera(db.produtos.filter(function (r) { return r.data >= de && r.data <= ate; })); } },
       folha: {
@@ -3173,6 +3285,8 @@ window.FT_CONFIG = {
   }
 
   /* doc = { titulo, subtitulo, info: [[rótulo, valor]...], blocos: [{ titulo, colunas: [{t, w (fração), a: 'r'|'c'}], linhas: [[...]], destaques: [índices], total: [...] }], rodape } */
+  FT.pdfLimpo = limpo; FT.pdfLogo = logo; FT.PDFLIB_URL = PDFLIB;
+
   FT.gerarPDF = async function (doc) {
     const L = await FT.carregarScript(PDFLIB, 'PDFLib');
     const pdf = await L.PDFDocument.create();
@@ -4044,7 +4158,7 @@ window.FT_CONFIG = {
       $('#dlg-func').close();
       await FT.obterFuncionarios(true); desenhar();
       FT.aviso('Funcionário excluído.');
-    } catch (err) { $('#ff-erro').textContent = 'Não foi possível excluir: ' + FT.textoErro(err); }
+    } catch (err) { $('#ff-erro').textContent = err && err.code === '23503' ? 'Este funcionário tem histórico guardado (ponto, pagamentos ou documentos assinados) e não pode ser excluído. Desmarque "Ativo" para tirá-lo das listas.' : 'Não foi possível excluir: ' + FT.textoErro(err); }
   }
 
   function encherSelects(setor, cargo) {
@@ -5131,6 +5245,10 @@ window.FT_CONFIG = {
       partes.push(s.tem_contab ? '<span class="chip-ok">contab. ✓</span>' : '<span class="chip-cinza">sem contab.</span>');
       if (s.enviado_em) partes.push('<span class="chip-ok">enviado ' + FT.ddmm(FT.dataSP(s.enviado_em)) + '</span>');
       if (s.visto_em) partes.push('<span class="chip-ok">visto ' + FT.ddmm(FT.dataSP(s.visto_em)) + '</span>');
+      if (s.enviado_em) {
+        const ok = (s.tem_sistema ? s.ass_sistema : true) && (s.tem_contab ? s.ass_contab : true);
+        partes.push(ok ? '<span class="chip-ok">✍ assinado</span>' : '<span class="chip-parcial">falta assinar</span>');
+      }
       el.innerHTML = partes.join(' ');
       const b = document.querySelector('[data-enviar="' + p.id + '"]'); if (b) b.textContent = s.enviado_em ? 'Reenviar' : 'Enviar';
     });
@@ -5212,7 +5330,7 @@ window.FT_CONFIG = {
       if (tel !== telNumeros(H.envio.telOriginal)) await FT.store.holerites.salvarTelefone(H.envio.fid, tel);
       await FT.store.holerites.enviar(H.envio.fid, st.mes, docHolerite(H.envio.fid));
       const texto = 'OLÁ, ' + p.nome.split(' ')[0] + '! SEU HOLERITE DE ' + A.nomeMes(st.mes) + ' JÁ ESTÁ DISPONÍVEL.\n' +
-        'ACESSE ' + linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO).\nFORNERIA TOSCANA';
+        'ACESSE ' + linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO). CONFIRA E ASSINE DIGITALMENTE.\nFORNERIA TOSCANA';
       const num = tel ? (tel.length <= 11 ? '55' + tel : tel) : '';
       const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(texto);
       if (janela) janela.location.href = url; else window.location.href = url;
@@ -7355,7 +7473,7 @@ window.FT_CONFIG = {
         if (t.ajustes) pend.push('<span class="tag">' + t.ajustes + ' ajuste(s)</span>');
         if (!st.cpf[id] && f.ativo !== false) pend.push('<span class="tag">sem acesso</span>');
         const lib = (st.liberados || {})[id];
-        if (lib && lib.espelho_em) pend.push('<span class="chip-ok">no app' + (lib.espelho_visto_em ? ' · visto' : '') + '</span>');
+        if (lib && lib.espelho_em) pend.push('<span class="chip-ok">no app' + (lib.espelho_visto_em ? ' · visto' : '') + '</span>' + (lib.ass_espelho ? ' <span class="chip-ok">✍ assinado</span>' : ' <span class="chip-parcial">falta assinar</span>'));
         return '<tr data-func="' + esc(id) + '" tabindex="0" class="' + (t.dias ? '' : 'sem-registro') + '"><td><b>' + esc(nome(id)) + '</b>' + (aberto[id] ? ' <span class="tag tag-ok">no turno</span>' : '') +
           '<small>' + esc([FT.nomeTipo(f.tipo || ''), f.setor ? FT.nomeSetor(f.setor) : ''].filter(Boolean).join(' · ')) + '</small></td>' +
           '<td class="num">' + (t.dias || '—') + '</td><td class="num">' + (t.min ? C.hhmm(t.min) : '—') + '</td><td class="num">' + (t.noturnos ? C.hhmm(t.noturnos) : '—') + '</td>' +
@@ -7498,7 +7616,7 @@ window.FT_CONFIG = {
       lista.map(function (id) {
         const t = espelhoDe(id).totais, l = (st.liberados || {})[id] || {};
         return '<tr><td><input type="checkbox" data-fp="' + esc(id) + '" checked aria-label="' + esc(nome(id)) + '"></td><td>' + esc(nome(id)) + '</td><td class="num">' + t.dias + '</td><td class="num">' + C.hhmm(t.min) + '</td>' +
-          '<td>' + (st.cpf[id] ? 'sim' : '<span class="chip-parcial">sem acesso</span>') + '</td><td>' + (l.espelho_em ? '<span class="chip-ok">liberado ' + FT.ddmm(FT.dataSP(l.espelho_em)) + '</span>' + (l.espelho_visto_em ? ' <span class="chip-ok">visto</span>' : '') : '—') + '</td></tr>';
+          '<td>' + (st.cpf[id] ? 'sim' : '<span class="chip-parcial">sem acesso</span>') + '</td><td>' + (l.espelho_em ? '<span class="chip-ok">liberado ' + FT.ddmm(FT.dataSP(l.espelho_em)) + '</span>' + (l.espelho_visto_em ? ' <span class="chip-ok">visto</span>' : '') + (l.ass_espelho ? ' <span class="chip-ok">✍ assinado</span>' : '') : '—') + '</td></tr>';
       }).join('') + '</tbody>';
     $('#fp-erro').textContent = ''; $('#fp-ok').hidden = false; $('#fp-cancelar').textContent = 'Cancelar';
     d.showModal();
@@ -7522,7 +7640,7 @@ window.FT_CONFIG = {
   // depois de liberar: um botão por funcionário para avisar no WhatsApp
   function mensagemEspelho(id) {
     return 'OLÁ, ' + nome(id).split(' ')[0] + '! O SEU ESPELHO DE PONTO DE ' + nomeMes(st.mes) + ' JÁ ESTÁ DISPONÍVEL.\n' +
-      'ACESSE ' + FT.linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO).\nFORNERIA TOSCANA';
+      'ACESSE ' + FT.linkPonto() + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO). CONFIRA E ASSINE DIGITALMENTE.\nFORNERIA TOSCANA';
   }
   function avisosWhatsApp(ids) {
     $('#fp-sub').innerHTML = '✓ Espelhos de <b>' + nomeMes(st.mes) + '</b> liberados no app. Agora avise cada funcionário no WhatsApp (abre a conversa com a mensagem pronta):';
@@ -7678,12 +7796,422 @@ window.FT_CONFIG = {
   };
 })();
 
+/* Forneria Toscana — RH e DP › Pastas dos colaboradores
+ * Holerites e espelhos de ponto assinados no app do ponto, numa pasta por colaborador.
+ * O que foi assinado fica congelado no banco; aqui só se lê, gera o PDF assinado (com certificado) e baixa.
+ */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const H2C = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+  const JSZIP = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js';
+  const TIPOS = ['sistema', 'contab', 'espelho'];
+  const st = { carregado: false, funcs: [], pasta: [], ass: [], termos: {}, sel: null, busca: '', mes: '', so: '' };
+
+  /* ---------------- tela ---------------- */
+  function montar() {
+    $('#tela-pastas').innerHTML =
+      '<div class="cab-tela"><div><h1>Pastas dos colaboradores</h1><p>Holerites e espelhos de ponto assinados digitalmente pelos colaboradores no app do ponto. A cópia assinada fica guardada e não pode ser alterada nem apagada.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="pa-atualizar">Atualizar</button><button type="button" class="btn" id="pa-zip-todas">Baixar todas as pastas (ZIP)</button></div></div>' +
+      '<div class="kpis kpis-4" id="pa-kpis"></div>' +
+      '<div class="pa-filtros"><label class="pa-busca"><span class="sr">Buscar colaborador</span><input id="pa-busca" type="search" placeholder="Buscar colaborador" autocomplete="off"></label>' +
+      '<label><span class="sr">Mês</span><select id="pa-mes"></select></label>' +
+      '<div class="segmentado" role="group" aria-label="Mostrar"><button type="button" data-so="" aria-pressed="true">Todos</button><button type="button" data-so="pend" aria-pressed="false">Com pendência</button></div></div>' +
+      '<div class="pa-corpo"><nav class="pa-lista" id="pa-lista" aria-label="Colaboradores"></nav><section class="pa-pasta" id="pa-pasta" aria-live="polite"></section></div>' +
+      '<p class="pa-nota">Os documentos chegam aqui quando o colaborador assina no app do ponto (Holerites e espelho de ponto). Se um holerite ou espelho for reenviado depois de assinado, a versão assinada antiga continua guardada e o colaborador precisa assinar a nova.</p>';
+    $('#pa-atualizar').addEventListener('click', function () { carregar(true); });
+    $('#pa-zip-todas').addEventListener('click', function (e) { baixarZip(null, e.currentTarget); });
+    $('#pa-busca').addEventListener('input', function (e) { st.busca = FT.semAcento(e.target.value.trim()); desenharLista(); });
+    $('#pa-mes').addEventListener('change', function (e) { st.mes = e.target.value; desenhar(); });
+    document.querySelector('#tela-pastas .segmentado').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-so]'); if (!b) return; st.so = b.dataset.so;
+      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); desenharLista();
+    });
+    $('#pa-lista').addEventListener('click', function (e) { const b = e.target.closest('[data-fid]'); if (b) { st.sel = b.dataset.fid; desenharLista(); desenharPasta(); if (window.innerWidth < 900) $('#pa-pasta').scrollIntoView({ behavior: 'smooth' }); } });
+    $('#pa-pasta').addEventListener('click', acaoPasta);
+  }
+
+  async function carregar(forcar) {
+    if (st.carregado && !forcar) { desenhar(); return; }
+    $('#pa-pasta').innerHTML = '<p class="vazio-lista">Carregando…</p>';
+    try {
+      const D = FT.store.docs;
+      const r = await Promise.all([FT.store.funcionarios.listar(), D.pasta(), D.assinaturas(), D.termos()]);
+      st.funcs = r[0]; st.pasta = r[1] || []; st.ass = r[2] || [];
+      st.termos = {}; (r[3] || []).forEach(function (t) { st.termos[t.funcionario_id] = t; });
+      st.carregado = true;
+      desenhar();
+    } catch (e) {
+      $('#pa-pasta').innerHTML = '<p class="vazio-lista">Não consegui carregar as pastas: ' + esc(FT.textoErro(e)) + '. Confira se o SQL da atualização 12 foi rodado no Supabase.</p>';
+    }
+  }
+
+  // monta a pasta de cada colaborador: documentos atuais (assinados ou pendentes) + versões antigas assinadas
+  function itens() {
+    const porF = {}, vistos = {};
+    function f(id) { return porF[id] = porF[id] || { id: id, docs: [] }; }
+    st.pasta.forEach(function (p) {
+      if (p.assinatura_id) vistos[p.assinatura_id] = true;
+      f(p.funcionario_id).docs.push({ fid: p.funcionario_id, mes: p.mes, tipo: p.tipo, situacao: p.assinatura_id ? 'assinado' : 'pendente', desde: p.disponivel_em, assinatura_id: p.assinatura_id, assinado_em: p.assinado_em, codigo: p.codigo, contab_nome: p.contab_nome });
+    });
+    st.ass.forEach(function (a) {
+      if (vistos[a.id]) return;
+      f(a.funcionario_id).docs.push({ fid: a.funcionario_id, mes: a.mes, tipo: a.tipo, situacao: 'anterior', assinatura_id: a.id, assinado_em: a.assinado_em, codigo: a.codigo, nome_ass: a.funcionario_nome });
+    });
+    const nomes = {}; st.funcs.forEach(function (x) { nomes[x.id] = x; });
+    st.ass.forEach(function (a) { if (!nomes[a.funcionario_id]) nomes[a.funcionario_id] = { id: a.funcionario_id, nome: a.funcionario_nome, ativo: false }; });
+    // ativos sem documentos também aparecem (pasta vazia)
+    st.funcs.forEach(function (x) { if (x.ativo !== false) f(x.id); });
+    return Object.values(porF).map(function (p) {
+      const fu = nomes[p.id] || { nome: '—' };
+      p.nome = fu.nome; p.func = fu; p.termo = st.termos[p.id] || null;
+      p.docs.sort(function (a, b) { return b.mes.localeCompare(a.mes) || TIPOS.indexOf(a.tipo) - TIPOS.indexOf(b.tipo) || (a.situacao === 'anterior') - (b.situacao === 'anterior'); });
+      return p;
+    }).sort(function (a, b) { return String(a.nome).localeCompare(String(b.nome), 'pt-BR'); });
+  }
+  function filtrarMes(docs) { return st.mes ? docs.filter(function (d) { return d.mes === st.mes; }) : docs; }
+  function conta(docs) {
+    const c = { assinado: 0, pendente: 0, anterior: 0 };
+    docs.forEach(function (d) { c[d.situacao]++; }); return c;
+  }
+  function nomeMes(m) { const p = m.split('-'); return FT.MESES[+p[1] - 1] + '/' + p[0]; }
+  function dataHoraSP(ts, seg) {
+    if (!ts) return '';
+    const o = { timeZone: FT.TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }; if (seg) o.second = '2-digit';
+    return new Intl.DateTimeFormat('pt-BR', o).format(new Date(ts)).replace(',', ' às');
+  }
+
+  function desenhar() {
+    const lista = itens();
+    // meses disponíveis
+    const meses = {}; lista.forEach(function (p) { p.docs.forEach(function (d) { meses[d.mes] = 1; }); });
+    const ms = Object.keys(meses).sort().reverse();
+    if (st.mes && !meses[st.mes]) st.mes = '';
+    $('#pa-mes').innerHTML = '<option value="">Todos os meses</option>' + ms.map(function (m) { return '<option value="' + m + '"' + (m === st.mes ? ' selected' : '') + '>' + nomeMes(m) + '</option>'; }).join('');
+    const tot = { assinado: 0, pendente: 0, pessoas: 0 };
+    lista.forEach(function (p) { const c = conta(filtrarMes(p.docs)); tot.assinado += c.assinado + c.anterior; tot.pendente += c.pendente; if (c.pendente) tot.pessoas++; });
+    const nTermos = Object.keys(st.termos).length;
+    $('#pa-kpis').innerHTML = [
+      ['Documentos assinados', tot.assinado, st.mes ? 'em ' + nomeMes(st.mes) : 'guardados nas pastas', ''],
+      ['Falta assinar', tot.pendente, tot.pendente ? 'enviados e ainda sem assinatura' : 'nada pendente', tot.pendente ? 'kpi-alerta' : ''],
+      ['Colaboradores com pendência', tot.pessoas, tot.pessoas ? 'dá para cobrar no WhatsApp' : 'todos em dia', ''],
+      ['Termos de adesão aceitos', nTermos, 'aceito na 1ª assinatura', '']
+    ].map(function (k) { return '<article class="kpi ' + k[3] + '"><h3>' + esc(k[0]) + '</h3><p class="kpi-v">' + k[1] + '</p><p class="kpi-s">' + esc(k[2]) + '</p></article>'; }).join('');
+    st.lista = lista;
+    if (!st.sel || !lista.some(function (p) { return p.id === st.sel; })) {
+      const prim = lista.find(function (p) { return p.docs.length; }) || lista[0];
+      st.sel = prim ? prim.id : null;
+    }
+    desenharLista(); desenharPasta();
+  }
+
+  function desenharLista() {
+    const l = st.lista.filter(function (p) {
+      if (st.busca && FT.semAcento(p.nome).indexOf(st.busca) < 0) return false;
+      if (st.so === 'pend' && !conta(filtrarMes(p.docs)).pendente) return false;
+      return true;
+    });
+    $('#pa-lista').innerHTML = l.length ? l.map(function (p) {
+      const c = conta(filtrarMes(p.docs)), n = c.assinado + c.anterior;
+      return '<button type="button" class="pa-item' + (p.id === st.sel ? ' ativo' : '') + '" data-fid="' + esc(p.id) + '"' + (p.id === st.sel ? ' aria-current="true"' : '') + '>' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4.2l2 2.2h8.8A1.5 1.5 0 0 1 21 9.7v8.8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></svg>' +
+        '<span><b>' + esc(p.nome) + '</b><small>' + (n ? n + ' assinado' + (n > 1 ? 's' : '') : 'nenhum assinado') + (p.func.ativo === false ? ' · inativo' : '') + '</small></span>' +
+        (c.pendente ? '<em class="pa-pend">' + c.pendente + '</em>' : (n ? '<em class="pa-ok" aria-label="em dia">✓</em>' : '')) + '</button>';
+    }).join('') : '<p class="vazio-lista">Ninguém encontrado.</p>';
+  }
+
+  function desenharPasta() {
+    const p = st.lista.find(function (x) { return x.id === st.sel; });
+    const el = $('#pa-pasta');
+    if (!p) { el.innerHTML = '<p class="vazio-lista">Nenhum colaborador.</p>'; return; }
+    const docs = filtrarMes(p.docs), c = conta(docs), tel = String(p.func.telefone || '').replace(/\D/g, '');
+    const cpf = p.termo ? p.termo.cpf : ((st.ass.find(function (a) { return a.funcionario_id === p.id; }) || {}).funcionario_cpf);
+    let h = '<div class="pa-cab"><div><h2>' + esc(p.nome) + '</h2><p>' + (cpf ? 'CPF ' + esc(FT.formatarCPF(cpf)) + ' · ' : '') +
+      (p.termo ? 'Termo de adesão aceito em ' + esc(dataHoraSP(p.termo.aceito_em)) : 'Ainda não aceitou o termo de adesão (aceita na 1ª assinatura)') + '</p></div>' +
+      '<div class="acoes-linha">' + (c.pendente ? '<a class="btn btn-sec" id="pa-cobrar" target="_blank" rel="noopener" href="https://wa.me/' + (tel ? (tel.length <= 11 ? '55' + tel : tel) : '') + '?text=' + encodeURIComponent(mensagemCobranca(p, docs)) + '">Cobrar no WhatsApp</a>' : '') +
+      ((c.assinado + c.anterior) || p.termo ? '<button type="button" class="btn" data-zip="' + esc(p.id) + '">Baixar pasta (ZIP)</button>' : '') + '</div></div>';
+    if (p.termo) {
+      h += '<div class="pa-termo"><span>📄</span><div><b>Termo de adesão à assinatura eletrônica</b><small>Aceito em ' + esc(dataHoraSP(p.termo.aceito_em)) + (p.termo.ip ? ' · IP ' + esc(p.termo.ip) : '') + '</small></div><button type="button" class="btn btn-sec btn-p" data-termo="' + esc(p.id) + '">Ver PDF</button></div>';
+    }
+    if (!docs.length) {
+      h += '<p class="vazio-lista">' + (st.mes ? 'Nada deste mês na pasta.' : 'Pasta vazia. Os documentos aparecem aqui quando você envia o holerite (Folha de pagamento) ou fecha o ponto (Ponto eletrônico).') + '</p>';
+      el.innerHTML = h; return;
+    }
+    const porMes = {}; docs.forEach(function (d) { (porMes[d.mes] = porMes[d.mes] || []).push(d); });
+    h += Object.keys(porMes).sort().reverse().map(function (m) {
+      return '<div class="pa-mes"><h3>' + esc(nomeMes(m)) + '</h3><div class="rolagem"><table class="lista pa-tab"><thead><tr><th>Documento</th><th>Situação</th><th>Código</th><th class="num">Ações</th></tr></thead><tbody>' +
+        porMes[m].map(function (d) {
+          const sit = d.situacao === 'assinado' ? '<span class="chip-ok">✍ assinado</span> <small>' + esc(dataHoraSP(d.assinado_em)) + '</small>'
+            : d.situacao === 'anterior' ? '<span class="chip-cinza">versão anterior</span> <small>assinada em ' + esc(dataHoraSP(d.assinado_em)) + ' · foi reenviado depois</small>'
+              : '<span class="chip-parcial">falta assinar</span> <small>enviado em ' + esc(FT.ddmmaaaa(FT.dataSP(d.desde))) + '</small>';
+          const ac = d.assinatura_id
+            ? '<button type="button" class="btn btn-sec btn-p" data-ver="' + esc(d.assinatura_id) + '">Ver</button> <button type="button" class="btn btn-p" data-pdf="' + esc(d.assinatura_id) + '">Baixar PDF</button>'
+            : '<button type="button" class="btn btn-sec btn-p" data-orig="' + esc(d.fid + '|' + d.mes + '|' + d.tipo) + '">Ver original</button>';
+          return '<tr class="' + (d.situacao === 'anterior' ? 'pa-antiga' : '') + '"><td><b>' + esc(FT.NOMES_DOC[d.tipo]) + '</b>' + (d.contab_nome && d.tipo === 'contab' ? '<small>' + esc(d.contab_nome) + '</small>' : '') + '</td><td>' + sit + '</td><td class="pa-cod">' + esc(d.codigo || '—') + '</td><td class="num pa-acoes">' + ac + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    }).join('');
+    el.innerHTML = h;
+  }
+
+  function mensagemCobranca(p, docs) {
+    const pend = docs.filter(function (d) { return d.situacao === 'pendente'; }).map(function (d) { return FT.NOMES_DOC[d.tipo].toUpperCase() + ' DE ' + nomeMes(d.mes).toUpperCase(); });
+    const link = FT.linkPonto ? FT.linkPonto() : '';
+    return 'OLÁ, ' + String(p.nome).split(' ')[0] + '! FALTA VOCÊ ASSINAR ' + (pend.length > 1 ? 'ESTES DOCUMENTOS' : 'ESTE DOCUMENTO') + ' NO APP DO PONTO:\n- ' + pend.join('\n- ') +
+      '\nACESSE ' + link + ' E TOQUE EM "HOLERITES E ESPELHO DE PONTO" (ENTRE COM SEU CPF E A SENHA DO PONTO). CONFIRA E ASSINE.\nFORNERIA TOSCANA';
+  }
+
+  async function acaoPasta(e) {
+    const b = e.target.closest('button'); if (!b) return;
+    const txt = b.textContent;
+    try {
+      b.disabled = true;
+      if (b.dataset.ver || b.dataset.pdf) {
+        const id = b.dataset.ver || b.dataset.pdf;
+        const janela = b.dataset.ver ? window.open('', '_blank') : null;
+        b.textContent = 'Gerando…';
+        const a = await FT.store.docs.assinatura(id);
+        const termo = st.termos[a.funcionario_id] || null;
+        const bytes = await FT.pdfAssinado(a, termo);
+        if (janela) { janela.location.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })); }
+        else FT.baixarArquivo(bytes, nomeArquivo(a));
+      } else if (b.dataset.termo) {
+        const janela = window.open('', '_blank'); b.textContent = 'Gerando…';
+        const t = await FT.store.docs.termo(b.dataset.termo);
+        const bytes = await FT.pdfTermo(t);
+        if (janela) janela.location.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+        else FT.baixarArquivo(bytes, 'Termo de adesao - ' + t.nome + '.pdf');
+      } else if (b.dataset.orig) {
+        const p = b.dataset.orig.split('|'), janela = window.open('', '_blank');
+        const c = await FT.store.docs.conteudo(p[0], p[1], p[2]);
+        if (!c) { if (janela) janela.close(); FT.aviso('Documento não encontrado.', true); return; }
+        const blob = c.pdf ? new Blob([FT.base64Bytes(c.pdf)], { type: 'application/pdf' }) : new Blob([c.html], { type: 'text/html' });
+        if (janela) janela.location.href = URL.createObjectURL(blob);
+      } else if (b.dataset.zip) await baixarZip(b.dataset.zip, b);
+    } catch (x) { console.error(x); FT.aviso('Não consegui gerar o arquivo: ' + FT.textoErro(x), true); }
+    finally { b.disabled = false; b.textContent = txt; }
+  }
+
+  function limparNome(s) { return String(s || '').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim(); }
+  function nomeArquivo(a, antiga) {
+    return limparNome(a.mes + ' - ' + FT.NOMES_DOC[a.tipo] + ' - ' + a.funcionario_nome + (antiga ? ' - versao anterior assinada em ' + FT.dataSP(a.assinado_em) : '') + ' - assinado.pdf');
+  }
+
+  // ZIP de uma pasta (fid) ou de todas (fid = null): PASTAS FORNERIA/<COLABORADOR>/<mês - documento>.pdf
+  async function baixarZip(fid, botao) {
+    const pessoas = st.lista.filter(function (p) { return (!fid || p.id === fid) && (p.docs.some(function (d) { return d.assinatura_id; }) || p.termo); });
+    const tarefas = [];
+    pessoas.forEach(function (p) {
+      if (p.termo) tarefas.push({ p: p, termo: true });
+      filtrarMes(p.docs).forEach(function (d) { if (d.assinatura_id) tarefas.push({ p: p, d: d }); });
+    });
+    if (!tarefas.length) { FT.aviso('Ainda não há documentos assinados para baixar.', true); return; }
+    const txt = botao.textContent; botao.disabled = true;
+    try {
+      const Z = await FT.carregarScript(JSZIP, 'JSZip'), zip = new Z();
+      const raiz = 'PASTAS FORNERIA' + (st.mes ? ' - ' + st.mes : '');
+      for (let i = 0; i < tarefas.length; i++) {
+        botao.textContent = 'Gerando ' + (i + 1) + ' de ' + tarefas.length + '…';
+        const t = tarefas[i], pasta = raiz + '/' + limparNome(t.p.nome) + '/';
+        if (t.termo) { const tr = await FT.store.docs.termo(t.p.id); zip.file(pasta + '00 - Termo de adesao a assinatura eletronica.pdf', await FT.pdfTermo(tr)); continue; }
+        const a = await FT.store.docs.assinatura(t.d.assinatura_id);
+        zip.file(pasta + nomeArquivo(a, t.d.situacao === 'anterior'), await FT.pdfAssinado(a, st.termos[a.funcionario_id] || null));
+      }
+      botao.textContent = 'Compactando…';
+      const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+      FT.baixarArquivo(blob, (fid ? 'Pasta - ' + limparNome(pessoas[0].nome) : raiz) + '.zip');
+      FT.aviso(tarefas.length + ' arquivo(s) baixado(s) no ZIP.');
+    } finally { botao.disabled = false; botao.textContent = txt; }
+  }
+
+  /* ---------------- PDF assinado ---------------- */
+  // HTML do documento -> imagens de páginas A4 (cortando entre linhas da tabela)
+  async function htmlParaPaginas(html, ass) {
+    await FT.carregarScript(H2C, 'html2canvas');
+    const LARG = 718, ALT = Math.floor(LARG * 277 / 190);
+    const f = document.createElement('iframe');
+    f.setAttribute('sandbox', 'allow-same-origin'); f.setAttribute('aria-hidden', 'true');
+    f.style.cssText = 'position:fixed;left:-12000px;top:0;width:' + LARG + 'px;height:60px;border:0;visibility:hidden';
+    document.body.appendChild(f);
+    try {
+      await new Promise(function (ok) {
+        f.onload = ok;
+        f.srcdoc = html + '<style>.barra{display:none!important}html,body{background:#fff!important;margin:0!important;padding:0!important}.folha{padding:0!important;margin:0!important;box-shadow:none!important;border:0!important;max-width:none!important;width:auto!important}</style>';
+      });
+      const d = f.contentDocument;
+      if (d.fonts && d.fonts.ready) await Promise.race([d.fonts.ready, new Promise(function (r) { setTimeout(r, 1500); })]);
+      // coloca a assinatura desenhada e a data nos campos de assinatura do documento (só na imagem do PDF)
+      if (ass) {
+        Array.from(d.querySelectorAll('div, td, p, span')).forEach(function (el) {
+          if (el.children.length > 1) return;
+          const t = el.textContent || '';
+          if (/ASSINATURA DO (FUNCION|COLABORADOR|EMPREGADO)/i.test(t) && t.length < 60 && ass.png) {
+            const img = d.createElement('img'); img.src = ass.png; img.alt = '';
+            img.style.cssText = 'display:block;margin:0 auto -10px;height:46px;max-width:90%;object-fit:contain';
+            el.insertBefore(img, el.firstChild);
+          }
+          if (/LOCAL E DATA:[^_]*_+\/_+\/_+/i.test(t)) Array.from(el.childNodes).forEach(function (n) { if (n.nodeType === 3 && /_+\/_+\/_+/.test(n.nodeValue)) n.nodeValue = n.nodeValue.replace(/_+\/_+\/_+/, ass.data); });
+        });
+        await new Promise(function (r) { setTimeout(r, 60); });
+      }
+      const fim = Array.from(d.body.children).reduce(function (m, el) { return Math.max(m, el.getBoundingClientRect().bottom); }, 0);
+      const total = Math.max(40, Math.ceil(Math.max(fim, d.body.scrollHeight)) + 4); f.style.height = total + 'px';
+      const bordas = Array.from(d.querySelectorAll('tr, p, h1, h2, h3, table, .via, section, li')).map(function (el) { return Math.round(el.getBoundingClientRect().bottom); }).sort(function (a, b) { return a - b; });
+      const ESC = 2;
+      const cv = await window.html2canvas(d.documentElement, { scale: ESC, backgroundColor: '#ffffff', width: LARG, height: total, windowWidth: LARG, windowHeight: total, logging: false, useCORS: true });
+      const cortes = [0]; let cur = 0;
+      while (total - cur > ALT) {
+        const lim = cur + ALT; let melhor = lim;
+        for (let i = bordas.length - 1; i >= 0; i--) { if (bordas[i] <= lim && bordas[i] > cur + ALT * 0.5) { melhor = bordas[i] + 2; break; } }
+        cortes.push(melhor); cur = melhor;
+      }
+      cortes.push(total);
+      const pags = [];
+      for (let i = 0; i < cortes.length - 1; i++) {
+        const y0 = cortes[i], h = cortes[i + 1] - y0; if (h < 4) continue;
+        const c = document.createElement('canvas'); c.width = LARG * ESC; c.height = Math.round(h * ESC);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(cv, 0, Math.round(y0 * ESC), c.width, c.height, 0, 0, c.width, c.height);
+        const url = c.toDataURL('image/jpeg', 0.92);
+        pags.push({ jpg: FT.base64Bytes(url.split(',')[1]), w: LARG, h: h });
+      }
+      return pags;
+    } finally { f.remove(); }
+  }
+
+  async function base(L, pdf) {
+    const f = await pdf.embedFont(L.StandardFonts.Helvetica), fb = await pdf.embedFont(L.StandardFonts.HelveticaBold), fm = await pdf.embedFont(L.StandardFonts.Courier);
+    let logo = null; try { const lb = await FT.pdfLogo(); if (lb) logo = await pdf.embedPng(lb); } catch (e) { logo = null; }
+    return { f: f, fb: fb, fm: fm, logo: logo };
+  }
+  // quebra texto em linhas que cabem na largura
+  function linhas(t, fonte, tam, larg) {
+    const palavras = FT.pdfLimpo(t).split(/\s+/), r = []; let l = '';
+    palavras.forEach(function (p) {
+      const x = l ? l + ' ' + p : p;
+      if (fonte.widthOfTextAtSize(x, tam) <= larg || !l) l = x; else { r.push(l); l = p; }
+    });
+    if (l) r.push(l); return r;
+  }
+
+  // página de certificado (assinatura de um documento ou do termo)
+  async function paginaCertificado(L, pdf, fx, o) {
+    const W = 595.28, H = 841.89, M = 44, LARG = W - 2 * M;
+    const preto = L.rgb(0.1, 0.1, 0.1), cinza = L.rgb(0.4, 0.4, 0.4), verde = L.rgb(0.14, 0.34, 0.29), vinho = L.rgb(0.38, 0.07, 0.15), fundo = L.rgb(0.95, 0.96, 0.94), borda = L.rgb(0.78, 0.8, 0.77);
+    const pg = pdf.addPage([W, H]); let y = H - M;
+    const T = function (t, x, yy, tam, fonte, cor) { pg.drawText(FT.pdfLimpo(t), { x: x, y: yy, size: tam, font: fonte || fx.f, color: cor || preto }); };
+    if (fx.logo) { const e = 120 / fx.logo.width; pg.drawImage(fx.logo, { x: M, y: y - fx.logo.height * e, width: 120, height: fx.logo.height * e }); }
+    const tit = o.titulo; T(tit, W - M - fx.fb.widthOfTextAtSize(FT.pdfLimpo(tit), 14), y - 16, 14, fx.fb, vinho);
+    const sub = o.subtitulo; T(sub, W - M - fx.f.widthOfTextAtSize(FT.pdfLimpo(sub), 9.5), y - 32, 9.5, fx.f, cinza);
+    y -= 58; pg.drawLine({ start: { x: M, y: y }, end: { x: W - M, y: y }, thickness: 1, color: vinho }); y -= 26;
+    // documento
+    o.doc.forEach(function (par) { T(par[0], M, y, 7.5, fx.fb, cinza); T(par[1], M + 130, y, 10, fx.f, preto); y -= 17; });
+    y -= 8;
+    // quadro do assinante
+    const alto = 214; pg.drawRectangle({ x: M, y: y - alto, width: LARG, height: alto, color: fundo, borderColor: borda, borderWidth: 0.8 });
+    let yy = y - 20; T('ASSINADO POR', M + 14, yy, 8, fx.fb, verde); yy -= 18;
+    T(o.nome, M + 14, yy, 13, fx.fb, preto); yy -= 15; T('CPF ' + FT.formatarCPF(o.cpf), M + 14, yy, 10, fx.f, preto); yy -= 20;
+    o.provas.forEach(function (par) {
+      T(par[0], M + 14, yy, 7.5, fx.fb, cinza);
+      linhas(par[1], fx.f, 8.5, 200).slice(0, 3).forEach(function (l, i) { T(l, M + 104, yy - i * 10.5, 8.5, fx.f, preto); });
+      yy -= Math.min(3, linhas(par[1], fx.f, 8.5, 200).length) * 10.5 + 5;
+    });
+    // assinatura desenhada
+    const bx = M + LARG - 190, by = y - alto + 30;
+    T('ASSINATURA', bx, y - 20, 8, fx.fb, verde);
+    if (o.png) {
+      try {
+        const img = await pdf.embedPng(FT.base64Bytes(o.png.split(',')[1]));
+        const e = Math.min(170 / img.width, 110 / img.height);
+        pg.drawImage(img, { x: bx + (170 - img.width * e) / 2, y: by + 22 + (110 - img.height * e) / 2, width: img.width * e, height: img.height * e });
+      } catch (e) { /* imagem inválida */ }
+    }
+    pg.drawLine({ start: { x: bx, y: by + 16 }, end: { x: bx + 170, y: by + 16 }, thickness: 0.8, color: cinza });
+    const nm = linhas(o.nome, fx.f, 7.5, 170)[0]; T(nm, bx + (170 - fx.f.widthOfTextAtSize(nm, 7.5)) / 2, by + 5, 7.5, fx.f, cinza);
+    y -= alto + 26;
+    // integridade
+    if (o.hash) {
+      T('INTEGRIDADE DO DOCUMENTO (SHA-256)', M, y, 8, fx.fb, verde); y -= 14;
+      T(o.hash.slice(0, 32), M, y, 9.5, fx.fm, preto); y -= 12; T(o.hash.slice(32), M, y, 9.5, fx.fm, preto); y -= 20;
+    }
+    if (o.codigo) { T('CÓDIGO DA ASSINATURA', M, y, 8, fx.fb, verde); T(o.codigo, M + 130, y, 12, fx.fb, preto); y -= 26; }
+    // texto legal
+    o.texto.forEach(function (par) {
+      linhas(par, fx.f, 9, LARG).forEach(function (l) { T(l, M, y, 9, fx.f, L.rgb(0.25, 0.25, 0.25)); y -= 12.5; });
+      y -= 6;
+    });
+    T('FORNERIA TOSCANA · GUARAREMA/SP · CERTIFICADO GERADO EM ' + dataHoraSP(new Date().toISOString()), M, 22, 7, fx.f, cinza);
+    return pg;
+  }
+
+  FT.pdfAssinado = async function (a, termo) {
+    const L = await FT.carregarScript(FT.PDFLIB_URL, 'PDFLib');
+    let pdf, nOrig;
+    const quando = dataHoraSP(a.assinado_em, true);
+    const carimbo = 'ASSINADO ELETRONICAMENTE POR ' + String(a.funcionario_nome).toUpperCase() + ' EM ' + quando + ' (BRASÍLIA) · CÓDIGO ' + a.codigo + ' · CERTIFICADO NA ÚLTIMA PÁGINA';
+    if (a.conteudo_pdf) {
+      pdf = await L.PDFDocument.load(FT.base64Bytes(a.conteudo_pdf), { ignoreEncryption: true });
+      nOrig = pdf.getPageCount();
+    } else {
+      pdf = await L.PDFDocument.create();
+      const pags = await htmlParaPaginas(a.conteudo_html, { png: a.assinatura_png, data: FT.ddmmaaaa(FT.dataSP(a.assinado_em)) }), MM = 2.8346, esc = 190 * MM / 718;
+      for (const p of pags) {
+        const pg = pdf.addPage([595.28, 841.89]), img = await pdf.embedJpg(p.jpg);
+        pg.drawImage(img, { x: 10 * MM, y: 841.89 - 10 * MM - p.h * esc, width: p.w * esc, height: p.h * esc });
+      }
+      nOrig = pags.length;
+    }
+    const fx = await base(L, pdf);
+    pdf.getPages().slice(0, nOrig).forEach(function (pg, i) {
+      const w = pg.getWidth();
+      const t = FT.pdfLimpo(carimbo + ' · PÁG. ' + (i + 1) + '/' + nOrig);
+      let tam = 6.5; while (tam > 4.5 && fx.f.widthOfTextAtSize(t, tam) > w - 40) tam -= 0.25;
+      const tw = fx.f.widthOfTextAtSize(t, tam);
+      pg.drawRectangle({ x: (w - tw) / 2 - 4, y: 6, width: tw + 8, height: tam + 6, color: L.rgb(1, 1, 1), opacity: 0.92 });
+      pg.drawText(t, { x: (w - tw) / 2, y: 9, size: tam, font: fx.f, color: L.rgb(0.14, 0.34, 0.29) });
+    });
+    const ua = String(a.user_agent || '—');
+    await paginaCertificado(L, pdf, fx, {
+      titulo: 'CERTIFICADO DE ASSINATURA ELETRÔNICA', subtitulo: FT.NOMES_DOC[a.tipo].toUpperCase() + ' · ' + nomeMes(a.mes).toUpperCase(),
+      doc: [['DOCUMENTO', FT.NOMES_DOC[a.tipo] + ' de ' + nomeMes(a.mes)], ['ARQUIVO ORIGINAL', a.arquivo_nome || (a.tipo === 'espelho' ? 'Espelho de ponto gerado pelo sistema' : 'Holerite gerado pelo sistema')], ['PÁGINAS DO DOCUMENTO', String(nOrig)]],
+      nome: String(a.funcionario_nome).toUpperCase(), cpf: a.funcionario_cpf, png: a.assinatura_png, hash: a.hash, codigo: a.codigo,
+      provas: [['DATA E HORA', quando + ' (horário de Brasília, relógio do servidor)'], ['ENDEREÇO IP', a.ip || 'não informado'], ['APARELHO', ua],
+        ['AUTENTICAÇÃO', 'CPF + senha pessoal do app de ponto, confirmada no momento da assinatura'],
+        ['TERMO DE ADESÃO', termo ? 'aceito em ' + dataHoraSP(termo.aceito_em, true) : 'aceito na primeira assinatura']],
+      texto: [
+        'Este documento foi assinado eletronicamente pelo(a) colaborador(a) acima no app de ponto da Forneria Toscana, depois de abri-lo e confirmar que leu o conteúdo. A identificação foi feita pelo CPF e pela senha pessoal do app, e a assinatura foi desenhada na tela do aparelho.',
+        'A assinatura eletrônica tem validade nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020, conforme o termo de adesão aceito pelo(a) colaborador(a).',
+        'O código SHA-256 identifica exatamente o conteúdo que foi assinado: qualquer alteração no documento gera um código diferente. A cópia assinada fica guardada no sistema da Forneria Toscana e não pode ser alterada nem apagada.'
+      ]
+    });
+    pdf.setTitle(FT.NOMES_DOC[a.tipo] + ' ' + a.mes + ' - ' + a.funcionario_nome + ' (assinado)');
+    pdf.setAuthor('Forneria Toscana'); pdf.setSubject('Documento assinado eletronicamente · código ' + a.codigo);
+    return pdf.save();
+  };
+
+  FT.pdfTermo = async function (t) {
+    const L = await FT.carregarScript(FT.PDFLIB_URL, 'PDFLib');
+    const pdf = await L.PDFDocument.create(), fx = await base(L, pdf);
+    await paginaCertificado(L, pdf, fx, {
+      titulo: 'TERMO DE ADESÃO À ASSINATURA ELETRÔNICA', subtitulo: 'VERSÃO ' + (t.versao || 1),
+      doc: [['COLABORADOR(A)', t.nome], ['CPF', FT.formatarCPF(t.cpf)]],
+      nome: String(t.nome).toUpperCase(), cpf: t.cpf, png: t.assinatura_png,
+      provas: [['ACEITO EM', dataHoraSP(t.aceito_em, true) + ' (horário de Brasília)'], ['ENDEREÇO IP', t.ip || 'não informado'], ['APARELHO', String(t.user_agent || '—')],
+        ['AUTENTICAÇÃO', 'CPF + senha pessoal do app de ponto']],
+      texto: FT.termoAssinatura(t.nome, t.cpf).concat(['Termo aceito no app de ponto da Forneria Toscana, junto com a primeira assinatura de documento do(a) colaborador(a).'])
+    });
+    pdf.setTitle('Termo de adesão - ' + t.nome);
+    return pdf.save();
+  };
+
+  FT.telas.pastas = { abrir: async function () { if (!$('#pa-kpis')) montar(); await carregar(true); } };
+})();
+
 /* Forneria Toscana — login, menu lateral e navegação entre telas */
 (function () {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'indicadores', 'produtos', 'pagamento', 'folha', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'indicadores', 'produtos', 'pagamento', 'folha', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
