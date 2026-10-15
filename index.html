@@ -896,6 +896,13 @@ table.lista.vp-dias .num { min-width: 64px; }
 .es-envio-cab p { margin: 0; font-size: 13px; color: var(--ink-2); max-width: 720px; }
 .es-env-tab td small { display: block; color: var(--ink-3); font-size: 11.5px; }
 .es-env-dia { display: inline-block; background: var(--surface-2); border-radius: 6px; padding: 2px 7px; margin: 2px 2px 2px 0; font-size: 12px; white-space: nowrap; }
+.fixos-lista { display: grid; gap: 10px; margin: 8px 0 12px; }
+.fixos-setor { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: start; }
+.fixos-setor > b { font-size: 13px; padding-top: 6px; }
+.fixos-setor > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.fixos-setor .link { font-size: 15px; text-decoration: none; padding: 0 2px; }
+.fixos-add { display: flex; flex-wrap: wrap; gap: 8px; }
+.fixos-add select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
 
 </style>
 </head>
@@ -4805,6 +4812,7 @@ window.FT_CONFIG = {
       '<div class="acoes-linha">' +
       '<button type="button" class="btn btn-sec" id="es-copiar-ant">Copiar semana anterior</button>' +
       '<button type="button" class="btn btn-sec" id="es-padrao">Quantidades padrão</button>' +
+      '<button type="button" class="btn btn-sec" id="es-fixos">Equipe fixa</button>' +
       '<button type="button" class="btn btn-sec" id="es-texto">Copiar escala (WhatsApp)</button></div>' +
       '<div id="es-resumo" class="es-resumo"></div>' +
       '</div></div>' +
@@ -4823,6 +4831,7 @@ window.FT_CONFIG = {
     $('#es-texto').addEventListener('click', function (e) { FT.copiar(C.textoEscala(st.semana, st.escala, st.funcs), e.currentTarget); });
     $('#es-copiar-ant').addEventListener('click', copiarAnterior);
     $('#es-padrao').addEventListener('click', abrirPadrao);
+    $('#es-fixos').addEventListener('click', abrirFixos);
     $('#es-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
     $('#es-env-todos').addEventListener('change', function (e) { st.envTodos = e.target.checked; desenharEnvio(); });
     $('#es-envio').addEventListener('click', function (e) {
@@ -4834,7 +4843,7 @@ window.FT_CONFIG = {
     tab.addEventListener('change', function (e) {
       const el = e.target, d = el.dataset.dia; if (!d) return;
       const dia = st.escala.dias[d];
-      if (el.classList.contains('es-aberto')) { dia.aberto = el.checked; }
+      if (el.classList.contains('es-aberto')) { dia.aberto = el.checked; if (dia.aberto) aplicarFixosDia(dia); }
       else if (el.classList.contains('es-sel')) {
         const s = el.dataset.setor, i = +el.dataset.i;
         dia.alocados[s] = dia.alocados[s] || [];
@@ -4849,6 +4858,30 @@ window.FT_CONFIG = {
       dia.vagas[s] = Math.max(0, Math.min(15, (+dia.vagas[s] || 0) + (+b.dataset.passo)));
       mudou(true);
     });
+
+    // diálogo da equipe fixa
+    const df = document.createElement('dialog'); df.id = 'dlg-fixos'; df.setAttribute('aria-labelledby', 'h-fixos');
+    df.innerHTML = '<div class="dlg"><h2 id="h-fixos">Equipe fixa</h2><p>Quem entra sozinho na escala de toda semana nova, em todos os dias abertos, no setor indicado. Dá para tirar alguém de um dia específico na própria escala.</p>' +
+      '<div id="fx-avisos"></div><div class="fixos-lista" id="fixos-lista"></div>' +
+      '<div class="fixos-add"><select id="fixos-setor" aria-label="Setor"></select><select id="fixos-func" aria-label="Funcionário"></select><button type="button" class="btn btn-sec" id="fixos-add">Adicionar</button></div>' +
+      '<p class="erro-form" id="fixos-erro"></p>' +
+      '<div class="dlg-acoes"><span class="espaco"></span><button class="btn btn-sec" type="button" id="fixos-cancelar">Cancelar</button><button class="btn btn-sec" type="button" id="fixos-aplicar">Salvar e aplicar nesta semana</button><button class="btn" type="button" id="fixos-salvar">Salvar</button></div></div>';
+    document.body.appendChild(df);
+    $('#fixos-cancelar').addEventListener('click', function () { df.close(); });
+    $('#fixos-add').addEventListener('click', function () {
+      const s = $('#fixos-setor').value, id = $('#fixos-func').value; if (!s || !id) return;
+      rascunhoFixos[s] = rascunhoFixos[s] || [];
+      if (rascunhoFixos[s].indexOf(id) < 0) rascunhoFixos[s].push(id);
+      desenharFixos();
+    });
+    $('#fixos-lista').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-tirar]'); if (!b) return;
+      const s = b.dataset.setor; rascunhoFixos[s] = (rascunhoFixos[s] || []).filter(function (x) { return x !== b.dataset.tirar; });
+      if (!rascunhoFixos[s].length) delete rascunhoFixos[s];
+      desenharFixos();
+    });
+    $('#fixos-salvar').addEventListener('click', function () { salvarFixos(false); });
+    $('#fixos-aplicar').addEventListener('click', function () { salvarFixos(true); });
 
     // diálogo de quantidades padrão
     const dlg = document.createElement('dialog');
@@ -4874,6 +4907,7 @@ window.FT_CONFIG = {
       const salvo = await FT.store.escala.ler(semana);
       st.existe = !!salvo;
       st.escala = salvo || C.novaEscala(semana, st.padrao);
+      if (!salvo) aplicarFixos(st.escala);
       // garante todos os setores (caso a lista mude)
       Object.keys(st.escala.dias).forEach(function (d) {
         const dia = st.escala.dias[d];
@@ -5027,6 +5061,77 @@ window.FT_CONFIG = {
     mudou(false); desenharEnvio();
   }
 
+  /* ---------- equipe fixa ---------- */
+  // pedido do Luiz: fixos em toda escala nova
+  const FIXOS_PADRAO = [['PIZZARIA', ['CLAUDECIR', 'JEFERSON', 'JOAO PAULO', 'LUCIANO']], ['BAR', ['DAMIANA']], ['CAIXA', ['JULIANA']], ['ADMINISTRATIVO', ['LUIZ']], ['ZELADORIA', ['UELSON']]];
+  let rascunhoFixos = null;
+  function acharPorNome(nome) {
+    const n = FT.semAcento(nome), at = st.funcs.filter(function (f) { return f.ativo !== false; });
+    const iguais = at.filter(function (f) { return FT.semAcento(f.nome) === n; });
+    if (iguais.length === 1) return iguais[0];
+    const comeca = at.filter(function (f) { return FT.semAcento(f.nome).indexOf(n + ' ') === 0; });
+    return comeca.length === 1 ? comeca[0] : null;
+  }
+  // monta a equipe fixa: a salva em configurações ou, se ainda não salvou, a do pedido (achando pelo nome)
+  function resolverFixos(salvos) {
+    st.fixosAvisos = [];
+    if (salvos) { st.fixos = salvos; return; }
+    const r = {};
+    FIXOS_PADRAO.forEach(function (x) {
+      x[1].forEach(function (nome) {
+        const f = acharPorNome(nome);
+        if (f) (r[x[0]] = r[x[0]] || []).push(f.id); else st.fixosAvisos.push(nome + ' (' + x[0] + ')');
+      });
+    });
+    st.fixos = r;
+  }
+  async function garantirSetores() {
+    const faltam = Object.keys(st.fixos || {}).filter(function (s) { return FT.SETORES.indexOf(s) < 0; });
+    if (!faltam.length) return;
+    try { await FT.salvarSetores(FT.SETORES.concat(faltam)); } catch (e) { FT.SETORES = FT.SETORES.concat(faltam); }
+  }
+  function aplicarFixosDia(dia) {
+    Object.keys(st.fixos || {}).forEach(function (s) {
+      const ids = st.fixos[s].filter(function (id) { return st.funcs.some(function (f) { return f.id === id && f.ativo !== false; }); });
+      if (!ids.length) return;
+      const n = +dia.vagas[s] || 0, atuais = (dia.alocados[s] || []).slice(0, n);
+      const outros = atuais.filter(function (id) { return id && ids.indexOf(id) < 0; });
+      const lista = ids.concat(outros);
+      dia.vagas[s] = Math.max(n, lista.length);
+      dia.alocados[s] = lista;
+    });
+  }
+  function aplicarFixos(esc_) { Object.keys(esc_.dias).forEach(function (d) { if (esc_.dias[d].aberto) aplicarFixosDia(esc_.dias[d]); }); }
+  function abrirFixos() {
+    rascunhoFixos = JSON.parse(JSON.stringify(st.fixos || {}));
+    $('#fixos-erro').textContent = '';
+    $('#fx-avisos').innerHTML = (st.fixosAvisos || []).length ? '<p class="msg">Não achei no cadastro: <b>' + st.fixosAvisos.map(esc).join(', ') + '</b>. Cadastre em Funcionários (ou adicione abaixo com o nome certo).</p>' : '';
+    const ativos = st.funcs.filter(function (f) { return f.ativo !== false; });
+    $('#fixos-setor').innerHTML = FT.SETORES.map(function (s) { return '<option value="' + esc(s) + '">' + esc(FT.nomeSetor(s)) + '</option>'; }).join('');
+    $('#fixos-func').innerHTML = '<option value="">— funcionário —</option>' + ativos.map(function (f) { return '<option value="' + esc(f.id) + '">' + esc(f.nome) + '</option>'; }).join('');
+    desenharFixos();
+    $('#dlg-fixos').showModal();
+  }
+  function desenharFixos() {
+    const nomes = {}; st.funcs.forEach(function (f) { nomes[f.id] = f.nome; });
+    const ss = FT.SETORES.filter(function (s) { return (rascunhoFixos[s] || []).length; }).concat(Object.keys(rascunhoFixos).filter(function (s) { return FT.SETORES.indexOf(s) < 0; }));
+    $('#fixos-lista').innerHTML = ss.length ? ss.map(function (s) {
+      return '<div class="fixos-setor"><b>' + esc(FT.nomeSetor(s)) + '</b><div>' + rascunhoFixos[s].map(function (id) {
+        return '<span class="pessoa-chip">' + esc(nomes[id] || 'removido do cadastro') + ' <button type="button" class="link" data-tirar="' + esc(id) + '" data-setor="' + esc(s) + '" aria-label="Tirar ' + esc(nomes[id] || '') + '">×</button></span>';
+      }).join('') + '</div></div>';
+    }).join('') : '<p class="vazio-bloco">Ninguém fixo. Adicione abaixo.</p>';
+  }
+  async function salvarFixos(aplicar) {
+    try {
+      await FT.store.config.salvar('escala_fixos', rascunhoFixos);
+      st.fixos = rascunhoFixos; st.fixosAvisos = [];
+      await garantirSetores();
+      if (aplicar) { aplicarFixos(st.escala); mudou(true); }
+      $('#dlg-fixos').close();
+      FT.aviso('Equipe fixa salva.' + (aplicar ? ' Aplicada nesta semana.' : ' Entra nas próximas semanas novas.'));
+    } catch (e) { $('#fixos-erro').textContent = 'Não foi possível salvar: ' + FT.textoErro(e); }
+  }
+
   /* ---------- calendário ---------- */
   function mudarMes(n) {
     const p = st.mes.split('-').map(Number); const d = new Date(p[0], p[1] - 1 + n, 1, 12);
@@ -5130,6 +5235,8 @@ window.FT_CONFIG = {
         st.funcs = await FT.obterFuncionarios(true);
         const p = await FT.store.config.ler('escala_padrao'); st.padrao = p || JSON.parse(JSON.stringify(FT.PADRAO_ESCALA));
         // setores novos entram no padrão com 0 vagas
+        resolverFixos(await FT.store.config.ler('escala_fixos'));
+        await garantirSetores();
         Object.keys(st.padrao).forEach(function (k) { FT.SETORES.forEach(function (s) { if (st.padrao[k].vagas[s] == null) st.padrao[k].vagas[s] = 0; }); });
       } catch (e) { FT.aviso('Não consegui carregar o cadastro: ' + FT.textoErro(e), true); return; }
       await irPara(st.semana || FT.segunda(FT.hoje()));
