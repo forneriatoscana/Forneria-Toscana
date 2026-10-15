@@ -879,6 +879,24 @@ table.lista.vp-dias .num { min-width: 64px; }
 .fx-din-top li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fx-dinl th.fx-rot { box-shadow: inset 3px 0 0 #c9a227; }
 
+/* ---------- WhatsApp ---------- */
+.wz-bt { display: inline-grid; justify-items: end; gap: 2px; }
+.wz-bt small { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.wz-bt small .link { font-size: 11px; }
+.btn-whats { background: #1f8f4e; border-color: #1f8f4e; color: #fff; }
+.btn-whats::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s.9 2.5 1.1 2.7c.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z'/%3E%3C/svg%3E") center / contain no-repeat; }
+.btn-whats:hover { filter: brightness(1.08); }
+.wz-msg { display: grid; gap: 4px; }
+.wz-msg span { font-size: 12px; font-weight: 600; color: var(--ink-3); letter-spacing: .04em; }
+.wz-msg pre { margin: 0; white-space: pre-wrap; font: 13px/1.45 var(--f-body, inherit); background: #e7f6dd; color: #1b1f1a; border-radius: 8px; padding: 10px 12px; max-height: 240px; overflow: auto; }
+.es-envio { display: grid; gap: 10px; }
+.es-envio-cab { display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: space-between; align-items: center; }
+.es-envio-cab p { margin: 0; font-size: 13px; color: var(--ink-2); max-width: 720px; }
+.es-env-tab td small { display: block; color: var(--ink-3); font-size: 11.5px; }
+.es-env-dia { display: inline-block; background: var(--surface-2); border-radius: 6px; padding: 2px 7px; margin: 2px 2px 2px 0; font-size: 12px; white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -2826,7 +2844,9 @@ window.FT_CONFIG = {
   // campos gravados do funcionário, sempre em CAIXA ALTA
   FT.limparFuncionario = function (f) {
     const pct = f.comissao_pct === '' || f.comissao_pct == null ? null : +f.comissao_pct;
-    return { nome: FT.mai(f.nome), tipo: f.tipo, setor: f.setor ? FT.mai(f.setor) : null, cargo: f.cargo ? FT.mai(f.cargo) : null, salario: +f.salario || 0, diaria: +f.diaria || 0, comissao_pct: pct, ativo: f.ativo !== false };
+    const r = { nome: FT.mai(f.nome), tipo: f.tipo, setor: f.setor ? FT.mai(f.setor) : null, cargo: f.cargo ? FT.mai(f.cargo) : null, salario: +f.salario || 0, diaria: +f.diaria || 0, comissao_pct: pct, ativo: f.ativo !== false };
+    if ('telefone' in f) r.telefone = String(f.telefone || '').replace(/\D/g, '').replace(/^55(?=\d{10,11}$)/, '') || null;
+    return r;
   };
   function clonar(x) { return x == null ? x : JSON.parse(JSON.stringify(x)); }
 
@@ -3211,6 +3231,91 @@ window.FT_CONFIG = {
     };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
+
+/* Forneria Toscana — envio de mensagens no WhatsApp para os funcionários.
+ * O celular é pedido uma vez só e fica salvo no cadastro do funcionário. */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+
+  // só os números, sem o 55 do Brasil
+  FT.telNumeros = function (t) {
+    let d = String(t || '').replace(/\D/g, '');
+    if (/^55\d{10,11}$/.test(d)) d = d.slice(2);
+    return d;
+  };
+  FT.telFormatado = function (t) {
+    const d = FT.telNumeros(t);
+    if (d.length === 11) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+    if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+    return d;
+  };
+  FT.telValido = function (t) { const d = FT.telNumeros(t); return d.length === 10 || d.length === 11; };
+  FT.linkWhats = function (tel, texto) { return 'https://wa.me/' + (tel ? '55' + FT.telNumeros(tel) : '') + '?text=' + encodeURIComponent(texto); };
+
+  let dlg = null, pendente = null;
+  function montar() {
+    dlg = document.createElement('dialog'); dlg.id = 'dlg-whats'; dlg.setAttribute('aria-labelledby', 'h-whats');
+    dlg.innerHTML = '<form class="dlg form" id="wz-form" novalidate><h2 id="h-whats">WhatsApp</h2>' +
+      '<p class="sub" id="wz-sub">Digite o celular com DDD. Ele fica salvo no cadastro e das próximas vezes é só enviar.</p>' +
+      '<label for="wz-tel">Celular (WhatsApp)<input id="wz-tel" inputmode="tel" autocomplete="off" placeholder="(11) 99999-9999"></label>' +
+      '<div class="wz-msg"><span>Mensagem</span><pre id="wz-texto"></pre></div>' +
+      '<p class="erro-form" id="wz-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><span class="espaco"></span><button class="btn btn-sec" type="button" id="wz-cancelar">Cancelar</button><button class="btn" type="submit" id="wz-enviar">Salvar e enviar</button></div></form>';
+    document.body.appendChild(dlg);
+    window.addEventListener('hashchange', function () { if (dlg.open) dlg.close(); });
+    $('#wz-tel').addEventListener('input', function (e) { const d = e.target.value.replace(/\D/g, '').slice(0, 13); e.target.value = d.length >= 10 && d.length <= 11 ? FT.telFormatado(d) : d; });
+    $('#wz-cancelar').addEventListener('click', function () { dlg.close(); });
+    dlg.addEventListener('close', function () { if (pendente) { pendente.ok(false); pendente = null; } });
+    $('#wz-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      if (!pendente) return;
+      const tel = FT.telNumeros($('#wz-tel').value);
+      if (!FT.telValido(tel)) { $('#wz-erro').textContent = 'Digite o celular com DDD (10 ou 11 números).'; return; }
+      // abre a conversa já no clique (senão o navegador bloqueia) e salva o número
+      const p = pendente, janela = window.open(FT.linkWhats(tel, p.texto), '_blank');
+      const b = $('#wz-enviar'); b.disabled = true;
+      try {
+        if (tel !== FT.telNumeros(p.f.telefone)) {
+          await FT.store.holerites.salvarTelefone(p.f.id, tel);
+          p.f.telefone = tel;
+          FT.aviso('Celular de ' + p.f.nome + ' salvo no cadastro.');
+        }
+        if (!janela) window.location.href = FT.linkWhats(tel, p.texto);
+        pendente = null; dlg.close(); p.ok(true);
+      } catch (x) { $('#wz-erro').textContent = 'Não consegui salvar o número: ' + FT.textoErro(x) + '. A conversa foi aberta mesmo assim.'; }
+      finally { b.disabled = false; }
+    });
+  }
+
+  /* Envia uma mensagem para o funcionário f ({id, nome, telefone}).
+   * Com número salvo: abre direto o WhatsApp. Sem número (ou trocar = true): pede o número uma vez e salva.
+   * Devolve uma promessa com true quando a conversa foi aberta. */
+  FT.enviarWhats = function (f, texto, trocar) {
+    const tel = FT.telNumeros(f.telefone);
+    if (FT.telValido(tel) && !trocar) {
+      const j = window.open(FT.linkWhats(tel, texto), '_blank');
+      if (!j) window.location.href = FT.linkWhats(tel, texto);
+      return Promise.resolve(true);
+    }
+    if (!dlg) montar();
+    if (pendente) { pendente.ok(false); pendente = null; }
+    $('#h-whats').textContent = 'WhatsApp de ' + f.nome;
+    $('#wz-sub').textContent = trocar ? 'Corrija o celular com DDD. O número novo substitui o do cadastro.' : 'Primeira vez enviando para ' + String(f.nome).split(' ')[0] + ': digite o celular com DDD. Ele fica salvo no cadastro e das próximas vezes é só enviar.';
+    $('#wz-tel').value = tel ? FT.telFormatado(tel) : '';
+    $('#wz-texto').textContent = texto;
+    $('#wz-erro').textContent = '';
+    $('#wz-enviar').textContent = trocar ? 'Salvar e enviar' : 'Salvar número e enviar';
+    return new Promise(function (ok) { pendente = { f: f, texto: texto, ok: ok }; dlg.showModal(); $('#wz-tel').focus(); });
+  };
+
+  // botão padrão de envio (texto do botão + número salvo embaixo)
+  FT.botaoWhats = function (f, attrs, rotulo) {
+    const tel = FT.telNumeros(f.telefone);
+    return '<span class="wz-bt"><button type="button" class="btn btn-p btn-whats" ' + attrs + '>' + esc(rotulo || 'Enviar') + '</button>' +
+      '<small>' + (FT.telValido(tel) ? esc(FT.telFormatado(tel)) + ' · <button type="button" class="link" ' + attrs + ' data-trocar="1">trocar</button>' : 'sem número · pede na 1ª vez') + '</small></span>';
+  };
+})();
 
 /* Forneria Toscana — peças comuns do Estoque e das Compras */
 (function () {
@@ -4105,7 +4210,7 @@ window.FT_CONFIG = {
       '<label for="ff-cargo-novo" id="ff-cargo-novo-l" hidden>Nome do novo cargo<input id="ff-cargo-novo" placeholder="ex.: Sommelier" autocomplete="off"></label></div></div>' +
       '<div class="grade2"><label for="ff-salario">Salário mensal (R$)<input id="ff-salario" inputmode="decimal" placeholder="0,00"></label>' +
       '<label for="ff-diaria">Diária (R$)<input id="ff-diaria" inputmode="decimal" placeholder="0,00"></label></div>' +
-      '<div class="grade2"><label for="ff-comissao">Comissão sobre o faturamento bruto (%)<input id="ff-comissao" inputmode="decimal" placeholder="sem comissão"></label><span></span></div>' +
+      '<div class="grade2"><label for="ff-comissao">Comissão sobre o faturamento bruto (%)<input id="ff-comissao" inputmode="decimal" placeholder="sem comissão"></label><label for="ff-tel">Celular (WhatsApp)<input id="ff-tel" inputmode="tel" placeholder="(11) 99999-9999" autocomplete="off"></label></div>' +
       '<p class="dica" id="ff-dica"></p>' +
       '<label class="check"><input id="ff-ativo" type="checkbox" checked> Ativo (aparece na escala e no pagamento)</label>' +
       '<p class="erro-form" id="ff-erro" role="alert"></p>' +
@@ -4139,6 +4244,7 @@ window.FT_CONFIG = {
     const pc = f ? FT.calc.pctComissao(f) : 0;
     $('#ff-comissao').value = pc ? FT.num2(pc) : '';
     $('#ff-ativo').checked = f ? f.ativo !== false : true;
+    $('#ff-tel').value = f && f.telefone ? FT.telFormatado(f.telefone) : '';
     $('#ff-erro').textContent = '';
     $('#ff-excluir').hidden = !f; $('#ff-excluir').textContent = 'Excluir';
     ajustarTipo();
@@ -4167,7 +4273,8 @@ window.FT_CONFIG = {
     }
     const repetido = cache.find(function (f) { return FT.semAcento(f.nome) === FT.semAcento(nome) && (!editando || f.id !== editando.id); });
     if (repetido) { $('#ff-erro').textContent = 'Já existe um funcionário com esse nome.'; return; }
-    const f = Object.assign({}, editando || {}, { nome: nome, tipo: tipo, setor: setor, cargo: cargo, salario: FT.lerValor($('#ff-salario').value), diaria: FT.lerValor($('#ff-diaria').value), comissao_pct: $('#ff-comissao').value.trim() ? FT.lerValor($('#ff-comissao').value) : null, ativo: $('#ff-ativo').checked });
+    const f = Object.assign({}, editando || {}, { nome: nome, tipo: tipo, setor: setor, cargo: cargo, salario: FT.lerValor($('#ff-salario').value), diaria: FT.lerValor($('#ff-diaria').value), comissao_pct: $('#ff-comissao').value.trim() ? FT.lerValor($('#ff-comissao').value) : null, ativo: $('#ff-ativo').checked, telefone: FT.telNumeros($('#ff-tel').value) });
+    if (f.telefone && !FT.telValido(f.telefone)) { $('#ff-erro').textContent = 'Celular incompleto: use DDD + número (10 ou 11 números).'; return; }
     const b = $('#ff-salvar'); b.disabled = true; b.textContent = 'Salvando…';
     try {
       await FT.store.funcionarios.salvar(f);
@@ -4703,7 +4810,9 @@ window.FT_CONFIG = {
       '</div></div>' +
       '<div id="es-msg" class="msg" hidden></div>' +
       '<div class="rolagem"><table class="es" id="es-tabela"></table></div>' +
-      '<h2 class="h2-sec">Dias por pessoa nesta semana</h2><div class="es-pessoas" id="es-pessoas"></div>';
+      '<h2 class="h2-sec">Dias por pessoa nesta semana</h2><div class="es-pessoas" id="es-pessoas"></div>' +
+      '<h2 class="h2-sec">Enviar a escala no WhatsApp</h2><div class="painel es-envio"><div class="es-envio-cab"><p>Cada um recebe só os próprios dias. Na primeira vez o sistema pede o celular e guarda no cadastro; depois é só clicar em <b>Enviar</b>.</p>' +
+      '<label class="check"><input type="checkbox" id="es-env-todos"> Mostrar também fixos e motoboys</label></div><div class="rolagem"><table class="lista es-env-tab" id="es-envio"></table></div></div>';
 
     $('#es-ant').addEventListener('click', function () { irPara(FT.somaDias(st.semana, -7)); });
     $('#es-prox').addEventListener('click', function () { irPara(FT.somaDias(st.semana, 7)); });
@@ -4715,6 +4824,11 @@ window.FT_CONFIG = {
     $('#es-copiar-ant').addEventListener('click', copiarAnterior);
     $('#es-padrao').addEventListener('click', abrirPadrao);
     $('#es-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
+    $('#es-env-todos').addEventListener('change', function (e) { st.envTodos = e.target.checked; desenharEnvio(); });
+    $('#es-envio').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-env]'); if (!b) return;
+      enviarEscala(b.dataset.env, !!b.dataset.trocar);
+    });
 
     const tab = $('#es-tabela');
     tab.addEventListener('change', function (e) {
@@ -4829,6 +4943,7 @@ window.FT_CONFIG = {
     });
     $('#es-tabela').innerHTML = h + '</tbody>';
     desenharResumo(dias, ativos);
+    desenharEnvio();
   }
 
   function opcoes(setor, sel, ativos, nomePorId) {
@@ -4859,6 +4974,57 @@ window.FT_CONFIG = {
       return '<span class="pessoa-chip"><b>' + esc(f.nome) + '</b> ' + cont[f.id].length + (cont[f.id].length === 1 ? ' dia' : ' dias') + '<small>' + cont[f.id].join(' · ') + '</small></span>';
     }).join('') : '<p class="vazio-bloco">Ninguém escalado ainda nesta semana.</p>') +
       (fora.length ? '<p class="fora"><b>Sem escala nesta semana:</b> ' + fora.map(function (f) { return esc(f.nome); }).join(', ') + '</p>' : '');
+  }
+
+  /* ---------- envio individual no WhatsApp ---------- */
+  function setorMsg(s) { return s === FT.SETOR_MOTO ? 'ENTREGA (MOTOBOY)' : s; }
+  // dias e setores de uma pessoa na semana aberta
+  function diasDe(fid) {
+    const r = [];
+    ORDEM_DIAS.map(function (k) { return FT.diasDaSemana(st.semana)[(k + 6) % 7]; }).forEach(function (d) {
+      const dia = st.escala.dias[d]; if (!dia || !dia.aberto) return;
+      const setores = FT.SETORES.filter(function (s) { return (dia.alocados[s] || []).slice(0, +dia.vagas[s] || 0).indexOf(fid) >= 0; });
+      if (setores.length) r.push({ data: d, setores: setores });
+    });
+    return r;
+  }
+  function textoEscalaPessoa(f) {
+    const ds = diasDe(f.id), nome = String(f.nome).split(' ')[0];
+    const periodo = FT.ddmm(st.semana) + ' A ' + FT.ddmm(FT.somaDias(st.semana, 6));
+    if (!ds.length) return 'OLÁ, ' + nome + '! HOUVE UMA MUDANÇA NA ESCALA DA SEMANA DE ' + periodo + ': VOCÊ NÃO ESTÁ MAIS ESCALADO(A) NESTA SEMANA.\nQUALQUER DÚVIDA, FALE COM O GERENTE.\nFORNERIA TOSCANA';
+    return 'OLÁ, ' + nome + '! SUA ESCALA NA FORNERIA TOSCANA NA SEMANA DE ' + periodo + ':\n' +
+      ds.map(function (x) { return '• ' + FT.DIAS[FT.diaSemana(x.data)].toUpperCase() + ' ' + FT.ddmm(x.data) + ' – ' + x.setores.map(setorMsg).join(' E '); }).join('\n') +
+      '\n\nTOTAL: ' + ds.length + (ds.length === 1 ? ' DIA' : ' DIAS') + '. SE NÃO PUDER COMPARECER EM ALGUM DIA, AVISE O QUANTO ANTES.\nFORNERIA TOSCANA';
+  }
+  function desenharEnvio() {
+    const el = $('#es-envio'); if (!el || !st.escala) return;
+    const env = st.escala.enviados || {};
+    const lista = st.funcs.filter(function (f) {
+      const tem = diasDe(f.id).length;
+      if (!tem && !env[f.id]) return false;           // só quem está na escala (ou já recebeu e saiu)
+      return st.envTodos || f.tipo === 'freelancer' || (!tem && env[f.id]);
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });
+    if (!lista.length) { el.innerHTML = '<tbody><tr><td class="vazio-lista">' + (st.envTodos ? 'Ninguém escalado nesta semana.' : 'Nenhum freelancer escalado nesta semana. Marque "Mostrar também fixos e motoboys" para enviar para eles.') + '</td></tr></tbody>'; return; }
+    el.innerHTML = '<thead><tr><th>Funcionário</th><th>Dias na semana</th><th>Situação</th><th class="num">WhatsApp</th></tr></thead><tbody>' +
+      lista.map(function (f) {
+        const ds = diasDe(f.id), e = env[f.id], txt = textoEscalaPessoa(f);
+        const sit = !e ? (ds.length ? '<span class="chip-parcial">não enviada</span>' : '')
+          : e.txt === txt ? '<span class="chip-ok">✓ enviada ' + FT.ddmm(FT.dataSP(e.em)) + ' às ' + FT.horaSP(e.em) + '</span>'
+            : '<span class="chip-dif">escala mudou · reenviar</span>';
+        return '<tr><td><b>' + esc(f.nome) + '</b><small>' + esc(FT.nomeTipo(f.tipo || '')) + '</small></td><td>' +
+          (ds.length ? ds.map(function (x) { return '<span class="es-env-dia">' + FT.DIAS_CURTOS[FT.diaSemana(x.data)] + ' ' + FT.ddmm(x.data) + ' · ' + esc(x.setores.map(function (s) { return s === FT.SETOR_MOTO ? 'ENTREGA' : s; }).join(' / ')) + '</span>'; }).join(' ') : '<i>saiu da escala</i>') +
+          '</td><td>' + sit + '</td><td class="num">' + FT.botaoWhats(f, 'data-env="' + esc(f.id) + '"', e ? (e.txt === txt ? 'Reenviar' : 'Enviar de novo') : (ds.length ? 'Enviar' : 'Avisar')) + '</td></tr>';
+      }).join('') + '</tbody>';
+  }
+  async function enviarEscala(fid, trocar) {
+    const f = st.funcs.find(function (x) { return x.id === fid; }); if (!f) return;
+    const txt = textoEscalaPessoa(f);
+    const ok = await FT.enviarWhats(f, txt, trocar);
+    if (!ok) { desenharEnvio(); return; }
+    st.escala.enviados = st.escala.enviados || {};
+    if (diasDe(fid).length) st.escala.enviados[fid] = { em: new Date().toISOString(), txt: txt };
+    else delete st.escala.enviados[fid];
+    mudou(false); desenharEnvio();
   }
 
   /* ---------- calendário ---------- */
@@ -7716,12 +7882,18 @@ window.FT_CONFIG = {
   }
   function avisosWhatsApp(ids) {
     $('#fp-sub').innerHTML = '✓ Espelhos de <b>' + nomeMes(st.mes) + '</b> liberados no app. Agora avise cada funcionário no WhatsApp (abre a conversa com a mensagem pronta):';
-    $('#fp-tab').innerHTML = '<thead><tr><th>Funcionário</th><th>WhatsApp</th><th></th></tr></thead><tbody>' + ids.map(function (id) {
-      const tel = String((st.porId[id] || {}).telefone || '').replace(/\D/g, '');
-      const num = tel ? (tel.length <= 11 ? '55' + tel : tel) : '';
-      return '<tr><td>' + esc(nome(id)) + '</td><td>' + (tel ? esc(tel.replace(/^(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3')) : '<span class="chip-cinza">sem telefone</span>') + '</td>' +
-        '<td><a class="btn btn-sec btn-p" target="_blank" rel="noopener" href="https://wa.me/' + num + '?text=' + encodeURIComponent(mensagemEspelho(id)) + '">Avisar no WhatsApp</a></td></tr>';
-    }).join('') + '</tbody>';
+    const linhas = function () {
+      $('#fp-tab').innerHTML = '<thead><tr><th>Funcionário</th><th class="num">WhatsApp</th></tr></thead><tbody>' + ids.map(function (id) {
+        const f = st.porId[id] || { id: id, nome: nome(id) };
+        return '<tr><td>' + esc(nome(id)) + '</td><td class="num">' + FT.botaoWhats(f, 'data-avisar="' + esc(id) + '"', 'Avisar no WhatsApp') + '</td></tr>';
+      }).join('') + '</tbody>';
+    };
+    linhas();
+    $('#fp-tab').onclick = async function (e) {
+      const b = e.target.closest('[data-avisar]'); if (!b) return;
+      const id = b.dataset.avisar, f = st.porId[id] || { id: id, nome: nome(id) };
+      if (await FT.enviarWhats(f, mensagemEspelho(id), !!b.dataset.trocar)) { st.porId[id] = f; linhas(); }
+    };
     $('#fp-ok').hidden = true; $('#fp-cancelar').textContent = 'Fechar';
   }
 
@@ -8000,7 +8172,7 @@ window.FT_CONFIG = {
     const cpf = p.termo ? p.termo.cpf : ((st.ass.find(function (a) { return a.funcionario_id === p.id; }) || {}).funcionario_cpf);
     let h = '<div class="pa-cab"><div><h2>' + esc(p.nome) + '</h2><p>' + (cpf ? 'CPF ' + esc(FT.formatarCPF(cpf)) + ' · ' : '') +
       (p.termo ? 'Termo de adesão aceito em ' + esc(dataHoraSP(p.termo.aceito_em)) : 'Ainda não aceitou o termo de adesão (aceita na 1ª assinatura)') + '</p></div>' +
-      '<div class="acoes-linha">' + (c.pendente ? '<a class="btn btn-sec" id="pa-cobrar" target="_blank" rel="noopener" href="https://wa.me/' + (tel ? (tel.length <= 11 ? '55' + tel : tel) : '') + '?text=' + encodeURIComponent(mensagemCobranca(p, docs)) + '">Cobrar no WhatsApp</a>' : '') +
+      '<div class="acoes-linha">' + (c.pendente ? FT.botaoWhats(p.func, 'data-cobrar="' + esc(p.id) + '"', 'Cobrar no WhatsApp') : '') +
       ((c.assinado + c.anterior) || p.termo ? '<button type="button" class="btn" data-zip="' + esc(p.id) + '">Baixar pasta (ZIP)</button>' : '') + '</div></div>';
     if (p.termo) {
       h += '<div class="pa-termo"><span>📄</span><div><b>Termo de adesão à assinatura eletrônica</b><small>Aceito em ' + esc(dataHoraSP(p.termo.aceito_em)) + (p.termo.ip ? ' · IP ' + esc(p.termo.ip) : '') + '</small></div><button type="button" class="btn btn-sec btn-p" data-termo="' + esc(p.id) + '">Ver PDF</button></div>';
@@ -8034,6 +8206,11 @@ window.FT_CONFIG = {
 
   async function acaoPasta(e) {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.cobrar) {
+      const p = st.lista.find(function (x) { return x.id === b.dataset.cobrar; });
+      if (p && await FT.enviarWhats(p.func, mensagemCobranca(p, filtrarMes(p.docs)), !!b.dataset.trocar)) desenharPasta();
+      return;
+    }
     const txt = b.textContent;
     try {
       b.disabled = true;
