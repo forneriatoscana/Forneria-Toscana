@@ -863,6 +863,22 @@ table.lista.vp-dias .num { min-width: 64px; }
   .pa-tab th:nth-child(3), .pa-tab td:nth-child(3) { display: none; }
 }
 
+/* ---------- Fluxo: dinheiro do caixa ---------- */
+.fx-din { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid #c9a227; border-radius: var(--r); padding: 14px 16px; display: grid; gap: 10px; }
+.fx-din-cab h2 { margin: 0; font-size: 15px; letter-spacing: .03em; }
+.fx-din-cab p { margin: 2px 0 0; color: var(--ink-3); font-size: 12.5px; }
+.fx-din-vazio { margin: 0; font-size: 13px; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+.fx-din-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.fx-din-nums article { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.fx-din-nums h3 { margin: 0; font-size: 11.5px; letter-spacing: .05em; color: var(--ink-3); }
+.fx-din-nums .v { margin: 0; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fx-din-nums .v.neg { color: var(--ruim); }
+.fx-din-nums .s { margin: 0; font-size: 11.5px; color: var(--ink-3); }
+.fx-din-top ol { margin: 2px 0 0; padding: 0; list-style: none; display: grid; gap: 2px; font-size: 12.5px; }
+.fx-din-top li { display: flex; justify-content: space-between; gap: 8px; }
+.fx-din-top li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-dinl th.fx-rot { box-shadow: inset 3px 0 0 #c9a227; }
+
 </style>
 </head>
 <body>
@@ -2480,6 +2496,11 @@ window.FT_CONFIG = {
     ['VISITA TECNICA', ['ALIMENTACAO', 'COMBUSTIVEL/PEDAGIO VISITA TECNICA', 'HOSPEDAGEM']]
   ];
   C.CONTAS_RECEBER = [['PIX', 'PIX'], ['CARTAO DE CREDITO', 'Cartão de crédito'], ['CARTAO DE DEBITO', 'Cartão de débito'], ['CONTAS A RECEBER', 'Contas a receber (fiado)'], ['OUTRAS', 'Outras entradas']];
+  // pagamento/recebimento em dinheiro (conta CAIXA DINHEIRO no sistema): não passa pelo banco
+  C.ehDinheiro = function (conta) {
+    const k = FT.semAcento(conta);
+    return /DINHEIRO|ESPECIE/.test(k) || (/^CAIXA\b/.test(k) && !/ECONOMICA|CEF/.test(k));
+  };
   function contaReceber(conta) { const k = FT.semAcento(conta); return ['PIX', 'CARTAO DE CREDITO', 'CARTAO DE DEBITO', 'CONTAS A RECEBER'].indexOf(k) >= 0 ? k : 'OUTRAS'; }
 
   /* Fluxo do mês.
@@ -2492,12 +2513,18 @@ window.FT_CONFIG = {
     const porDia = {};
     resumo.forEach(function (r) {
       const d = String(r.data).slice(0, 10);
-      const x = porDia[d] = porDia[d] || { previsto: 0, previstoConta: {}, saidas: 0, grupo: {}, op: {} };
+      const x = porDia[d] = porDia[d] || { previsto: 0, previstoConta: {}, saidas: 0, grupo: {}, op: {}, dinEnt: 0, dinSai: 0, dinOp: {} };
       const v = +r.total || 0;
+      if (C.ehDinheiro(r.conta)) {
+        // dinheiro do caixa: controle à parte, fora do saldo do banco
+        if (r.tipo === 'receber') x.dinEnt += v;
+        else { x.dinSai += v; const k = r.grupo + '|' + r.operacao; x.dinOp[k] = (x.dinOp[k] || 0) + v; }
+        return;
+      }
       if (r.tipo === 'receber') { x.previsto += v; const k = contaReceber(r.conta); x.previstoConta[k] = (x.previstoConta[k] || 0) + v; }
       else { x.saidas += v; x.grupo[r.grupo] = (x.grupo[r.grupo] || 0) + v; const k = r.grupo + '|' + r.operacao; x.op[k] = (x.op[k] || 0) + v; }
     });
-    const vazio = { previsto: 0, previstoConta: {}, saidas: 0, grupo: {}, op: {} };
+    const vazio = { previsto: 0, previstoConta: {}, saidas: 0, grupo: {}, op: {}, dinEnt: 0, dinSai: 0, dinOp: {} };
     const extratoDe = function (d) { const x = dias[d]; return x && x.saldo_extrato != null && x.saldo_extrato !== '' ? +x.saldo_extrato : null; };
     const entradaDe = function (d, x) { const e = dias[d]; return e && e.entrada_extrato != null && e.entrada_extrato !== '' ? +e.entrada_extrato : x.previsto; };
     // Saldo esperado do dia = saldo do extrato do dia anterior (se conferido) ou o saldo esperado anterior
@@ -2512,7 +2539,7 @@ window.FT_CONFIG = {
     }
     const abertura = ini && ini.data < primeiro ? FT.r2(extratoDe(FT.somaDias(primeiro, -1)) != null ? extratoDe(FT.somaDias(primeiro, -1)) : saldo) : null;
     const lista = [];
-    const tot = { previsto: 0, previstoConta: {}, extrato: 0, entrada: 0, saidas: 0, grupo: {}, op: {}, diasConciliados: 0, diasComDif: 0 };
+    const tot = { previsto: 0, previstoConta: {}, extrato: 0, entrada: 0, saidas: 0, grupo: {}, op: {}, diasConciliados: 0, diasComDif: 0, dinEnt: 0, dinSai: 0, dinOp: {} };
     for (let d = primeiro; d <= ultimo; d = FT.somaDias(d, 1)) {
       const x = porDia[d] || vazio, dia = dias[d] || {};
       const temExtrato = dia.entrada_extrato != null && dia.entrada_extrato !== '';
@@ -2529,13 +2556,16 @@ window.FT_CONFIG = {
       if (dif != null && Math.abs(dif) >= 0.01 && dia.conciliado_manual) { difAceita = dif; dif = 0; }
       if (dif != null) { if (Math.abs(dif) < 0.01) tot.diasConciliados++; else tot.diasComDif++; }
       lista.push({ data: d, previsto: FT.r2(x.previsto), previstoConta: x.previstoConta, extrato: temExtrato ? +dia.entrada_extrato : null, entrada: FT.r2(entrada), entradaPrevista: !temExtrato,
-        saidas: FT.r2(x.saidas), saidaExtrato: dia.saida_extrato != null && dia.saida_extrato !== '' ? +dia.saida_extrato : null, grupo: x.grupo, op: x.op, saldoAnterior: base == null ? null : FT.r2(base), saldo: saldoDia, saldoExtrato: saldoExt, dif: dif, difAceita: difAceita, aceito: !!dia.conciliado_manual, obs: dia.obs || '' });
+        saidas: FT.r2(x.saidas), saidaExtrato: dia.saida_extrato != null && dia.saida_extrato !== '' ? +dia.saida_extrato : null, grupo: x.grupo, op: x.op, saldoAnterior: base == null ? null : FT.r2(base), saldo: saldoDia, saldoExtrato: saldoExt, dif: dif, difAceita: difAceita, aceito: !!dia.conciliado_manual, obs: dia.obs || '',
+        dinEnt: FT.r2(x.dinEnt), dinSai: FT.r2(x.dinSai), dinOp: x.dinOp });
+      tot.dinEnt += x.dinEnt; tot.dinSai += x.dinSai;
+      Object.keys(x.dinOp).forEach(function (k) { tot.dinOp[k] = (tot.dinOp[k] || 0) + x.dinOp[k]; });
       tot.previsto += x.previsto; tot.entrada += entrada; if (dia.saida_extrato != null && dia.saida_extrato !== '') { tot.saidaExtrato = (tot.saidaExtrato || 0) + +dia.saida_extrato; } tot.saidas += x.saidas; if (temExtrato) tot.extrato += +dia.entrada_extrato;
       Object.keys(x.previstoConta).forEach(function (k) { tot.previstoConta[k] = (tot.previstoConta[k] || 0) + x.previstoConta[k]; });
       Object.keys(x.grupo).forEach(function (k) { tot.grupo[k] = (tot.grupo[k] || 0) + x.grupo[k]; });
       Object.keys(x.op).forEach(function (k) { tot.op[k] = (tot.op[k] || 0) + x.op[k]; });
     }
-    ['previsto', 'entrada', 'saidas', 'extrato', 'saidaExtrato'].forEach(function (k) { tot[k] = FT.r2(tot[k]); });
+    ['previsto', 'entrada', 'saidas', 'extrato', 'saidaExtrato', 'dinEnt', 'dinSai'].forEach(function (k) { tot[k] = FT.r2(tot[k]); });
     tot.resultado = FT.r2(tot.entrada + tot.saidas);
     const ultimoDia = lista[lista.length - 1];
     tot.saldoFinal = ultimoDia ? (ultimoDia.saldoExtrato != null ? ultimoDia.saldoExtrato : ultimoDia.saldo) : null;
@@ -2552,7 +2582,9 @@ window.FT_CONFIG = {
       if (vistos[g]) return;
       grupos.push({ grupo: g, ops: Object.keys(tot.op).filter(function (k) { return k.split('|')[0] === g; }).map(function (k) { return k.split('|')[1]; }) });
     });
-    return { dias: lista, totais: tot, grupos: grupos, abertura: abertura, aberturaExtrato: abertura != null && (extratoDe(FT.somaDias(primeiro, -1)) != null || ini.data === FT.somaDias(primeiro, -1)) };
+    // operações pagas em dinheiro, maiores primeiro
+    const dinOps = Object.keys(tot.dinOp).sort(function (a, b) { return tot.dinOp[a] - tot.dinOp[b]; });
+    return { dias: lista, totais: tot, grupos: grupos, dinOps: dinOps, abertura: abertura, aberturaExtrato: abertura != null && (extratoDe(FT.somaDias(primeiro, -1)) != null || ini.data === FT.somaDias(primeiro, -1)) };
   };
 
   /* Conciliação de um dia: casa as saídas do extrato do banco com as contas a pagar do sistema.
@@ -5662,6 +5694,7 @@ window.FT_CONFIG = {
       '<div class="acoes-linha"><button type="button" class="btn btn-sec btn-p" id="fx-abrir-todos">Abrir todos os grupos</button></div></div>' +
       '<div id="fx-msg" class="msg" hidden></div>' +
       '<div class="kpis" id="fx-kpis"></div>' +
+      '<section class="fx-din" id="fx-din" aria-label="Dinheiro do caixa"></section>' +
       '<details class="painel fx-venc" id="fx-venc"><summary id="fx-venc-sum"></summary><div class="rolagem"><table class="lista" id="fx-venc-tab"></table></div></details>' +
       '<div class="rolagem fx-rolagem"><table class="fx" id="fx-tabela"></table></div>' +
       '<p class="dica">Valores em itálico na linha TOTAL DE ENTRADA são <b>previstos pelo sistema</b> (o extrato daquele dia ainda não foi informado). Saldo esperado = saldo do extrato do dia anterior + entradas + saídas do dia.</p>';
@@ -5700,6 +5733,7 @@ window.FT_CONFIG = {
       '<div id="dd-conc-bloco" hidden><h3 class="h3-dia">Conciliação com o extrato do banco</h3><p class="dd-conc-res" id="dd-conc-res"></p>' +
       '<div class="rolagem"><table class="lista" id="dd-banco"></table></div></div>' +
       '<h3 class="h3-dia">Saídas do dia (sistema)</h3><div class="rolagem"><table class="lista" id="dd-saidas"></table></div>' +
+      '<div id="dd-din-bloco" hidden><h3 class="h3-dia">💵 Em dinheiro do caixa (fora do banco)</h3><div class="rolagem"><table class="lista" id="dd-din"></table></div></div>' +
       '<h3 class="h3-dia">Recebimentos previstos (sistema)</h3><div class="rolagem"><table class="lista" id="dd-receb"></table></div>' +
       '<h3 class="h3-dia">Lançamentos manuais do dia</h3><div class="rolagem"><table class="lista" id="dd-man"></table></div>' +
       '<form class="dd-man-add" id="dd-man-form" novalidate><select id="dm-tipo" aria-label="Tipo"><option value="pagar">Saída</option><option value="receber">Entrada</option></select>' +
@@ -5763,11 +5797,12 @@ window.FT_CONFIG = {
     $('#fx-kpis').innerHTML = [
       { t: 'Saldo no início do mês', v: f.abertura != null ? FT.moeda(f.abertura) : '—', s: f.abertura == null ? 'Informe o saldo inicial' : (f.aberturaExtrato ? 'Extrato do último dia do mês anterior' : 'Calculado pelo sistema') },
       { t: 'Entradas', v: FT.moeda(t.entrada), s: t.extrato ? 'Extrato ' + FT.moeda(t.extrato) + ' · previsto no resto' : 'Previsto pelo relatório de contas a receber' },
-      { t: 'Saídas', v: FT.moeda(t.saidas), s: 'Contas a pagar com vencimento no mês', neg: true },
+      { t: 'Saídas', v: FT.moeda(t.saidas), s: t.dinSai ? 'Pelo banco · fora ' + FT.moeda(-t.dinSai) + ' em dinheiro' : 'Contas a pagar com vencimento no mês', neg: true },
       { t: 'Resultado do mês', v: FT.moeda(t.resultado), s: t.resultado < 0 ? 'Saiu mais do que entrou' : 'Entradas menos saídas', vermelho: t.resultado < -0.004, pos: t.resultado > 0.004 },
       { t: 'Saldo no fim do mês', v: t.saldoFinal != null ? FT.moeda(t.saldoFinal) : '—', s: t.saldoFinal != null && t.saldoFinal < 0 ? 'Conta no negativo' : 'Saldo esperado no último dia', d: !(t.saldoFinal < 0), vermelho: t.saldoFinal < 0 },
       { t: 'Conciliação', v: t.diasConciliados + ' dias ok', s: t.diasComDif ? t.diasComDif + ' dia(s) com diferença' : 'Nenhuma diferença', alerta: t.diasComDif > 0 }
     ].map(function (k) { return '<article class="kpi' + (k.d ? ' kpi-destaque' : '') + (k.alerta ? ' kpi-alerta' : '') + (k.vermelho ? ' kpi-neg' : '') + (k.pos ? ' kpi-pos' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p><p class="kpi-s">' + esc(k.s) + '</p></article>'; }).join('');
+    desenharDinheiro();
     // vencidos
     const pagar = st.vencidos.filter(function (x) { return x.tipo === 'pagar'; }), receber = st.vencidos.filter(function (x) { return x.tipo === 'receber'; });
     const soma = function (l) { return l.reduce(function (s, x) { return s + (+x.valor); }, 0); };
@@ -5776,6 +5811,25 @@ window.FT_CONFIG = {
     $('#fx-venc-tab').innerHTML = '<thead><tr><th>Vencimento</th><th>Tipo</th><th>Nome</th><th>Operação</th><th>Descrição</th><th>Conta</th><th class="num">Valor</th></tr></thead><tbody>' +
       st.vencidos.map(function (x) { return '<tr><td>' + FT.ddmmaaaa(String(x.data_vencimento).slice(0, 10)) + '</td><td>' + (x.tipo === 'pagar' ? 'A PAGAR' : 'A RECEBER') + '</td><td>' + esc(x.nome) + '</td><td>' + esc(x.operacao) + '</td><td>' + esc(x.descricao) + '</td><td>' + esc(x.conta) + '</td><td class="num' + (x.valor < 0 ? ' neg' : '') + '">' + FT.num2(+x.valor) + '</td></tr>'; }).join('') + '</tbody>';
     desenharTabela();
+  }
+
+  // dinheiro do caixa: lançado no sistema com a conta CAIXA DINHEIRO (não aparece no extrato)
+  function desenharDinheiro() {
+    const f = st.f, t = f.totais, el = $('#fx-din');
+    const diasCom = f.dias.filter(function (d) { return d.dinSai; });
+    const top = f.dinOps.slice(0, 3).map(function (k) { return '<li><span>' + esc(k.split('|')[1]) + '</span><b>' + FT.moeda(-t.dinOp[k]) + '</b></li>'; }).join('');
+    const maior = diasCom.slice().sort(function (a, b) { return a.dinSai - b.dinSai; })[0];
+    let h = '<div class="fx-din-cab"><h2>💵 Dinheiro do caixa</h2><p>Pagamentos e recebimentos lançados no sistema com a conta <b>CAIXA DINHEIRO</b>. Não passam pelo banco, por isso ficam fora do saldo e da conciliação.</p></div>';
+    if (!t.dinSai && !t.dinEnt) {
+      el.innerHTML = h + '<p class="fx-din-vazio">Nenhum pagamento em dinheiro neste mês. Quando pagar algo com o dinheiro do caixa, lance no sistema com a forma de pagamento/conta <b>CAIXA DINHEIRO</b> e importe o relatório de contas como sempre.</p>';
+      return;
+    }
+    h += '<div class="fx-din-nums">' +
+      '<article><h3>Saiu em dinheiro</h3><p class="v neg">' + FT.moeda(-t.dinSai) + '</p><p class="s">' + diasCom.length + ' dia(s) com saída' + (maior ? ' · maior: ' + FT.ddmm(maior.data) + ' (' + FT.moeda(-maior.dinSai) + ')' : '') + '</p></article>' +
+      (t.dinEnt ? '<article><h3>Entrou em dinheiro</h3><p class="v">' + FT.moeda(t.dinEnt) + '</p><p class="s">recebimentos lançados como dinheiro</p></article>' +
+        '<article><h3>Sobra do dinheiro no mês</h3><p class="v' + (t.dinEnt + t.dinSai < 0 ? ' neg' : '') + '">' + FT.moeda(t.dinEnt + t.dinSai) + '</p><p class="s">entrou menos saiu</p></article>' : '') +
+      '<article class="fx-din-top"><h3>Onde mais saiu dinheiro</h3><ol>' + top + '</ol></article></div>';
+    el.innerHTML = h;
   }
 
   function desenharTabela() {
@@ -5813,6 +5867,14 @@ window.FT_CONFIG = {
     });
     linha('TOTAL DE SAÍDA', function (d) { return d.saidas; }, t.saidas, 'fx-total');
 
+    if (t.dinSai || t.dinEnt) {
+      secao('DINHEIRO DO CAIXA · FORA DO BANCO');
+      if (t.dinEnt) linha('Entradas em dinheiro', function (d) { return d.dinEnt; }, t.dinEnt, 'fx-g fx-dinl');
+      linha('<button type="button" class="fx-grp" data-grupo="__din">' + seta('__din') + 'Saídas em dinheiro</button>', function (d) { return d.dinSai; }, t.dinSai, 'fx-g fx-dinl');
+      if (st.abertos.__din) f.dinOps.forEach(function (k) { linha('<span class="fx-op">' + esc(k.split('|')[1]) + '</span>', function (d) { return d.dinOp[k]; }, t.dinOp[k], 'fx-o'); });
+      if (t.dinEnt) linha('Sobra do dinheiro', function (d) { return d.dinEnt + d.dinSai || null; }, FT.r2(t.dinEnt + t.dinSai), 'fx-total');
+    }
+
     secao('SALDO BANCÁRIO');
     linha('Saldo esperado (calculado)', function (d) { return d.saldo; }, undefined, 'fx-saldo');
     linha('Saldo no extrato', function (d) { return d.saldoExtrato; }, undefined, 'fx-ext');
@@ -5839,6 +5901,7 @@ window.FT_CONFIG = {
     if (!$('#dlg-dia').open) $('#dlg-dia').showModal();
     $('#dd-conc-bloco').hidden = true;
     $('#dd-saidas').innerHTML = $('#dd-receb').innerHTML = $('#dd-man').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
+    $('#dd-din-bloco').hidden = true;
     try {
       const x = await FT.store.fluxo.doDia(d); if (st.dia !== d) return;
       st.doDia = x;
@@ -5847,9 +5910,12 @@ window.FT_CONFIG = {
           l.map(function (r) { return '<tr><td>' + esc(r.nome) + '</td><td>' + esc(r.operacao) + '</td><td>' + esc(r.descricao) + '</td><td>' + esc(r.conta) + '</td><td>' + (r.situacao === 'PAGO' ? '<span class="tag tag-ok">PAGO</span>' : '<span class="chip-parcial">' + esc(r.situacao || 'NÃO PAGO') + '</span>') + '</td><td class="num' + (r.valor < 0 ? ' neg' : '') + '">' + FT.num2(+r.valor) + '</td></tr>'; }).join('') + '</tbody>'
           : '<tbody><tr><td class="vazio-lista">' + vazio + '</td></tr></tbody>';
       };
-      $('#dd-saidas').innerHTML = linhas(x.lancamentos.filter(function (r) { return r.tipo === 'pagar'; }), 'Nenhuma conta a pagar neste dia.');
+      $('#dd-saidas').innerHTML = linhas(x.lancamentos.filter(function (r) { return r.tipo === 'pagar' && !C.ehDinheiro(r.conta); }), 'Nenhuma conta a pagar neste dia.');
+      const din = x.lancamentos.filter(function (r) { return C.ehDinheiro(r.conta); });
+      $('#dd-din-bloco').hidden = !din.length;
+      $('#dd-din').innerHTML = linhas(din, '');
       desenharConciliacao(x);
-      $('#dd-receb').innerHTML = linhas(x.lancamentos.filter(function (r) { return r.tipo === 'receber'; }), 'Nenhum recebimento previsto neste dia.');
+      $('#dd-receb').innerHTML = linhas(x.lancamentos.filter(function (r) { return r.tipo === 'receber' && !C.ehDinheiro(r.conta); }), 'Nenhum recebimento previsto neste dia.');
       $('#dd-man').innerHTML = x.manuais.length ? '<thead><tr><th>Tipo</th><th>Grupo</th><th>Operação</th><th>Descrição</th><th class="num">Valor</th><th></th></tr></thead><tbody>' +
         x.manuais.map(function (m) { return '<tr><td>' + (m.tipo === 'pagar' ? 'SAÍDA' : 'ENTRADA') + '</td><td>' + esc(m.grupo) + '</td><td>' + esc(m.operacao) + '</td><td>' + esc(m.descricao || '') + '</td><td class="num' + (m.valor < 0 ? ' neg' : '') + '">' + FT.num2(+m.valor) + '</td><td><button type="button" class="link" data-remover="' + esc(m.id) + '">Remover</button></td></tr>'; }).join('') + '</tbody>'
         : '<tbody><tr><td class="vazio-lista">Nenhum. Use para projeções, ajustes ou transferências que não estão no sistema.</td></tr></tbody>';
@@ -5972,6 +6038,12 @@ window.FT_CONFIG = {
       g.ops.forEach(function (o) { const k = g.grupo + '|' + o; add('   ' + o, function (d) { return d.op[k]; }, t.op[k]); });
     });
     add('TOTAL DE SAÍDA', function (d) { return d.saidas; }, t.saidas);
+    if (t.dinSai || t.dinEnt) {
+      rows.push(['DINHEIRO DO CAIXA (FORA DO BANCO)']);
+      if (t.dinEnt) add('ENTRADAS EM DINHEIRO', function (d) { return d.dinEnt; }, t.dinEnt);
+      add('SAÍDAS EM DINHEIRO', function (d) { return d.dinSai; }, t.dinSai);
+      f.dinOps.forEach(function (k) { add('   ' + k.split('|')[1], function (d) { return d.dinOp[k]; }, t.dinOp[k]); });
+    }
     add('SALDO ESPERADO (CALCULADO)', function (d) { return d.saldo; });
     add('SALDO NO EXTRATO', function (d) { return d.saldoExtrato; });
     add('DIFERENÇA', function (d) { return d.dif; });
