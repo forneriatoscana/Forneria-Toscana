@@ -904,6 +904,45 @@ table.lista.vp-dias .num { min-width: 64px; }
 .fixos-add { display: flex; flex-wrap: wrap; gap: 8px; }
 .fixos-add select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; }
 
+/* ---------- Descontos concedidos ---------- */
+#tela-descontos .kpis-4, .dc-imp .kpis-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dc-expl h2, .dc-sec h2 { margin: 0 0 8px; font-size: 16px; }
+.dc-sec h2 small { font-size: 11.5px; font-weight: 500; color: var(--ink-3); margin-left: 6px; letter-spacing: 0; }
+.dc-expl ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; font-size: 14px; line-height: 1.5; text-transform: none; }
+.dc-expl li b { font-weight: 700; }
+.dc-nota { margin: 10px 0 0; font-size: 12px; color: var(--ink-3); }
+.dc-sec { display: grid; gap: 4px; min-width: 0; }
+.dc-tipos { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.dc-tipo { text-align: left; display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-top: 4px solid var(--dc); border-radius: var(--r); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }
+.dc-tipo:disabled { opacity: .5; cursor: default; }
+.dc-tipo.ativo { box-shadow: 0 0 0 2px var(--dc); }
+.dc-tipo b { font-size: 13px; }
+.dc-tipo .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dc-tipo small { font-size: 11.5px; color: var(--ink-3); }
+.dc-tipo .ex { text-transform: none; line-height: 1.35; }
+.dc-tipo .bar, .dc-bar { display: block; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.dc-tipo .bar i, .dc-bar i { display: block; height: 100%; background: var(--dc, var(--accent)); border-radius: 3px; }
+.d-f { --dc: #3987e5; } .d-c { --dc: #d95926; } .d-r { --dc: #199e70; } .d-o { --dc: #8a6bc9; } .d-i { --dc: #b8263a; }
+.dc-chip { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; border-radius: 4px; padding: 1px 6px; background: color-mix(in srgb, var(--dc) 16%, transparent); color: var(--dc); white-space: nowrap; }
+#dc-corpo { display: grid; gap: 20px; min-width: 0; }
+.dc-duas { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.dc-duas .tag { font-size: 9.5px; padding: 0 5px; }
+.dc-alto { max-height: 420px; overflow: auto; }
+.dc-dias .dc-barcol { width: 22%; }
+.dc-dias .dc-bar i { background: #d95926; }
+.dc-peds td small { display: block; color: var(--ink-3); font-size: 11px; }
+.dc-peds .dc-pg { font-size: 12px; max-width: 220px; }
+.dc-ped { cursor: pointer; }
+.dc-ped:hover td, .dc-ped.aberto td { background: var(--surface-2); }
+.dc-itens > td { background: var(--surface-2); padding: 4px 10px 12px 28px; }
+.dc-itens table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dc-itens th, .dc-itens td { padding: 3px 8px; text-align: left; border-bottom: 1px solid var(--line); }
+.dc-itens .num { text-align: right; }
+.dc-itens tr.com td { font-weight: 600; }
+@media (max-width: 1000px) { .dc-tipos { grid-template-columns: 1fr 1fr; } .dc-duas { grid-template-columns: minmax(0, 1fr); } #tela-descontos .kpis-4 { grid-template-columns: 1fr 1fr; } }
+@media print { .dc-alto { max-height: none; overflow: visible; } .dc-imp .dc-tipo .ex { display: none; } }
+.dc-duas td small { display: block; color: var(--ink-3); font-size: 11px; }
+
 </style>
 </head>
 <body>
@@ -933,6 +972,7 @@ table.lista.vp-dias .num { min-width: 64px; }
         <div class="menu-itens" id="mg-dash" hidden>
           <a href="#indicadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Indicadores</a>
           <a href="#produtos"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6.4 6.4M12 12 3.6 15"/><circle cx="8" cy="8.5" r="1"/><circle cx="15.5" cy="8" r="1"/><circle cx="9" cy="16.5" r="1"/></svg>Vendas por produto</a>
+          <a href="#descontos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8 8-9 9z"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M10 16l5-5"/></svg>Descontos concedidos</a>
         </div>
       </div>
       <div class="menu-grupo" data-grupo="fin">
@@ -1057,6 +1097,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     </section>
 
     <section id="tela-produtos" class="tela" hidden></section>
+    <section id="tela-descontos" class="tela" hidden></section>
     <section id="tela-pagamento" class="tela" hidden></section>
     <section id="tela-folha" class="tela" hidden></section>
     <section id="tela-escala" class="tela" hidden></section>
@@ -1341,6 +1382,18 @@ window.FT_CONFIG = {
 
   function pareceVendas(linhas) { return acharCabecalhoVendas(linhas) >= 0; }
 
+  // "CARTÃO DE DÉBITO COD CD VALOR 173,00PIX COD PX VALOR 10,00" -> "CARTÃO DE DÉBITO 173,00 + PIX 10,00"
+  function limparPagamento(v) {
+    const t = String(v == null ? '' : v).toUpperCase(), r = [], re = /(.+?)\s+COD\s+\S+\s+VALOR\s+([\d.]*\d,\d{2})/g;
+    let m; while ((m = re.exec(t))) r.push(m[1].trim() + ' ' + m[2]);
+    return r.length ? r.join(' + ') : t.trim();
+  }
+  // tira da observação o texto automático do Sischef (GERADO PELO PED..., Identificador...)
+  function limparObs(v) {
+    return String(v == null ? '' : v).split('|').map(function (x) { return x.trim(); })
+      .filter(function (x) { return x && !/^GERADO PELO PED/i.test(x) && !/^IDENTIFICADOR PRINCIPAL/i.test(x) && !/^SECUND[AÁ]RIO/i.test(x); })
+      .join(' | ').toUpperCase();
+  }
   function lerVendas(linhas) {
     const h = acharCabecalhoVendas(linhas);
     if (h < 0) throw new Error('Não encontrei o cabeçalho do relatório de pedidos (colunas "Data pedido", "Grupo", "Total").');
@@ -1349,7 +1402,8 @@ window.FT_CONFIG = {
     const c = {
       pedido: col('ID PEDIDO'), tipo: col('TIPO PEDIDO'), data: col('DATA PEDIDO'),
       produto: col('PRODUTO'), grupo: col('GRUPO'), garcom: col('GARCOM'),
-      qtde: col('QTDE'), unit: col('UNITARIO'), desc: col('DESCONTO'), total: col('TOTAL')
+      qtde: col('QTDE'), unit: col('UNITARIO'), desc: col('DESCONTO'), total: col('TOTAL'),
+      pessoa: col('PESSOA'), pgto: col('PGTO'), obs: col('OBSERVACAO DO PEDIDO')
     };
     ['pedido', 'data', 'grupo', 'qtde', 'unit', 'total'].forEach(function (k) {
       if (c[k] < 0) throw new Error('Coluna obrigatória não encontrada no relatório de pedidos: ' + k);
@@ -1373,6 +1427,9 @@ window.FT_CONFIG = {
         grupo: semAcento(r[c.grupo]) || 'SEM GRUPO',
         produto: c.produto >= 0 ? String(r[c.produto] || '').trim() : '',
         garcom: c.garcom >= 0 ? String(r[c.garcom] || '').trim() : '',
+        pessoa: c.pessoa >= 0 ? String(r[c.pessoa] || '').trim().toUpperCase() : '',
+        pagamento: c.pgto >= 0 ? limparPagamento(r[c.pgto]) : '',
+        observacao: c.obs >= 0 ? limparObs(r[c.obs]) : '',
         qtde: qtde,
         unitario: unitario,
         desconto: desconto,
@@ -2987,6 +3044,27 @@ window.FT_CONFIG = {
         },
         salvarTelefone: async function (fid, tel) { return ok(sb.from('funcionarios').update({ telefone: tel || null }).eq('id', fid)); }
       },
+      descontos: {
+        // itens (todos) dos pedidos que tiveram algum desconto no período
+        carregar: async function (de, ate) {
+          const cols = 'data,data_hora,pedido_id,tipo_pedido,grupo,produto,garcom,pessoa,pagamento,observacao,qtde,unitario,desconto,bruto,total';
+          const com = [];
+          for (let i = 0; ; i += 1000) {
+            const d = await ok(sb.from('vendas_itens').select('pedido_id').neq('desconto', 0).gte('data', de).lte('data', ate).order('id').range(i, i + 999));
+            com.push.apply(com, d); if (d.length < 1000) break;
+          }
+          const ids = Array.from(new Set(com.map(function (x) { return x.pedido_id; })));
+          const r = [];
+          for (let i = 0; i < ids.length; i += 80) {
+            const parte = ids.slice(i, i + 80);
+            for (let j = 0; ; j += 1000) {
+              const d = await ok(sb.from('vendas_itens').select(cols).in('pedido_id', parte).gte('data', de).lte('data', ate).order('id').range(j, j + 999));
+              r.push.apply(r, d); if (d.length < 1000) break;
+            }
+          }
+          return r;
+        }
+      },
       // pastas dos colaboradores: documentos assinados no app (somente leitura)
       docs: {
         pasta: async function () { return ok(sb.from('vw_documentos_pasta').select('*')); },
@@ -3072,7 +3150,7 @@ window.FT_CONFIG = {
       funcionarios: clonar(inicial.funcionarios || []),
       config: {}, escalas: clonar(inicial.escalas || {}), pagamentos: {}, folhas: {},
       acessos: clonar(inicial.acessos || []), pontos: clonar(inicial.pontos || []),
-      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), produtos: clonar(inicial.produtos || []), holerites: clonar(inicial.holerites || {}), assinaturas: clonar(inicial.assinaturas || []), termos: clonar(inicial.termos || {}), fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
+      fluxoLanc: clonar(inicial.fluxoLanc || []), fluxoDias: clonar(inicial.fluxoDias || {}), produtos: clonar(inicial.produtos || []), holerites: clonar(inicial.holerites || {}), vendasItens: clonar(inicial.vendasItens || []), assinaturas: clonar(inicial.assinaturas || []), termos: clonar(inicial.termos || {}), fluxoMan: [], fluxoExt: clonar(inicial.fluxoExt || []),
       pontoConfig: { id: 1, lat: -23.4028019, lng: -46.0428557, raio_m: 100, precisao_max_m: 100 },
       ind: clonar(inicial.indicadores || { vendasDia: [], pedidosDia: [], maoObraDia: [] })
     };
@@ -3203,6 +3281,10 @@ window.FT_CONFIG = {
         termo: function (fid) { return espera(db.termos[fid] || null); },
         conteudo: function (fid, mes, tipo) { const h = db.holerites[fid + '|' + mes]; return espera(h ? { html: tipo === 'espelho' ? h.espelho_html : tipo === 'sistema' ? h.holerite_html : null, pdf: tipo === 'contab' ? h.contab_pdf : null, nome: h.contab_nome } : null); }
       },
+      descontos: {
+        // itens (todos) dos pedidos que tiveram algum desconto no período
+        carregar: function (de, ate) { return espera(db.vendasItens.filter(function (r) { return r.data >= de && r.data <= ate; })); }
+      },
       produtos: { carregar: function (de, ate) { return espera(db.produtos.filter(function (r) { return r.data >= de && r.data <= ate; })); } },
       folha: {
         ler: function (m) { return espera(db.folhas[m] || null); },
@@ -3230,6 +3312,9 @@ window.FT_CONFIG = {
           db.ind.pedidosDia = db.ind.pedidosDia.filter(fora).concat(ag.pedidosDia);
           const gp = {};
           a.itens.forEach(function (x) { const k = x.data + '|' + x.grupo + '|' + x.produto; gp[k] = (gp[k] || 0) + x.qtde; });
+          // itens dos pedidos com desconto (relatório de descontos)
+          const comDesc = {}; a.itens.forEach(function (x) { if (+x.desconto) comDesc[x.pedido_id] = 1; });
+          db.vendasItens = db.vendasItens.filter(fora).concat(a.itens.filter(function (x) { return comDesc[x.pedido_id]; }).map(function (x) { return Object.assign({ bruto: x.bruto }, x); }));
           db.produtos = db.produtos.filter(fora).concat(Object.keys(gp).map(function (k) { const q = k.split('|'); return { data: q[0], grupo: q[1], produto: q[2], qtde: gp[k] }; }));
         } else substituirMO(a.inicio, a.fim, a.itens);
         db.ind.atualizadoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + ' (prévia, não salvo)';
@@ -4027,6 +4112,274 @@ window.FT_CONFIG = {
 
   let montado = false;
   FT.telas.produtos = {
+    abrir: async function () {
+      if (!montado) { montado = true; montar(); }
+      await ir(st.mes || FT.hoje().slice(0, 7));
+    }
+  };
+})();
+
+/* Forneria Toscana — Dashboard › Descontos concedidos
+ * Para quem, quando, quem lançou e o motivo provável de cada desconto (relatório de pedidos do Sischef). */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const st = { mes: null, itens: [], peds: [], filtro: '', abertos: {}, primeira: true };
+
+  // tipos de desconto, deduzidos do percentual (o relatório do Sischef não traz o motivo digitado)
+  const TIPOS = {
+    func40: { nome: 'Desconto de 40% (funcionário)', curto: '40% funcionário', expl: 'Itens com 40% de desconto: é o desconto padrão para o consumo da equipe.', cor: 'd-f' },
+    inteira: { nome: 'Conta inteira de graça', curto: 'Conta inteira 100%', expl: 'Comanda ou pedido inteiro com 100% de desconto e sem pagamento: consumo da casa, evento, degustação ou conta cancelada lançada como desconto. Confira com quem lançou.', cor: 'd-i' },
+    cortesia: { nome: 'Cortesia (item de graça)', curto: 'Cortesia', expl: 'Item com 100% de desconto: saiu de graça para o cliente.', cor: 'd-c' },
+    conta: { nome: 'Desconto na conta (rateado)', curto: 'Desconto na conta', expl: 'Desconto pequeno dado no fechamento da conta; o Sischef divide o valor entre todos os itens.', cor: 'd-r' },
+    outros: { nome: 'Outros descontos', curto: 'Outros', expl: 'Percentual diferente dos padrões acima: vale conferir um por um.', cor: 'd-o' }
+  };
+  const ORDEM = ['func40', 'inteira', 'cortesia', 'conta', 'outros'];
+
+  function somaMes(chave, n) { const p = chave.split('-').map(Number); const d = new Date(p[0], p[1] - 1 + n, 1, 12); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function nomeMes(m) { const p = m.split('-'); return FT.MESES[+p[1] - 1] + '/' + p[0]; }
+  function pct(v) { return (Math.round(v * 1000) / 10).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%'; }
+  function hora(dh) { const m = /T?(\d{2}:\d{2})/.exec(String(dh || '').slice(10)); return m ? m[1] : ''; }
+
+  function montar() {
+    $('#tela-descontos').innerHTML =
+      '<div class="cab-tela"><div><h1>Descontos concedidos</h1><p>Quanto foi dado de desconto, para quem, quando, quem lançou e o motivo provável. Vem do relatório de pedidos do Sischef importado em <a href="#importar">Importar planilhas</a>.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="dc-excel">Baixar Excel</button><button type="button" class="btn" id="dc-imprimir">Imprimir</button></div></div>' +
+      '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="dc-ant" aria-label="Mês anterior">‹</button>' +
+      '<div class="nav-semana-t"><span>Mês</span><b id="dc-rotulo"></b></div>' +
+      '<button type="button" class="btn-icone" id="dc-prox" aria-label="Próximo mês">›</button>' +
+      '<button type="button" class="btn btn-sec btn-p" id="dc-atual">Mês atual</button></div></div>' +
+      '<div id="dc-msg" class="msg" hidden></div>' +
+      '<div id="dc-corpo"></div>';
+    $('#dc-ant').addEventListener('click', function () { ir(somaMes(st.mes, -1)); });
+    $('#dc-prox').addEventListener('click', function () { ir(somaMes(st.mes, 1)); });
+    $('#dc-atual').addEventListener('click', function () { ir(FT.hoje().slice(0, 7)); });
+    $('#dc-imprimir').addEventListener('click', imprimir);
+    $('#dc-excel').addEventListener('click', excel);
+    $('#dc-corpo').addEventListener('click', function (e) {
+      const f = e.target.closest('[data-filtro]');
+      if (f) { st.filtro = st.filtro === f.dataset.filtro ? '' : f.dataset.filtro; desenharLista(); return; }
+      const p = e.target.closest('[data-ped]');
+      if (p) { st.abertos[p.dataset.ped] = !st.abertos[p.dataset.ped]; desenharLista(); }
+    });
+  }
+
+  async function ir(mes) {
+    st.mes = mes; st.filtro = ''; st.abertos = {};
+    $('#dc-rotulo').textContent = nomeMes(mes).toUpperCase();
+    const p = mes.split('-').map(Number), de = mes + '-01', ate = FT.iso(new Date(p[0], p[1], 0, 12));
+    $('#dc-corpo').innerHTML = '<p class="vazio-lista">Carregando…</p>'; $('#dc-msg').hidden = true;
+    try {
+      const r = await Promise.all([FT.store.descontos.carregar(de, ate), FT.store.indicadores.carregar(), FT.obterFuncionarios ? FT.obterFuncionarios() : []]);
+      st.itens = r[0] || []; st.funcs = r[2] || [];
+      const vd = (r[1].vendasDia || []).filter(function (x) { return x.data >= de && x.data <= ate; });
+      st.brutoDia = {}; vd.forEach(function (x) { st.brutoDia[x.data] = (st.brutoDia[x.data] || 0) + (+x.bruto || 0); });
+      st.bruto = Object.keys(st.brutoDia).reduce(function (s, k) { return s + st.brutoDia[k]; }, 0);
+      st.pedidosMes = (r[1].pedidosDia || []).filter(function (x) { return x.data >= de && x.data <= ate; }).reduce(function (s, x) { return s + (+x.pedidos || 0); }, 0);
+      if (!st.itens.length && st.primeira) { st.primeira = false; if (!st.bruto) return ir(somaMes(mes, -1)); }
+      st.primeira = false;
+      calcular(); desenhar();
+    } catch (e) {
+      $('#dc-corpo').innerHTML = '';
+      $('#dc-msg').hidden = false; $('#dc-msg').className = 'msg erro';
+      $('#dc-msg').innerHTML = 'Não consegui carregar os descontos: ' + esc(FT.textoErro(e)) + '. Confira se o SQL da atualização 13 foi rodado no Supabase e importe de novo o relatório de pedidos.';
+    }
+  }
+
+  // funcionário? pelo cadastro (nome) ou pela observação do pedido
+  function ehFuncionario(pessoa, obs) {
+    if (/FUNCION/.test(FT.semAcento(obs))) return true;
+    const p = ' ' + FT.semAcento(pessoa).replace(/[^A-Z ]/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
+    if (p.trim() === '' || /CLIENTE FINAL/.test(p)) return false;
+    return (st.funcs || []).some(function (f) {
+      const n = FT.semAcento(String(f.nome).replace(/\(.*?\)/g, '')).replace(/[^A-Z ]/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!n) return false;
+      const t = n.split(' ');
+      if (t.length >= 2) return p.indexOf(' ' + n + ' ') === 0 || p.indexOf(' ' + t[0] + ' ') === 0 && p.indexOf(' ' + t[t.length - 1] + ' ') >= 0;
+      return p.indexOf(' ' + n + ' ') === 0;
+    });
+  }
+
+  function calcular() {
+    const porPed = {};
+    st.itens.forEach(function (x) {
+      const p = porPed[x.pedido_id] = porPed[x.pedido_id] || { id: x.pedido_id, data: x.data, data_hora: x.data_hora, tipo: x.tipo_pedido, pessoa: x.pessoa || '', pagamento: x.pagamento || '', obs: x.observacao || '', garcons: {}, itens: [], bruto: 0, desconto: 0, total: 0 };
+      const bruto = +x.bruto || (+x.total + +x.desconto) || 0;
+      p.itens.push({ produto: x.produto, grupo: x.grupo, qtde: +x.qtde, bruto: bruto, desconto: +x.desconto || 0, total: +x.total || 0, garcom: x.garcom });
+      p.bruto += bruto; p.desconto += +x.desconto || 0; p.total += +x.total || 0;
+      if (x.garcom && +x.desconto) p.garcons[x.garcom] = (p.garcons[x.garcom] || 0) + +x.desconto;
+      if (!p.data_hora || (x.data_hora && x.data_hora < p.data_hora)) p.data_hora = x.data_hora || p.data_hora;
+      if (!p.pessoa && x.pessoa) p.pessoa = x.pessoa;
+    });
+    st.peds = Object.values(porPed).filter(function (p) { return p.desconto > 0.004; });
+    st.peds.forEach(function (p) {
+      const pp = p.bruto ? p.desconto / p.bruto : 0;
+      const desc = p.itens.filter(function (i) { return i.desconto > 0.004; });
+      const pcts = desc.map(function (i) { return i.bruto ? i.desconto / i.bruto : 0; });
+      const uniforme = pcts.length > 1 && Math.max.apply(null, pcts) - Math.min.apply(null, pcts) < 0.02;
+      p.porTipo = {};
+      desc.forEach(function (i, k) {
+        const q = pcts[k];
+        let t;
+        if (pp >= 0.98) t = 'inteira';
+        else if (q >= 0.98) t = 'cortesia';
+        else if (q >= 0.35 && q <= 0.45) t = 'func40';
+        else if (q <= 0.15 && (uniforme || pp <= 0.15)) t = 'conta';
+        else t = 'outros';
+        i.tipo = t; i.pct = q;
+        p.porTipo[t] = (p.porTipo[t] || 0) + i.desconto;
+      });
+      p.tipoPrincipal = ORDEM.slice().sort(function (a, b) { return (p.porTipo[b] || 0) - (p.porTipo[a] || 0); })[0];
+      p.pct = pp;
+      p.funcionario = ehFuncionario(p.pessoa, p.obs);
+      p.fiado = /CONTAS A RECEBER/.test(FT.semAcento(p.pagamento));
+      p.garcom = Object.keys(p.garcons).sort(function (a, b) { return p.garcons[b] - p.garcons[a]; })[0] || '—';
+    });
+    st.peds.sort(function (a, b) { return String(a.data_hora || a.data).localeCompare(String(b.data_hora || b.data)); });
+  }
+
+  function agrupar(chave, filtro) {
+    const g = {};
+    st.peds.forEach(function (p) {
+      if (filtro && !filtro(p)) return;
+      const k = chave(p); const x = g[k] = g[k] || { k: k, pedidos: 0, desconto: 0, bruto: 0, tipos: {}, func: false, fiado: false };
+      x.pedidos++; x.desconto += p.desconto; x.bruto += p.bruto; x.func = x.func || p.funcionario; x.fiado = x.fiado || p.fiado;
+      Object.keys(p.porTipo).forEach(function (t) { x.tipos[t] = (x.tipos[t] || 0) + p.porTipo[t]; });
+    });
+    return Object.values(g).sort(function (a, b) { return b.desconto - a.desconto; });
+  }
+  function tipoPrinc(tipos) { return ORDEM.slice().sort(function (a, b) { return (tipos[b] || 0) - (tipos[a] || 0); })[0]; }
+  function chipTipo(t) { return '<span class="dc-chip ' + TIPOS[t].cor + '">' + esc(TIPOS[t].curto) + '</span>'; }
+
+  function resumo() {
+    const tot = st.peds.reduce(function (s, p) { return s + p.desconto; }, 0);
+    const porTipo = {}; ORDEM.forEach(function (t) { porTipo[t] = { valor: 0, pedidos: 0, itens: 0, prods: {} }; });
+    st.peds.forEach(function (p) {
+      Object.keys(p.porTipo).forEach(function (t) { porTipo[t].valor += p.porTipo[t]; porTipo[t].pedidos++; });
+      p.itens.forEach(function (i) { if (!i.tipo) return; porTipo[i.tipo].itens++; porTipo[i.tipo].prods[i.produto] = (porTipo[i.tipo].prods[i.produto] || 0) + 1; });
+    });
+    return { tot: tot, porTipo: porTipo };
+  }
+
+  function desenhar() {
+    const el = $('#dc-corpo');
+    if (!st.peds.length) {
+      el.innerHTML = '<p class="vazio-lista">' + (st.itens.length || st.bruto ? 'Nenhum desconto em ' + esc(nomeMes(st.mes)) + '. Se você já tinha importado este mês antes da atualização 13, importe de novo o relatório de pedidos para trazer clientes e pagamentos.' : 'Nenhuma venda importada em ' + esc(nomeMes(st.mes)) + '. Importe o relatório de pedidos do Sischef em Importar planilhas.') + '</p>';
+      return;
+    }
+    const r = resumo(), tot = r.tot;
+    const pessoas = agrupar(function (p) { return p.pessoa || 'SEM NOME'; });
+    const garcons = agrupar(function (p) { return p.garcom; });
+    const dias = agrupar(function (p) { return p.data; });
+    const maior = st.peds.slice().sort(function (a, b) { return b.desconto - a.desconto; })[0];
+    const semNome = pessoas.find(function (x) { return x.k === 'CLIENTE FINAL'; });
+    const funcs = pessoas.filter(function (x) { return x.func; });
+    const funcTot = funcs.reduce(function (s, x) { return s + x.desconto; }, 0);
+    const diaTop = dias[0];
+    // ---- KPIs
+    let h = '<div class="kpis kpis-4">' + [
+      ['Total de descontos', FT.moeda(tot), st.bruto ? pct(tot / st.bruto) + ' do faturamento bruto (' + FT.moeda(st.bruto) + ')' : 'no mês', 'kpi-alerta'],
+      ['Pedidos com desconto', String(st.peds.length), st.pedidosMes ? 'de ' + st.pedidosMes + ' pedidos no mês (' + pct(st.peds.length / st.pedidosMes) + ')' : '', ''],
+      ['Desconto médio por pedido', FT.moeda(tot / st.peds.length), 'só entre os pedidos com desconto', ''],
+      ['Maior desconto', FT.moeda(maior.desconto), FT.ddmm(maior.data) + ' · ' + (maior.pessoa || '—'), '']
+    ].map(function (k) { return '<article class="kpi ' + k[3] + '"><h3>' + esc(k[0]) + '</h3><p class="kpi-v">' + k[1] + '</p><p class="kpi-s">' + esc(k[2]) + '</p></article>'; }).join('') + '</div>';
+    // ---- explicação em palavras
+    const frases = [];
+    frases.push('Em <b>' + esc(nomeMes(st.mes)) + '</b> foram dados <b>' + FT.moeda(tot) + '</b> de desconto em <b>' + st.peds.length + ' pedidos</b>' + (st.bruto ? ', o que é <b>' + pct(tot / st.bruto) + '</b> de tudo o que foi vendido' : '') + '.');
+    ORDEM.forEach(function (t) {
+      const x = r.porTipo[t]; if (!x.valor) return;
+      const top = Object.keys(x.prods).sort(function (a, b) { return x.prods[b] - x.prods[a]; }).slice(0, 3).map(function (k) { return esc(k) + ' (' + x.prods[k] + ')'; }).join(', ');
+      let f = '<b>' + FT.moeda(x.valor) + ' (' + pct(x.valor / tot) + ')</b> — ' + esc(TIPOS[t].nome.toLowerCase()) + ': ' + esc(TIPOS[t].expl) + ' ' + x.pedidos + (x.pedidos === 1 ? ' pedido' : ' pedidos') + '.';
+      if (t === 'cortesia' && top) f += ' Mais dados de graça: ' + top + '.';
+      if (t === 'inteira') f += ' ' + st.peds.filter(function (p) { return p.porTipo.inteira; }).sort(function (a, b) { return b.porTipo.inteira - a.porTipo.inteira; }).slice(0, 3).map(function (p) { return FT.ddmm(p.data) + ' ' + hora(p.data_hora) + ' (' + FT.moeda(p.porTipo.inteira) + ', lançado por ' + esc(p.garcom) + ')'; }).join('; ') + '.';
+      if (t === 'func40') { const pf = agrupar(function (p) { return p.pessoa || 'SEM NOME'; }, function (p) { return p.porTipo.func40; }); f += ' ' + pf.length + (pf.length === 1 ? ' pessoa' : ' pessoas') + '; quem mais usou: ' + pf.slice(0, 3).map(function (x) { return esc(x.k) + ' (' + FT.moeda(x.tipos.func40) + ')'; }).join(', ') + '.'; }
+      if (t === 'conta') { const big = st.peds.filter(function (p) { return p.porTipo.conta; }).sort(function (a, b) { return b.porTipo.conta - a.porTipo.conta; })[0]; if (big) f += ' Maior: ' + FT.moeda(big.porTipo.conta) + ' em ' + FT.ddmm(big.data) + ' numa conta de ' + FT.moeda(big.bruto) + '.'; }
+      frases.push(f);
+    });
+    if (funcTot) frases.push('<b>' + FT.moeda(funcTot) + ' (' + pct(funcTot / tot) + ')</b> foram para pessoas que parecem ser da equipe (nome igual ao cadastro de funcionários ou “funcionário” na observação).');
+    if (semNome) frases.push('<b>' + FT.moeda(semNome.desconto) + '</b> foram em pedidos <b>sem cliente identificado</b> (CLIENTE FINAL), em ' + semNome.pedidos + ' pedidos: nesses não dá para saber para quem foi.');
+    if (garcons[0]) frases.push('Quem mais lançou pedidos com desconto: <b>' + esc(garcons[0].k) + '</b> (' + FT.moeda(garcons[0].desconto) + ', ' + garcons[0].pedidos + ' pedidos)' + (garcons[1] ? ', depois ' + esc(garcons[1].k) + ' (' + FT.moeda(garcons[1].desconto) + ')' : '') + '.');
+    if (diaTop) frases.push('Dia com mais desconto: <b>' + FT.DIAS[FT.diaSemana(diaTop.k)].toLowerCase() + ', ' + FT.ddmm(diaTop.k) + '</b> (' + FT.moeda(diaTop.desconto) + ' em ' + diaTop.pedidos + ' pedidos).');
+    h += '<section class="painel dc-expl"><h2>O que aconteceu</h2><ul>' + frases.map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul>' +
+      '<p class="dc-nota">O relatório do Sischef não traz o motivo digitado no desconto, então o motivo é deduzido pelo percentual: 40% = funcionário, 100% num item = cortesia, 100% no pedido todo = conta inteira de graça, percentual pequeno igual em todos os itens = desconto na conta. "Lançado por" é o garçom/caixa que lançou os itens com desconto. Se no Sischef der para exportar o motivo, me mande que ele entra aqui.</p></section>';
+    // ---- por tipo (clicável = filtra a lista)
+    h += '<section class="dc-sec"><h2>Por motivo <small>clique para filtrar a lista de pedidos</small></h2><div class="dc-tipos">' + ORDEM.map(function (t) {
+      const x = r.porTipo[t];
+      return '<button type="button" class="dc-tipo ' + TIPOS[t].cor + '" data-filtro="' + t + '"' + (x.valor ? '' : ' disabled') + '><b>' + esc(TIPOS[t].nome) + '</b><span class="v">' + FT.moeda(x.valor) + '</span><span class="bar"><i style="width:' + (tot ? Math.round(x.valor / tot * 100) : 0) + '%"></i></span><small>' + (tot ? pct(x.valor / tot) : '0%') + ' · ' + x.pedidos + ' pedidos · ' + x.itens + ' itens</small><small class="ex">' + esc(TIPOS[t].expl) + '</small></button>';
+    }).join('') + '</div></section>';
+    // ---- para quem / quem lançou
+    const linhaP = function (x) {
+      const tp = tipoPrinc(x.tipos);
+      return '<tr><td><b>' + esc(x.k) + '</b>' + (x.func || x.fiado ? '<small>' + [x.func ? 'equipe' : '', x.fiado ? 'pagou em contas a receber' : ''].filter(Boolean).join(' · ') + '</small>' : '') + '</td><td class="num">' + x.pedidos + '</td><td>' + chipTipo(tp) + '</td><td class="num"><b>' + FT.num2(x.desconto) + '</b></td><td class="num">' + pct(x.desconto / tot) + '</td></tr>';
+    };
+    h += '<div class="dc-duas"><section class="dc-sec"><h2>Para quem foi <small>cliente do pedido</small></h2><div class="rolagem dc-alto"><table class="lista"><thead><tr><th>Cliente</th><th class="num">Pedidos</th><th>Motivo principal</th><th class="num">Desconto R$</th><th class="num">% do total</th></tr></thead><tbody>' + pessoas.map(linhaP).join('') + '</tbody></table></div></section>' +
+      '<section class="dc-sec"><h2>Quem lançou <small>garçom / caixa do pedido</small></h2><div class="rolagem dc-alto"><table class="lista"><thead><tr><th>Lançado por</th><th class="num">Pedidos</th><th>Motivo principal</th><th class="num">Desconto R$</th><th class="num">% do total</th></tr></thead><tbody>' + garcons.map(function (x) { x.func = false; x.fiado = false; return linhaP(x); }).join('') + '</tbody></table></div></section></div>';
+    // ---- quando
+    const maxD = dias.reduce(function (m, x) { return Math.max(m, x.desconto); }, 0);
+    h += '<section class="dc-sec"><h2>Quando <small>dia a dia</small></h2><div class="rolagem"><table class="lista dc-dias"><thead><tr><th>Data</th><th>Dia</th><th class="num">Pedidos</th><th class="num">Desconto R$</th><th class="dc-barcol"></th><th class="num">Vendido no dia</th><th class="num">% do dia</th></tr></thead><tbody>' +
+      dias.slice().sort(function (a, b) { return a.k.localeCompare(b.k); }).map(function (x) {
+        const b = st.brutoDia[x.k] || 0;
+        return '<tr><td>' + FT.ddmm(x.k) + '</td><td>' + FT.DIAS[FT.diaSemana(x.k)].toUpperCase() + '</td><td class="num">' + x.pedidos + '</td><td class="num"><b>' + FT.num2(x.desconto) + '</b></td><td class="dc-barcol"><span class="dc-bar"><i style="width:' + Math.round(x.desconto / maxD * 100) + '%"></i></span></td><td class="num">' + (b ? FT.num2(b) : '—') + '</td><td class="num">' + (b ? pct(x.desconto / b) : '—') + '</td></tr>';
+      }).join('') + '</tbody></table></div></section>';
+    // ---- produtos
+    const prods = {};
+    st.peds.forEach(function (p) { p.itens.forEach(function (i) { if (!i.tipo) return; const x = prods[i.produto] = prods[i.produto] || { k: i.produto, n: 0, d: 0, tipos: {} }; x.n++; x.d += i.desconto; x.tipos[i.tipo] = (x.tipos[i.tipo] || 0) + i.desconto; }); });
+    const lp = Object.values(prods).sort(function (a, b) { return b.d - a.d; }).slice(0, 15);
+    h += '<section class="dc-sec"><h2>O que mais teve desconto <small>15 produtos com mais desconto em R$</small></h2><div class="rolagem"><table class="lista"><thead><tr><th>Produto</th><th class="num">Itens</th><th>Motivo principal</th><th class="num">Desconto R$</th></tr></thead><tbody>' +
+      lp.map(function (x) { return '<tr><td>' + esc(x.k) + '</td><td class="num">' + x.n + '</td><td>' + chipTipo(tipoPrinc(x.tipos)) + '</td><td class="num"><b>' + FT.num2(x.d) + '</b></td></tr>'; }).join('') + '</tbody></table></div></section>';
+    // ---- lista de pedidos
+    h += '<section class="dc-sec"><h2>Todos os pedidos com desconto <small id="dc-lista-sub"></small></h2><div class="rolagem"><table class="lista dc-peds" id="dc-lista"></table></div></section>';
+    el.innerHTML = h;
+    desenharLista();
+  }
+
+  function desenharLista() {
+    const l = st.peds.filter(function (p) { return !st.filtro || p.porTipo[st.filtro]; });
+    document.querySelectorAll('#dc-corpo [data-filtro]').forEach(function (b) { b.classList.toggle('ativo', b.dataset.filtro === st.filtro); b.setAttribute('aria-pressed', String(b.dataset.filtro === st.filtro)); });
+    $('#dc-lista-sub').innerHTML = st.filtro ? 'só ' + esc(TIPOS[st.filtro].nome.toLowerCase()) + ' · ' + l.length + ' pedidos · <button type="button" class="link" data-filtro="' + st.filtro + '">mostrar todos</button>' : l.length + ' pedidos · clique num pedido para ver os itens';
+    $('#dc-lista').innerHTML = '<thead><tr><th>Data</th><th>Pedido</th><th>Cliente</th><th>Lançado por</th><th>Pagamento</th><th class="num">Valor cheio</th><th class="num">Desconto</th><th class="num">%</th><th>Motivo provável</th></tr></thead><tbody>' +
+      l.map(function (p) {
+        let h = '<tr class="dc-ped' + (st.abertos[p.id] ? ' aberto' : '') + '" data-ped="' + esc(p.id) + '" tabindex="0"><td>' + FT.ddmm(p.data) + ' <small>' + esc(hora(p.data_hora)) + '</small></td><td>' + esc(p.tipo || '') + '<small>#' + esc(p.id) + '</small></td>' +
+          '<td><b>' + esc(p.pessoa || '—') + '</b>' + (p.funcionario ? ' <span class="tag">equipe</span>' : '') + (p.obs ? '<small>obs.: ' + esc(p.obs) + '</small>' : '') + '</td><td>' + esc(p.garcom) + '</td><td class="dc-pg">' + esc(p.pagamento || '—') + '</td>' +
+          '<td class="num">' + FT.num2(p.bruto) + '</td><td class="num"><b>' + FT.num2(p.desconto) + '</b></td><td class="num">' + pct(p.pct) + '</td><td>' + Object.keys(p.porTipo).sort(function (a, b) { return p.porTipo[b] - p.porTipo[a]; }).map(chipTipo).join(' ') + '</td></tr>';
+        if (st.abertos[p.id]) {
+          h += '<tr class="dc-itens"><td colspan="9"><table><thead><tr><th>Item</th><th class="num">Qtde</th><th class="num">Valor cheio</th><th class="num">Desconto</th><th class="num">%</th><th class="num">Cobrado</th><th>Lançado por</th></tr></thead><tbody>' +
+            p.itens.map(function (i) { return '<tr class="' + (i.desconto > 0.004 ? 'com' : '') + '"><td>' + esc(i.produto) + '</td><td class="num">' + FT.num2(i.qtde).replace(/,00$/, '') + '</td><td class="num">' + FT.num2(i.bruto) + '</td><td class="num">' + (i.desconto > 0.004 ? FT.num2(i.desconto) : '') + '</td><td class="num">' + (i.desconto > 0.004 ? pct(i.pct) : '') + '</td><td class="num">' + FT.num2(i.total) + '</td><td>' + esc(i.garcom || '') + '</td></tr>'; }).join('') + '</tbody></table></td></tr>';
+        }
+        return h;
+      }).join('') + '</tbody>';
+  }
+
+  function imprimir() {
+    if (!st.peds.length) return;
+    const abertos = st.abertos; st.abertos = {}; desenharLista();
+    let area = document.getElementById('impressao');
+    if (!area) { area = document.createElement('div'); area.id = 'impressao'; document.body.appendChild(area); }
+    area.innerHTML = '<div class="vp-imp dc-imp"><header><b>FORNERIA TOSCANA</b><span>DESCONTOS CONCEDIDOS · ' + esc(nomeMes(st.mes).toUpperCase()) + '</span></header>' + $('#dc-corpo').innerHTML + '</div>';
+    st.abertos = abertos; desenharLista();
+    window.print();
+  }
+
+  function excel() {
+    if (typeof XLSX === 'undefined') { FT.aviso('O gerador de planilhas não carregou. Confira a internet e recarregue a página.', true); return; }
+    if (!st.peds.length) { FT.aviso('Nenhum desconto neste mês.', true); return; }
+    const r2 = function (v) { return Math.round(v * 100) / 100; };
+    const r = resumo();
+    const res = [['DESCONTOS CONCEDIDOS · ' + nomeMes(st.mes).toUpperCase()], [], ['TOTAL DE DESCONTOS', r2(r.tot)], ['PEDIDOS COM DESCONTO', st.peds.length], ['FATURAMENTO BRUTO DO MÊS', r2(st.bruto)], [], ['MOTIVO', 'VALOR', '% DO TOTAL', 'PEDIDOS', 'ITENS']];
+    ORDEM.forEach(function (t) { const x = r.porTipo[t]; res.push([TIPOS[t].nome.toUpperCase(), r2(x.valor), r.tot ? r2(x.valor / r.tot * 100) : 0, x.pedidos, x.itens]); });
+    const peds = [['DATA', 'HORA', 'PEDIDO', 'TIPO', 'CLIENTE', 'EQUIPE?', 'LANÇADO POR', 'PAGAMENTO', 'OBSERVAÇÃO', 'VALOR CHEIO', 'DESCONTO', '%', 'MOTIVO PROVÁVEL']];
+    st.peds.forEach(function (p) { peds.push([FT.ddmmaaaa(p.data), hora(p.data_hora), p.id, p.tipo, p.pessoa, p.funcionario ? 'SIM' : '', p.garcom, p.pagamento, p.obs, r2(p.bruto), r2(p.desconto), r2(p.pct * 100), Object.keys(p.porTipo).map(function (t) { return TIPOS[t].curto.toUpperCase(); }).join(' + ')]); });
+    const its = [['DATA', 'PEDIDO', 'CLIENTE', 'PRODUTO', 'QTDE', 'VALOR CHEIO', 'DESCONTO', '%', 'COBRADO', 'LANÇADO POR', 'MOTIVO PROVÁVEL']];
+    st.peds.forEach(function (p) { p.itens.forEach(function (i) { if (i.desconto > 0.004) its.push([FT.ddmmaaaa(p.data), p.id, p.pessoa, i.produto, i.qtde, r2(i.bruto), r2(i.desconto), r2(i.pct * 100), r2(i.total), i.garcom, TIPOS[i.tipo].curto.toUpperCase()]); }); });
+    const wb = XLSX.utils.book_new();
+    [['RESUMO', res, [36, 14, 12, 10, 10]], ['PEDIDOS', peds, [12, 7, 12, 10, 34, 8, 30, 40, 30, 12, 11, 7, 24]], ['ITENS', its, [12, 12, 34, 34, 7, 12, 11, 7, 11, 30, 18]]].forEach(function (a) {
+      const ws = XLSX.utils.aoa_to_sheet(a[1]); ws['!cols'] = a[2].map(function (w) { return { wch: w }; }); XLSX.utils.book_append_sheet(wb, ws, a[0]);
+    });
+    XLSX.writeFile(wb, 'descontos_' + st.mes + '.xlsx');
+  }
+
+  let montado = false;
+  FT.telas.descontos = {
     abrir: async function () {
       if (!montado) { montado = true; montar(); }
       await ir(st.mes || FT.hoje().slice(0, 7));
@@ -8622,7 +8975,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'indicadores', 'produtos', 'pagamento', 'folha', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
