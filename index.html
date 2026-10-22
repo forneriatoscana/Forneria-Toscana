@@ -5416,7 +5416,40 @@ window.FT_CONFIG = {
 
   /* ---------- equipe fixa ---------- */
   // pedido do Luiz: fixos em toda escala nova
-  const FIXOS_PADRAO = [['PIZZARIA', ['CLAUDECIR', 'JEFERSON', 'JOAO PAULO', 'LUCIANO']], ['BAR', ['DAMIANA']], ['CAIXA', ['JULIANA']], ['ADMINISTRATIVO', ['LUIZ']], ['ZELADORIA', ['UELSON']]];
+  const FIXOS_PADRAO = [['PIZZARIA', ['JEFERSON', 'JOAO PAULO', 'LUCIANO']], ['BAR', ['DAMIANA']], ['ADMINISTRATIVO', ['LUIZ']], ['ZELADORIA', ['UELSON']]];
+  // pedido do Luiz (22/10): Juliana, Claudecir Bruno e Ana saem da equipe fixa e da escala; as vagas ficam em aberto
+  const TIRAR_22_10 = ['JULIANA', 'CLAUDECIR', 'ANA'];
+  function ehTirado(id) {
+    const f = st.funcs.find(function (x) { return x.id === id; }); if (!f) return false;
+    const n = FT.semAcento(f.nome);
+    return TIRAR_22_10.some(function (t) { return n === t || n.indexOf(t + ' ') === 0; });
+  }
+  async function correcao2210() {
+    // tira da equipe fixa salva
+    let mudouFixos = false;
+    Object.keys(st.fixos || {}).forEach(function (s) {
+      const l = st.fixos[s].filter(function (id) { return !ehTirado(id); });
+      if (l.length !== st.fixos[s].length) { mudouFixos = true; st.fixos[s] = l; if (!l.length) delete st.fixos[s]; }
+    });
+    if (mudouFixos) { try { await FT.store.config.salvar('escala_fixos', st.fixos); } catch (e) { console.warn(e); } }
+    // uma vez só: tira das escalas já montadas desta semana em diante, deixando a vaga em aberto
+    try {
+      if (await FT.store.config.ler('escala_correcao_2210')) return;
+      const de = FT.segunda(FT.hoje()), ate = FT.somaDias(de, 7 * 12);
+      const sems = await FT.store.escala.listar(de, ate);
+      for (const sem of Object.keys(sems)) {
+        const e = sems[sem]; let mud = false;
+        Object.keys(e.dias || {}).forEach(function (d) {
+          const dia = e.dias[d];
+          Object.keys(dia.alocados || {}).forEach(function (s) {
+            dia.alocados[s] = (dia.alocados[s] || []).map(function (id) { if (id && ehTirado(id)) { mud = true; return null; } return id; });
+          });
+        });
+        if (mud) await FT.store.escala.salvar(sem, e);
+      }
+      await FT.store.config.salvar('escala_correcao_2210', { em: new Date().toISOString() });
+    } catch (e) { console.warn('correção da escala', e); }
+  }
   let rascunhoFixos = null;
   function acharPorNome(nome) {
     const n = FT.semAcento(nome), at = st.funcs.filter(function (f) { return f.ativo !== false; });
@@ -5589,6 +5622,7 @@ window.FT_CONFIG = {
         const p = await FT.store.config.ler('escala_padrao'); st.padrao = p || JSON.parse(JSON.stringify(FT.PADRAO_ESCALA));
         // setores novos entram no padrão com 0 vagas
         resolverFixos(await FT.store.config.ler('escala_fixos'));
+        await correcao2210();
         await garantirSetores();
         Object.keys(st.padrao).forEach(function (k) { FT.SETORES.forEach(function (s) { if (st.padrao[k].vagas[s] == null) st.padrao[k].vagas[s] = 0; }); });
       } catch (e) { FT.aviso('Não consegui carregar o cadastro: ' + FT.textoErro(e), true); return; }
