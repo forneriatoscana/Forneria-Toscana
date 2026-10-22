@@ -943,6 +943,18 @@ table.lista.vp-dias .num { min-width: 64px; }
 @media print { .dc-alto { max-height: none; overflow: visible; } .dc-imp .dc-tipo .ex { display: none; } }
 .dc-duas td small { display: block; color: var(--ink-3); font-size: 11px; }
 
+/* ---------- Escala: feriados ---------- */
+.es th.es-fer { background: color-mix(in srgb, #e0782f 18%, var(--surface)); box-shadow: inset 0 3px 0 #e0782f; }
+.es td.es-fer { background: color-mix(in srgb, #e0782f 8%, transparent); }
+.es-fer-tag { display: block; margin: 4px auto 2px; max-width: 150px; font-size: 10px; font-weight: 700; letter-spacing: .03em; color: #fff; background: #c95f17; border-radius: 4px; padding: 2px 5px; line-height: 1.25; white-space: normal; }
+.es-fer { display: grid; gap: 6px; }
+.es-fer-aviso { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; background: color-mix(in srgb, #e0782f 14%, var(--surface)); border: 1px solid #e0782f; border-left-width: 5px; border-radius: var(--r); padding: 10px 14px; font-size: 14px; color: var(--ink); }
+.es-fer-aviso small { flex-basis: 100%; color: var(--ink-2); font-size: 12.5px; }
+.es-fer-prox { margin: 0; font-size: 12.5px; color: var(--ink-3); }
+.cal-d.cal-fer { position: relative; box-shadow: inset 0 0 0 2px #e0782f; }
+.cal-d.cal-fer::after { content: "★"; position: absolute; top: 0; right: 2px; font-size: 8px; color: #c95f17; }
+.lg-fer { background: transparent !important; border: 0 !important; color: #c95f17; font-style: normal; font-size: 11px; line-height: 10px; text-align: center; }
+
 </style>
 </head>
 <body>
@@ -5156,7 +5168,7 @@ window.FT_CONFIG = {
       '<div class="es-topo">' +
       '<div class="painel cal"><div class="cal-cab"><button type="button" class="btn-icone" id="cal-ant" aria-label="Mês anterior">‹</button><b id="cal-mes"></b><button type="button" class="btn-icone" id="cal-prox" aria-label="Próximo mês">›</button></div>' +
       '<div class="cal-grade" id="cal-grade"></div>' +
-      '<div class="cal-leg"><span><i class="lg-ok"></i>Completo</span><span><i class="lg-falta"></i>Faltam pessoas</span><span><i class="lg-fech"></i>Fechado</span><span><i class="lg-sem"></i>Sem escala</span></div></div>' +
+      '<div class="cal-leg"><span><i class="lg-ok"></i>Completo</span><span><i class="lg-falta"></i>Faltam pessoas</span><span><i class="lg-fech"></i>Fechado</span><span><i class="lg-sem"></i>Sem escala</span><span><i class="lg-fer">★</i>Feriado</span></div></div>' +
       '<div class="es-lado">' +
       '<div class="nav-semana"><button type="button" class="btn-icone" id="es-ant" aria-label="Semana anterior">‹</button>' +
       '<div class="nav-semana-t"><span>Semana</span><b id="es-rotulo"></b></div>' +
@@ -5170,6 +5182,7 @@ window.FT_CONFIG = {
       '<div id="es-resumo" class="es-resumo"></div>' +
       '</div></div>' +
       '<div id="es-msg" class="msg" hidden></div>' +
+      '<div id="es-fer" class="es-fer" hidden></div>' +
       '<div class="rolagem"><table class="es" id="es-tabela"></table></div>' +
       '<h2 class="h2-sec">Dias por pessoa nesta semana</h2><div class="es-pessoas" id="es-pessoas"></div>' +
       '<h2 class="h2-sec">Enviar a escala no WhatsApp</h2><div class="painel es-envio"><div class="es-envio-cab"><p>Cada um recebe só os próprios dias. Na primeira vez o sistema pede o celular e guarda no cadastro; depois é só clicar em <b>Enviar</b>.</p>' +
@@ -5185,6 +5198,7 @@ window.FT_CONFIG = {
     $('#es-copiar-ant').addEventListener('click', copiarAnterior);
     $('#es-padrao').addEventListener('click', abrirPadrao);
     $('#es-fixos').addEventListener('click', abrirFixos);
+    $('#es-fer').addEventListener('click', function (e) { const b = e.target.closest('[data-ir]'); if (b) irPara(FT.segunda(b.dataset.ir)); });
     $('#es-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
     $('#es-env-todos').addEventListener('change', function (e) { st.envTodos = e.target.checked; desenharEnvio(); });
     $('#es-envio').addEventListener('click', function (e) {
@@ -5307,7 +5321,9 @@ window.FT_CONFIG = {
     let h = '<thead><tr><th class="col-setor">Setor</th>' + dias.map(function (d) {
       const dia = st.escala.dias[d], cob = C.coberturaDia(dia);
       const chip = cob.fechado ? '<span class="chip-c fech">Fechado</span>' : cob.faltam > 0 ? '<span class="chip-c falta">Faltam ' + cob.faltam + '</span>' : '<span class="chip-c ok">Completo · ' + cob.vagas + '</span>';
-      return '<th class="col-es' + (dia.aberto ? '' : ' fechado') + (d === FT.hoje() ? ' hoje' : '') + '"><div class="es-dia"><b>' + FT.DIAS[FT.diaSemana(d)] + '</b><span>' + FT.ddmm(d) + '</span></div>' +
+      const fer = feriado(d);
+      return '<th class="col-es' + (dia.aberto ? '' : ' fechado') + (d === FT.hoje() ? ' hoje' : '') + (fer ? ' es-fer' : '') + '"><div class="es-dia"><b>' + FT.DIAS[FT.diaSemana(d)] + '</b><span>' + FT.ddmm(d) + '</span></div>' +
+        (fer ? '<span class="es-fer-tag" title="' + esc(fer.nome) + '">★ Feriado · ' + esc(fer.nome) + '</span>' : '') +
         '<label class="switch"><input type="checkbox" class="es-aberto" data-dia="' + d + '" id="es-ab-' + d + '"' + (dia.aberto ? ' checked' : '') + '><span>' + (dia.aberto ? 'Aberto' : 'Fechado') + '</span></label>' + chip + '</th>';
     }).join('') + '</tr></thead><tbody>';
     const repetidos = {}; dias.forEach(function (d) { repetidos[d] = C.repetidosNoDia(st.escala.dias[d]); });
@@ -5315,9 +5331,9 @@ window.FT_CONFIG = {
       h += '<tr><th class="col-setor" scope="row">' + esc(FT.nomeSetor(s)) + '</th>';
       dias.forEach(function (d) {
         const dia = st.escala.dias[d];
-        if (!dia.aberto) { h += '<td class="col-es fechado"></td>'; return; }
+        if (!dia.aberto) { h += '<td class="col-es fechado' + (feriado(d) ? ' es-fer' : '') + '"></td>'; return; }
         const n = +dia.vagas[s] || 0, aloc = dia.alocados[s] || [];
-        h += '<td class="col-es"><div class="vagas"><button type="button" class="passo" data-passo="-1" data-dia="' + d + '" data-setor="' + esc(s) + '" aria-label="Uma vaga a menos em ' + esc(s) + '">−</button>' +
+        h += '<td class="col-es' + (feriado(d) ? ' es-fer' : '') + '"><div class="vagas"><button type="button" class="passo" data-passo="-1" data-dia="' + d + '" data-setor="' + esc(s) + '" aria-label="Uma vaga a menos em ' + esc(s) + '">−</button>' +
           '<span>' + n + (n === 1 ? ' vaga' : ' vagas') + '</span><button type="button" class="passo" data-passo="1" data-dia="' + d + '" data-setor="' + esc(s) + '" aria-label="Uma vaga a mais em ' + esc(s) + '">+</button></div>';
         for (let i = 0; i < n; i++) {
           const id = aloc[i] || '';
@@ -5329,6 +5345,7 @@ window.FT_CONFIG = {
       h += '</tr>';
     });
     $('#es-tabela').innerHTML = h + '</tbody>';
+    desenharFeriados(dias);
     desenharResumo(dias, ativos);
     desenharEnvio();
   }
@@ -5412,6 +5429,25 @@ window.FT_CONFIG = {
     if (diasDe(fid).length) st.escala.enviados[fid] = { em: new Date().toISOString(), txt: txt };
     else delete st.escala.enviados[fid];
     mudou(false); desenharEnvio();
+  }
+
+  /* ---------- feriados: destaque para lembrar de colocar mais gente ---------- */
+  function feriado(d) {
+    const ano = +d.slice(0, 4); st.ferAno = st.ferAno || {};
+    if (!st.ferAno[ano]) st.ferAno[ano] = C.feriadosDoAno(ano, st.cfgFer || {});
+    const f = st.ferAno[ano][d]; return f && f.ativo ? f : null;
+  }
+  function desenharFeriados(dias) {
+    const el = $('#es-fer'); if (!el) return;
+    const naSemana = dias.filter(feriado);
+    const prox = []; for (let d = FT.somaDias(st.semana, 7), i = 0; i < 49; i++, d = FT.somaDias(d, 1)) if (feriado(d)) prox.push(d);
+    let h = '';
+    if (naSemana.length) h += '<div class="es-fer-aviso"><b>★ Feriado nesta semana:</b> ' + naSemana.map(function (d) {
+      const dia = st.escala.dias[d], c = C.coberturaDia(dia);
+      return '<span><b>' + FT.DIAS[FT.diaSemana(d)] + ' ' + FT.ddmm(d) + '</b> – ' + esc(feriado(d).nome) + (dia.aberto ? ' · ' + c.vagas + ' vagas' : ' · <i>marcado como fechado</i>') + '</span>';
+    }).join(' ') + '<small>Lembre de colocar mais pessoas: use o + em cada setor.</small></div>';
+    if (prox.length) h += '<p class="es-fer-prox">Próximos feriados: ' + prox.map(function (d) { return '<button type="button" class="link" data-ir="' + d + '">' + FT.DIAS_CURTOS[FT.diaSemana(d)] + ' ' + FT.ddmm(d) + ' · ' + esc(feriado(d).nome) + '</button>'; }).join(' · ') + '</p>';
+    el.innerHTML = h; el.hidden = !h;
   }
 
   /* ---------- equipe fixa ---------- */
@@ -5550,7 +5586,8 @@ window.FT_CONFIG = {
         else { cls = 'ok'; titulo = 'Escala completa'; }
       }
       const fora = d.slice(0, 7) !== st.mes;
-      h += '<button type="button" class="cal-d ' + cls + (fora ? ' fora' : '') + (sem === st.semana ? ' sel' : '') + (d === FT.hoje() ? ' hoje' : '') + '" data-dia="' + d + '" title="' + FT.ddmm(d) + ' · ' + titulo + '">' + (+d.slice(8)) + '</button>';
+      const fer = feriado(d); if (fer) titulo += ' · ★ ' + fer.nome;
+      h += '<button type="button" class="cal-d ' + cls + (fer ? ' cal-fer' : '') + (fora ? ' fora' : '') + (sem === st.semana ? ' sel' : '') + (d === FT.hoje() ? ' hoje' : '') + '" data-dia="' + d + '" title="' + FT.ddmm(d) + ' · ' + titulo + '">' + (+d.slice(8)) + '</button>';
       d = FT.somaDias(d, 1);
     }
     $('#cal-grade').innerHTML = h;
@@ -5621,6 +5658,8 @@ window.FT_CONFIG = {
         st.funcs = await FT.obterFuncionarios(true);
         const p = await FT.store.config.ler('escala_padrao'); st.padrao = p || JSON.parse(JSON.stringify(FT.PADRAO_ESCALA));
         // setores novos entram no padrão com 0 vagas
+        try { st.cfgFer = (await FT.store.config.ler('feriados')) || {}; } catch (e) { st.cfgFer = {}; }
+        st.ferAno = {};
         resolverFixos(await FT.store.config.ler('escala_fixos'));
         await correcao2210();
         await garantirSetores();
