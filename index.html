@@ -5430,7 +5430,7 @@ window.FT_CONFIG = {
     const ds = diasDe(f.id), nome = String(f.nome).split(' ')[0];
     const periodo = FT.ddmm(st.semana) + ' A ' + FT.ddmm(FT.somaDias(st.semana, 6));
     if (!ds.length) return 'OLÁ, ' + nome + '! HOUVE UMA MUDANÇA NA ESCALA DA SEMANA DE ' + periodo + ': VOCÊ NÃO ESTÁ MAIS ESCALADO(A) NESTA SEMANA.\nQUALQUER DÚVIDA, FALE COM O GERENTE.\nFORNERIA TOSCANA';
-    return 'OLÁ, ' + nome + '! SUA ESCALA NA FORNERIA TOSCANA NA SEMANA DE ' + periodo + ':\n' +
+    return 'OLÁ, ' + nome + '! SUA ESCALA NA FORNERIA TOSCANA\n' +
       ds.map(function (x) { return '• ' + FT.DIAS[FT.diaSemana(x.data)].toUpperCase() + ' ' + FT.ddmm(x.data) + ' – ' + x.setores.map(setorMsg).join(' E '); }).join('\n') +
       '\n\nTOTAL: ' + ds.length + (ds.length === 1 ? ' DIA' : ' DIAS') + '. SE NÃO PUDER COMPARECER EM ALGUM DIA, AVISE O QUANTO ANTES.\nFORNERIA TOSCANA';
   }
@@ -5446,12 +5446,13 @@ window.FT_CONFIG = {
     el.innerHTML = '<thead><tr><th>Funcionário</th><th>Dias na semana</th><th>Situação</th><th class="num">WhatsApp</th></tr></thead><tbody>' +
       lista.map(function (f) {
         const ds = diasDe(f.id), e = env[f.id], txt = textoEscalaPessoa(f);
+        const corpo = function (t) { return String(t || '').split('\n').slice(1).join('\n'); };
         const sit = !e ? (ds.length ? '<span class="chip-parcial">não enviada</span>' : '')
-          : e.txt === txt ? '<span class="chip-ok">✓ enviada ' + FT.ddmm(FT.dataSP(e.em)) + ' às ' + FT.horaSP(e.em) + '</span>'
+          : corpo(e.txt) === corpo(txt) ? '<span class="chip-ok">✓ enviada ' + FT.ddmm(FT.dataSP(e.em)) + ' às ' + FT.horaSP(e.em) + '</span>'
             : '<span class="chip-dif">escala mudou · reenviar</span>';
         return '<tr><td><b>' + esc(f.nome) + '</b><small>' + esc(FT.nomeTipo(f.tipo || '')) + '</small></td><td>' +
           (ds.length ? ds.map(function (x) { return '<span class="es-env-dia">' + FT.DIAS_CURTOS[FT.diaSemana(x.data)] + ' ' + FT.ddmm(x.data) + ' · ' + esc(x.setores.map(function (s) { return s === FT.SETOR_MOTO ? 'ENTREGA' : s; }).join(' / ')) + '</span>'; }).join(' ') : '<i>saiu da escala</i>') +
-          '</td><td>' + sit + '</td><td class="num">' + FT.botaoWhats(f, 'data-env="' + esc(f.id) + '"', e ? (e.txt === txt ? 'Reenviar' : 'Enviar de novo') : (ds.length ? 'Enviar' : 'Avisar')) + '</td></tr>';
+          '</td><td>' + sit + '</td><td class="num">' + FT.botaoWhats(f, 'data-env="' + esc(f.id) + '"', e ? (corpo(e.txt) === corpo(txt) ? 'Reenviar' : 'Enviar de novo') : (ds.length ? 'Enviar' : 'Avisar')) + '</td></tr>';
       }).join('') + '</tbody>';
   }
   async function enviarEscala(fid, trocar) {
