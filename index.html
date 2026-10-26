@@ -954,6 +954,8 @@ table.lista.vp-dias .num { min-width: 64px; }
 .cal-d.cal-fer { position: relative; box-shadow: inset 0 0 0 2px #e0782f; }
 .cal-d.cal-fer::after { content: "★"; position: absolute; top: 0; right: 2px; font-size: 8px; color: #c95f17; }
 .lg-fer { background: transparent !important; border: 0 !important; color: #c95f17; font-style: normal; font-size: 11px; line-height: 10px; text-align: center; }
+.pg td.col-dia.escala { position: relative; }
+.pg td.col-dia.escala::before { content: "◆"; position: absolute; top: 2px; left: 4px; font-size: 8px; color: var(--accent); }
 
 </style>
 </head>
@@ -4879,7 +4881,7 @@ window.FT_CONFIG = {
   const FT = window.FT, C = FT.calc;
   const $ = FT.$, esc = FT.esc;
 
-  const st = { pontoDias: {}, semana: null, dados: null, salvo: true, existe: false, salvando: false, erro: null, vendasDia: null, confirmarEscala: false };
+  const st = { pontoDias: {}, escalaDias: {}, semana: null, dados: null, salvo: true, existe: false, salvando: false, erro: null, vendasDia: null, confirmarEscala: false };
 
   function semanaPadrao() {
     const hoje = FT.hoje(), dow = FT.diaSemana(hoje);
@@ -4889,7 +4891,7 @@ window.FT_CONFIG = {
 
   function montar() {
     $('#tela-pagamento').innerHTML =
-      '<div class="cab-tela"><div><h1>Pagamento 10%</h1><p>Informe o 10% de cada dia e marque quem trabalhou. 80% do valor informado é dividido entre a equipe marcada e somado às diárias.</p></div>' +
+      '<div class="cab-tela"><div><h1>Pagamento 10%</h1><p>Quem está na escala já vem marcado em cada dia (◆); quem bateu ponto também (●). Confira, marque ou desmarque à vontade e informe o 10% de cada dia. 80% do valor é dividido entre a equipe marcada e somado às diárias.</p></div>' +
       '<div class="acoes-linha"><span class="pilula" id="pg-estado"></span></div></div>' +
       '<div class="barra">' +
       '<div class="nav-semana"><button type="button" class="btn-icone" id="pg-ant" aria-label="Semana anterior">‹</button>' +
@@ -4966,14 +4968,46 @@ window.FT_CONFIG = {
         $('#pg-msg').innerHTML = 'Nenhum funcionário cadastrado ainda. Cadastre a equipe em <a href="#funcionarios">Funcionários</a> para começar.';
       } else $('#pg-msg').hidden = true;
       st.salvo = true; st.erro = null;
+      const marcadosEscala = await aplicarEscala(semana);
       const marcadosPonto = await aplicarPonto(semana);
       $('#pg-pct').value = FT.num2(st.dados.percentual).replace(',00', '');
       desenharTudo(); estadoSalvo();
-      if (marcadosPonto) {
+      if (marcadosPonto || marcadosEscala) {
         mudou();
-        mostrarMsg('<b>' + marcadosPonto + (marcadosPonto === 1 ? ' dia marcado' : ' dias marcados') + ' pelo ponto eletrônico.</b> Os dias com ● vieram do ponto. Confira e preencha o 10% de cada dia.');
+        const partes = [];
+        if (marcadosEscala) partes.push('<b>' + marcadosEscala + (marcadosEscala === 1 ? ' turno marcado' : ' turnos marcados') + ' conforme a escala</b> (◆)');
+        if (marcadosPonto) partes.push('<b>' + marcadosPonto + (marcadosPonto === 1 ? ' dia marcado' : ' dias marcados') + ' pelo ponto eletrônico</b> (●)');
+        mostrarMsg(partes.join(' e ') + '. Pode marcar ou desmarcar à vontade: o que você mudar fica como você deixou. Confira e preencha o 10% de cada dia.');
       }
     } catch (e) { FT.aviso('Não consegui abrir a semana: ' + FT.textoErro(e), true); }
+  }
+
+  /* ---------- escala → dias trabalhados ---------- */
+  // Quem está na escala fica marcado no dia (uma vez só por pessoa e dia: se você desmarcar, fica desmarcado;
+  // se a escala ganhar alguém depois, essa pessoa é marcada ao abrir a semana de novo).
+  async function aplicarEscala(semana) {
+    st.escalaDias = {};
+    let e;
+    try { e = await FT.store.escala.ler(semana); } catch (x) { return 0; }
+    if (!e || !e.dias) return 0;
+    const dados = st.dados; dados.escalaAplicada = dados.escalaAplicada || {};
+    let n = 0;
+    Object.keys(dados.dias).forEach(function (d) {
+      const ed = e.dias[d]; if (!ed || !ed.aberto) return;
+      const ids = {};
+      Object.keys(ed.alocados || {}).forEach(function (s) { (ed.alocados[s] || []).slice(0, +(ed.vagas || {})[s] || 0).forEach(function (id) { if (id) ids[id] = 1; }); });
+      if (!Object.keys(ids).length) return;
+      if (!dados.escalaAplicada['dia|' + d]) { dados.escalaAplicada['dia|' + d] = true; dados.dias[d].aberto = true; }
+      dados.pessoas.forEach(function (p) {
+        if (!ids[p.id]) return;
+        const k = p.id + '|' + d; st.escalaDias[k] = true;
+        if (dados.escalaAplicada[k]) return;
+        dados.escalaAplicada[k] = true;
+        p.dias[d] = p.dias[d] || { t: false, entrega: 0 };
+        if (!p.dias[d].t) { p.dias[d].t = true; n++; }
+      });
+    });
+    return n;
   }
 
   /* ---------- ponto eletrônico → dias trabalhados ---------- */
@@ -5072,7 +5106,7 @@ window.FT_CONFIG = {
         '<td class="num"><input class="val inp-dinheiro" data-p="' + esc(p.id) + '" data-campo="diaria" id="pg-d-' + esc(p.id) + '" inputmode="decimal" value="' + (+p.diaria ? FT.num2(+p.diaria) : '') + '" placeholder="0,00" aria-label="Diária de ' + esc(p.nome) + '"></td>';
       dias.forEach(function (d) {
         const x = p.dias[d] || {};
-        r += '<td class="col-dia' + (x.t ? ' marcado' : '') + (st.pontoDias[p.id + '|' + d] ? ' ponto" title="Entrada registrada no ponto eletrônico' : '') + '"><input type="checkbox" class="t" data-p="' + esc(p.id) + '" data-dia="' + d + '" id="pg-t-' + esc(p.id) + '-' + d + '"' + (x.t ? ' checked' : '') + ' aria-label="' + esc(p.nome) + ' trabalhou ' + FT.ddmm(d) + '">' +
+        r += '<td class="col-dia' + (x.t ? ' marcado' : '') + (st.pontoDias[p.id + '|' + d] ? ' ponto' : '') + (st.escalaDias[p.id + '|' + d] ? ' escala' : '') + '" title="' + [st.escalaDias[p.id + '|' + d] ? 'Na escala' : '', st.pontoDias[p.id + '|' + d] ? 'Entrada registrada no ponto eletrônico' : ''].filter(Boolean).join(' · ') + '"><input type="checkbox" class="t" data-p="' + esc(p.id) + '" data-dia="' + d + '" id="pg-t-' + esc(p.id) + '-' + d + '"' + (x.t ? ' checked' : '') + ' aria-label="' + esc(p.nome) + ' trabalhou ' + FT.ddmm(d) + '">' +
           (moto ? '<input class="val inp-entrega" data-p="' + esc(p.id) + '" data-dia="' + d + '" data-campo="entrega" id="pg-e-' + esc(p.id) + '-' + d + '" inputmode="decimal" placeholder="entregas" value="' + (+x.entrega ? FT.num2(+x.entrega) : '') + '" aria-label="Taxas de entrega de ' + esc(p.nome) + ' em ' + FT.ddmm(d) + '">' : '') + '</td>';
       });
       r += '<td class="num" id="pg-n-' + esc(p.id) + '"></td><td class="num" id="pg-dr-' + esc(p.id) + '"></td><td class="num" id="pg-r-' + esc(p.id) + '"></td><td class="num" id="pg-en-' + esc(p.id) + '"></td>';
