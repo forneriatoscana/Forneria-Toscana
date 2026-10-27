@@ -188,7 +188,7 @@ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px 
     <button class="btn btn-sec" id="btn-concluir" type="button">Concluir</button>
   </section>
 </main>
-<p class="rodape">Portal do Colaborador · Forneria Toscana. Esqueceu a senha ou não consegue entrar? Fale com o gerente.</p>
+<p class="rodape">Portal do Colaborador · Forneria Toscana</p>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -361,12 +361,15 @@ window.FT_CONFIG = {
   if (typeof module !== 'undefined' && module.exports) module.exports = FT;
 
   /* ---------- assinatura eletrônica (Portal do Colaborador e pastas) ---------- */
-  FT.TERMO_VERSAO = 1;
-  FT.termoAssinatura = function (nome, cpf) {
+  FT.TERMO_VERSAO = 2;
+  // versao: a que o colaborador aceitou (o PDF do termo usa sempre o texto exato que ele leu)
+  FT.termoAssinatura = function (nome, cpf, versao) {
+    const v = +versao || FT.TERMO_VERSAO;
     return [
       'Eu, ' + nome + ', CPF ' + FT.formatarCPF(cpf) + ', concordo em receber os meus holerites, espelhos de ponto e outros documentos do trabalho em formato digital, pelo Portal do Colaborador da Forneria Toscana, e em assiná-los eletronicamente, sem papel.',
       'Reconheço que a assinatura feita no app (com o meu CPF, a minha senha pessoal e o desenho da minha assinatura) me identifica e vale como a minha assinatura nesses documentos, nos termos do art. 10, § 2º, da MP 2.200-2/2001 e da Lei 14.063/2020.',
-      'Comprometo-me a guardar a minha senha em segredo e a avisar o gerente se outra pessoa souber dela. Posso pedir, a qualquer momento, uma cópia dos documentos que assinei.'
+      v === 1 ? 'Comprometo-me a guardar a minha senha em segredo e a avisar o gerente se outra pessoa souber dela. Posso pedir, a qualquer momento, uma cópia dos documentos que assinei.'
+        : 'Comprometo-me a guardar a minha senha em segredo e a avisar a Forneria Toscana se outra pessoa souber dela. Posso pedir, a qualquer momento, uma cópia dos documentos que assinei.'
     ];
   };
   FT.NOMES_DOC = { sistema: 'Holerite Forneria', contab: 'Holerite contabilidade', espelho: 'Espelho de ponto' };
@@ -388,16 +391,16 @@ window.FT_CONFIG = {
 
   const ERROS = {
     CPF_OU_SENHA: 'CPF ou senha incorretos. Confira e tente de novo.',
-    BLOQUEADO: 'Muitas tentativas erradas. Aguarde 15 minutos ou fale com o gerente.',
-    INATIVO: 'Seu acesso ao ponto está desativado. Fale com o gerente.',
+    BLOQUEADO: 'Muitas tentativas erradas. Aguarde 15 minutos e tente de novo.',
+    INATIVO: 'Seu acesso ao portal está desativado.',
     SEM_LOCALIZACAO: 'Não recebi a sua localização. Ative a localização do celular e tente de novo.',
     PRECISAO_BAIXA: 'O sinal do GPS está fraco. Ative a "localização precisa", saia de perto de paredes grossas e tente de novo.',
     FORA_DO_LOCAL: 'Você não está na Forneria Toscana. O ponto só pode ser batido no local de trabalho.',
     TURNO_NAO_ENCONTRADO: 'Não encontrei a sua entrada. Entre de novo com CPF e senha.',
     SENHA_CURTA: 'A senha nova precisa ter pelo menos 4 caracteres.',
     SENHA_IGUAL: 'A senha nova precisa ser diferente da senha provisória.',
-    NAO_ENCONTRADO: 'Documento não encontrado. Fale com o gerente.',
-    DOCUMENTO_ALTERADO: 'O gerente atualizou este documento agora há pouco. Volte e abra de novo para ver a versão nova.',
+    NAO_ENCONTRADO: 'Documento não encontrado.',
+    DOCUMENTO_ALTERADO: 'Este documento foi atualizado agora há pouco. Volte e abra de novo para ver a versão nova.',
     ASSINATURA_INVALIDA: 'Não consegui ler a sua assinatura. Toque em "Limpar" e assine de novo.',
     TERMO_PENDENTE: 'Antes da primeira assinatura, leia e aceite o termo de adesão.'
   };
@@ -692,7 +695,7 @@ window.FT_CONFIG = {
     try {
       msg('#msg-doc', 'Assinando…', 'info');
       const r = await rpc('documento_assinar', { p_cpf: cred.cpf, p_senha: senha, p_mes: doc.mes, p_tipo: doc.tipo, p_hash: doc.hash,
-        p_assinatura: pad.imagem(), p_aceite_termo: !lista.termo && $('#doc-aceito').checked, p_user_agent: navigator.userAgent });
+        p_assinatura: pad.imagem(), p_aceite_termo: !lista.termo && $('#doc-aceito').checked, p_user_agent: navigator.userAgent, p_termo_versao: FT.TERMO_VERSAO });
       if (!r.ok) {
         if (r.erro === 'TERMO_PENDENTE') { lista.termo = false; $('#doc-termo').hidden = false; }
         msg('#msg-doc', r.erro === 'CPF_OU_SENHA' ? 'Senha incorreta. Confira e tente de novo.' : textoErro(r), 'erro'); return;
