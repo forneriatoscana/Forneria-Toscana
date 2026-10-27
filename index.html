@@ -960,6 +960,14 @@ table.lista.vp-dias .num { min-width: 64px; }
 .pg td.pg-recibo .btn { padding: 5px 9px; font-size: 12px; }
 .pg-rec-ok { display: block; font-size: 10.5px; color: var(--bom, #1d7a3b); margin-top: 2px; }
 
+/* ---------- Fechamento da folha ---------- */
+.fe .fe-txt { width: 100%; min-width: 180px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; text-transform: uppercase; }
+.fe .fe-txt:disabled, .fe input.val:disabled { background: transparent; border-color: transparent; color: var(--ink); }
+.fe td.fe-ponto { font-size: 12.5px; white-space: nowrap; }
+.fe td.fe-ponto small, .fe .fe-sug { display: block; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.fe .fe-sem { color: var(--ink-3); }
+.fe-nota { font-size: 12px; color: var(--ink-3); margin: 0; }
+
 </style>
 </head>
 <body>
@@ -999,6 +1007,7 @@ table.lista.vp-dias .num { min-width: 64px; }
           <a href="#analise"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3M20 16v-7"/></svg>Análise do caixa</a>
           <a href="#pagamento"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 9.5v6M18 9.5v6"/></svg>Pagamento 10%</a>
           <a href="#folha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4M9 11h7M9 14.5h7M9 18h4"/></svg>Folha de pagamento</a>
+          <a href="#fechamento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4"/><path d="M9 14.5l2.2 2.2L16 12"/></svg>Fechamento da folha</a>
         </div>
       </div>
       <div class="menu-grupo" data-grupo="est">
@@ -1117,6 +1126,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     <section id="tela-descontos" class="tela" hidden></section>
     <section id="tela-pagamento" class="tela" hidden></section>
     <section id="tela-folha" class="tela" hidden></section>
+    <section id="tela-fechamento" class="tela" hidden></section>
     <section id="tela-escala" class="tela" hidden></section>
     <section id="tela-fluxo" class="tela" hidden></section>
     <section id="tela-analise" class="tela" hidden></section>
@@ -6005,6 +6015,244 @@ window.FT_CONFIG = {
   };
 })();
 
+/* Forneria Toscana — Financeiro › Fechamento da folha (para a contabilidade)
+ * Por funcionário: consumo interno, empréstimo e adiantamento a descontar + horas extras a pagar.
+ * Finalizado, gera PDF ou Excel para mandar à contabilidade. */
+(function () {
+  'use strict';
+  const FT = window.FT, C = FT.calc, $ = FT.$, esc = FT.esc;
+  const CAMPOS = [['consumo', 'Consumo interno'], ['emprestimo', 'Empréstimo'], ['adiantamento', 'Adiantamento / vale']];
+  const st = { mes: null, dados: null, funcs: [], salvo: true, salvando: false, erro: null, todos: false, sug: {}, ponto: {} };
+
+  function mesPadrao() { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return FT.iso(d).slice(0, 7); }
+  function somaMes(chave, n) { const p = chave.split('-').map(Number); return FT.iso(new Date(p[0], p[1] - 1 + n, 1, 12)).slice(0, 7); }
+  function nomeMes(chave) { const p = chave.split('-'); return FT.MESES[+p[1] - 1].toLocaleUpperCase('pt-BR') + '/' + p[0]; }
+  function ultimoDia(chave) { const p = chave.split('-').map(Number); return FT.iso(new Date(p[0], p[1], 0, 12)); }
+  function chave() { return 'fechamento_folha_' + st.mes; }
+
+  function montar() {
+    $('#tela-fechamento').innerHTML =
+      '<div class="cab-tela"><div><h1>Fechamento da folha</h1><p>Informe o que descontar de cada funcionário (consumo interno, empréstimo, adiantamento) e as horas extras a pagar. Depois de finalizar, gere o PDF ou o Excel e mande para a contabilidade montar a folha.</p></div>' +
+      '<div class="acoes-linha"><span class="pilula" id="fe-estado"></span></div></div>' +
+      '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="fe-ant" aria-label="Mês anterior">‹</button>' +
+      '<div class="nav-semana-t"><span>Mês de referência</span><b id="fe-rotulo"></b></div>' +
+      '<button type="button" class="btn-icone" id="fe-prox" aria-label="Próximo mês">›</button></div>' +
+      '<label class="check"><input type="checkbox" id="fe-todos"> Mostrar também freelancers e motoboys</label>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="fe-excel">Baixar Excel</button><button type="button" class="btn btn-sec" id="fe-pdf">Baixar PDF</button><button type="button" class="btn" id="fe-finalizar">Finalizar fechamento</button></div></div>' +
+      '<div id="fe-msg" class="msg" hidden></div>' +
+      '<div class="kpis kpis-5" id="fe-kpis"></div>' +
+      '<div class="rolagem"><table class="pg fe" id="fe-tabela"></table></div>' +
+      '<p class="fe-nota">Consumo sugerido: soma dos pedidos do funcionário pagos em "contas a receber" no relatório de pedidos importado (pedidos com o desconto de funcionário). Confira e clique em "usar" para levar o valor. Ponto: dias e horas registrados no ponto eletrônico no mês, para ajudar a conferir as horas extras.</p>';
+    $('#fe-ant').addEventListener('click', function () { irPara(somaMes(st.mes, -1)); });
+    $('#fe-prox').addEventListener('click', function () { irPara(somaMes(st.mes, 1)); });
+    $('#fe-todos').addEventListener('change', function (e) { st.todos = e.target.checked; desenhar(); });
+    $('#fe-excel').addEventListener('click', excel);
+    $('#fe-pdf').addEventListener('click', function (e) { pdf(e.currentTarget); });
+    $('#fe-finalizar').addEventListener('click', finalizar);
+    $('#fe-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
+    const tab = $('#fe-tabela');
+    tab.addEventListener('input', function (e) {
+      const el = e.target, id = el.dataset.p; if (!id || travado()) return;
+      const r = reg(id), c = el.dataset.campo;
+      if (c === 'he' || c === 'obs') r[c] = el.value; else r[c] = el.value.trim() ? FT.lerValor(el.value) : 0;
+      mudou(); totais(); linhaTotal(id);
+    });
+    tab.addEventListener('change', function (e) {
+      const el = e.target, id = el.dataset.p; if (!id) return;
+      const r = reg(id), c = el.dataset.campo;
+      if (c === 'he' || c === 'obs') { r[c] = FT.mai(el.value); el.value = r[c]; mudou(); }
+      else { el.value = +r[c] ? FT.num2(+r[c]) : ''; }
+    });
+    tab.addEventListener('click', function (e) {
+      const b = e.target.closest('[data-usar]'); if (!b || travado()) return;
+      reg(b.dataset.usar).consumo = st.sug[b.dataset.usar].valor; mudou(); desenhar();
+    });
+  }
+
+  function reg(id) { const p = st.dados.pessoas; return p[id] = p[id] || { consumo: 0, emprestimo: 0, adiantamento: 0, he: '', obs: '' }; }
+  function travado() { return st.dados && st.dados.status === 'finalizado'; }
+  function descontar(r) { return FT.r2((+r.consumo || 0) + (+r.emprestimo || 0) + (+r.adiantamento || 0)); }
+
+  async function irPara(mes) {
+    if (!st.salvo && st.dados) await salvarAgora();
+    st.mes = mes; $('#fe-rotulo').textContent = nomeMes(mes); $('#fe-msg').hidden = true;
+    $('#fe-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
+    try {
+      st.funcs = await FT.obterFuncionarios();
+      st.dados = (await FT.store.config.ler(chave())) || { status: 'rascunho', pessoas: {} };
+      st.dados.pessoas = st.dados.pessoas || {};
+      st.salvo = true; st.erro = null; estado();
+      await Promise.all([carregarSugestoes(), carregarPonto()]);
+      desenhar();
+    } catch (e) { FT.aviso('Não consegui abrir o fechamento: ' + FT.textoErro(e), true); }
+  }
+
+  /* consumo interno sugerido: pedidos em "contas a receber" de quem é da equipe */
+  function nomeBate(pessoa, f) {
+    const p = ' ' + FT.semAcento(pessoa).replace(/[^A-Z ]/g, ' ').replace(/\s+/g, ' ').trim() + ' ';
+    const n = FT.semAcento(String(f.nome).replace(/\(.*?\)/g, '')).replace(/[^A-Z ]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!n || p.trim() === '') return 0;
+    if (p.trim() === n) return 3;
+    const t = n.split(' ');
+    if (t.length >= 2) return p.indexOf(' ' + n + ' ') === 0 ? 2 : (p.indexOf(' ' + t[0] + ' ') === 0 && p.indexOf(' ' + t[t.length - 1] + ' ') > 0 ? 1 : 0);
+    return p.indexOf(' ' + n + ' ') === 0 ? 1 : 0;
+  }
+  async function carregarSugestoes() {
+    st.sug = {};
+    let itens = [];
+    try { itens = await FT.store.descontos.carregar(st.mes + '-01', ultimoDia(st.mes)); } catch (e) { return; }
+    const peds = {};
+    itens.forEach(function (x) { if (!peds[x.pedido_id]) peds[x.pedido_id] = x; });
+    Object.values(peds).forEach(function (x) {
+      const m = /CONTAS A RECEBER\s+([\d.]*\d,\d{2})/.exec(FT.semAcento(x.pagamento || '')); if (!m || !x.pessoa) return;
+      let melhor = null, pts = 0;
+      st.funcs.forEach(function (f) { const k = nomeBate(x.pessoa, f); if (k > pts) { pts = k; melhor = f; } });
+      if (!melhor) return;
+      const s = st.sug[melhor.id] = st.sug[melhor.id] || { valor: 0, pedidos: 0 };
+      s.valor = FT.r2(s.valor + FT.lerValor(m[1])); s.pedidos++;
+    });
+  }
+  async function carregarPonto() {
+    st.ponto = {};
+    try {
+      const ini = st.mes + '-01', fim = ultimoDia(st.mes);
+      const regs = await FT.store.ponto.listar(ini, fim);
+      let cfg = {}; try { cfg = (await FT.store.config.ler('feriados')) || {}; } catch (e) { cfg = {}; }
+      const fer = C.feriadosNoPeriodo(ini, fim, cfg), porF = {};
+      regs.forEach(function (r) { (porF[r.funcionario_id] = porF[r.funcionario_id] || []).push(r); });
+      Object.keys(porF).forEach(function (id) { st.ponto[id] = C.espelho(st.mes, porF[id], fer, null, FT.hoje()).totais; });
+    } catch (e) { /* ponto não instalado */ }
+  }
+
+  function lista() {
+    return st.funcs.filter(function (f) {
+      const r = st.dados.pessoas[f.id], tem = r && (descontar(r) || r.he || r.obs);
+      if (tem) return true;
+      if (f.ativo === false) return false;
+      return st.todos || f.tipo === 'fixo' || !f.tipo;
+    }).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });
+  }
+
+  function desenhar() {
+    const trav = travado(), l = lista();
+    $('#fe-finalizar').textContent = trav ? 'Reabrir para editar' : 'Finalizar fechamento';
+    $('#fe-finalizar').className = trav ? 'btn btn-sec' : 'btn';
+    if (trav) { $('#fe-msg').hidden = false; $('#fe-msg').className = 'msg ok'; $('#fe-msg').innerHTML = '✓ Fechamento de <b>' + nomeMes(st.mes) + '</b> finalizado em ' + esc(FT.ddmmaaaa(FT.dataSP(st.dados.finalizadoEm))) + '. Baixe o PDF ou o Excel e mande para a contabilidade. Para mudar algo, clique em "Reabrir para editar".'; }
+    else $('#fe-msg').hidden = true;
+    const dis = trav ? ' disabled' : '';
+    let h = '<thead><tr><th class="col-nome">Funcionário</th><th>Ponto no mês</th>' + CAMPOS.map(function (c) { return '<th class="num">' + esc(c[1]) + ' (R$)</th>'; }).join('') +
+      '<th class="num col-total">Total a descontar</th><th>Horas extras a pagar</th><th>Observação</th></tr></thead><tbody>';
+    h += l.length ? l.map(function (f) {
+      const r = st.dados.pessoas[f.id] || {}, s = st.sug[f.id], pt = st.ponto[f.id];
+      const inp = function (c) { return '<input class="val inp-dinheiro" data-p="' + esc(f.id) + '" data-campo="' + c + '" id="fe-' + c + '-' + esc(f.id) + '" inputmode="decimal" placeholder="0,00" value="' + (+r[c] ? FT.num2(+r[c]) : '') + '" aria-label="' + c + ' de ' + esc(f.nome) + '"' + dis + '>'; };
+      return '<tr><th class="col-nome" scope="row"><b>' + esc(f.nome) + '</b><small>' + esc([f.cargo, FT.nomeTipo(f.tipo || '')].filter(Boolean).join(' · ')) + '</small></th>' +
+        '<td class="fe-ponto">' + (pt ? pt.dias + ' dias · ' + C.hhmm(pt.min) + (pt.feriadosMin ? '<small>feriado ' + C.hhmm(pt.feriadosMin) + '</small>' : '') + (pt.noturnos ? '<small>noturnas ' + C.hhmm(pt.noturnos) + '</small>' : '') : '<span class="fe-sem">—</span>') + '</td>' +
+        '<td class="num">' + inp('consumo') + (s ? '<small class="fe-sug">sugerido ' + FT.num2(s.valor) + ' (' + s.pedidos + (s.pedidos === 1 ? ' pedido' : ' pedidos') + ')' + (!trav && Math.abs(s.valor - (+r.consumo || 0)) > 0.004 ? ' · <button type="button" class="link" data-usar="' + esc(f.id) + '">usar</button>' : '') + '</small>' : '') + '</td>' +
+        '<td class="num">' + inp('emprestimo') + '</td><td class="num">' + inp('adiantamento') + '</td>' +
+        '<td class="num col-total" id="fe-tot-' + esc(f.id) + '">' + (descontar(r) ? FT.moeda(descontar(r)) : '—') + '</td>' +
+        '<td><input class="fe-txt" data-p="' + esc(f.id) + '" data-campo="he" id="fe-he-' + esc(f.id) + '" placeholder="ex.: 4H NO DIA 12/10" value="' + esc(r.he || '') + '" aria-label="Horas extras de ' + esc(f.nome) + '"' + dis + '></td>' +
+        '<td><input class="fe-txt" data-p="' + esc(f.id) + '" data-campo="obs" id="fe-obs-' + esc(f.id) + '" placeholder="" value="' + esc(r.obs || '') + '" aria-label="Observação de ' + esc(f.nome) + '"' + dis + '></td></tr>';
+    }).join('') : '<tr><td colspan="9" class="vazio-lista">Nenhum funcionário fixo ativo. Marque "Mostrar também freelancers e motoboys" ou cadastre em Funcionários.</td></tr>';
+    h += '</tbody><tfoot><tr><th class="col-nome">Total</th><td></td>' + CAMPOS.map(function (c) { return '<td class="num" id="fe-f-' + c[0] + '"></td>'; }).join('') + '<td class="num col-total" id="fe-f-total"></td><td></td><td></td></tr></tfoot>';
+    $('#fe-tabela').innerHTML = h;
+    totais();
+  }
+  function linhaTotal(id) { const el = document.getElementById('fe-tot-' + id), r = st.dados.pessoas[id]; if (el) el.textContent = descontar(r) ? FT.moeda(descontar(r)) : '—'; }
+  function soma() {
+    const t = { consumo: 0, emprestimo: 0, adiantamento: 0, total: 0, he: 0, pessoas: 0 };
+    lista().forEach(function (f) {
+      const r = st.dados.pessoas[f.id]; if (!r) return;
+      CAMPOS.forEach(function (c) { t[c[0]] += +r[c[0]] || 0; });
+      t.total += descontar(r); if (r.he) t.he++; if (descontar(r) || r.he) t.pessoas++;
+    });
+    Object.keys(t).forEach(function (k) { t[k] = FT.r2(t[k]); });
+    return t;
+  }
+  function totais() {
+    const t = soma();
+    CAMPOS.forEach(function (c) { const el = document.getElementById('fe-f-' + c[0]); if (el) el.textContent = t[c[0]] ? FT.num2(t[c[0]]) : '—'; });
+    const tt = document.getElementById('fe-f-total'); if (tt) tt.textContent = FT.moeda(t.total);
+    $('#fe-kpis').innerHTML = [
+      ['Total a descontar', FT.moeda(t.total), t.pessoas + ' funcionário(s) com lançamento', true],
+      ['Consumo interno', FT.moeda(t.consumo), 'a descontar na folha'],
+      ['Empréstimos', FT.moeda(t.emprestimo), 'parcelas a descontar'],
+      ['Adiantamentos / vales', FT.moeda(t.adiantamento), 'já pagos no mês'],
+      ['Horas extras', String(t.he), t.he === 1 ? 'funcionário com hora extra' : 'funcionários com hora extra']
+    ].map(function (k) { return '<article class="kpi' + (k[3] ? ' kpi-destaque' : '') + '"><h3>' + esc(k[0]) + '</h3><p class="kpi-v">' + k[1] + '</p><p class="kpi-s">' + esc(k[2]) + '</p></article>'; }).join('');
+  }
+
+  /* salvar automático */
+  function mudou() { st.salvo = false; st.erro = null; estado(); salvarDepois(); }
+  const salvarDepois = FT.debounce(function () { salvarAgora(); }, 1000);
+  async function salvarAgora() {
+    if (st.salvo || st.salvando) return;
+    st.salvando = true; estado();
+    const k = chave(), d = JSON.parse(JSON.stringify(st.dados));
+    try { await FT.store.config.salvar(k, d); if (k === chave()) st.salvo = true; } catch (e) { st.erro = FT.textoErro(e); }
+    st.salvando = false; estado();
+  }
+  function estado() {
+    const el = $('#fe-estado');
+    if (st.erro) { el.className = 'pilula erro'; el.textContent = 'Não salvou: ' + st.erro + ' · clique para tentar de novo'; return; }
+    if (st.salvando) { el.className = 'pilula'; el.textContent = 'Salvando…'; return; }
+    if (!st.salvo) { el.className = 'pilula'; el.textContent = 'Alterações não salvas'; return; }
+    el.className = 'pilula ' + (travado() ? 'ok' : ''); el.textContent = travado() ? '✓ Finalizado' : '✓ Salvo · em aberto';
+  }
+  async function finalizar() {
+    if (travado()) { st.dados.status = 'rascunho'; st.dados.finalizadoEm = null; }
+    else { st.dados.status = 'finalizado'; st.dados.finalizadoEm = new Date().toISOString(); }
+    mudou(); await salvarAgora(); desenhar(); estado();
+    if (travado()) FT.aviso('Fechamento de ' + nomeMes(st.mes) + ' finalizado. Agora baixe o PDF ou o Excel.');
+  }
+
+  /* exportar */
+  function linhasExport() {
+    return lista().map(function (f) { const r = st.dados.pessoas[f.id] || {}; return { f: f, r: r, tot: descontar(r) }; })
+      .filter(function (x) { return x.tot || x.r.he || x.r.obs || x.f.tipo === 'fixo'; });
+  }
+  async function pdf(b) {
+    if (!travado() && !confirm('O fechamento ainda está em aberto. Gerar o PDF mesmo assim?')) return;
+    const txt = b.textContent; b.disabled = true; b.textContent = 'Gerando…';
+    try {
+      const l = linhasExport(), t = soma();
+      const he = l.filter(function (x) { return x.r.he || x.r.obs; });
+      const bytes = await FT.gerarPDF({
+        paisagem: true, titulo: 'FECHAMENTO DA FOLHA DE PAGAMENTO', subtitulo: 'MÊS DE REFERÊNCIA: ' + nomeMes(st.mes),
+        info: [['EMPRESA', 'FORNERIA TOSCANA · CNPJ 09.385.499/0001-77'], ['SITUAÇÃO', travado() ? 'FINALIZADO EM ' + FT.ddmmaaaa(FT.dataSP(st.dados.finalizadoEm)) : 'EM ABERTO (RASCUNHO)']],
+        blocos: [
+          { titulo: 'Descontos em folha', colunas: [{ t: 'FUNCIONÁRIO', w: 0.3 }, { t: 'CARGO', w: 0.16 }, { t: 'CONSUMO INTERNO', w: 0.13, a: 'r' }, { t: 'EMPRÉSTIMO', w: 0.13, a: 'r' }, { t: 'ADIANTAMENTO / VALE', w: 0.14, a: 'r' }, { t: 'TOTAL A DESCONTAR', w: 0.14, a: 'r' }],
+            linhas: l.map(function (x) { return [x.f.nome, x.f.cargo || FT.nomeTipo(x.f.tipo || ''), FT.num2(+x.r.consumo || 0), FT.num2(+x.r.emprestimo || 0), FT.num2(+x.r.adiantamento || 0), FT.num2(x.tot)]; }),
+            total: ['TOTAL', '', FT.num2(t.consumo), FT.num2(t.emprestimo), FT.num2(t.adiantamento), FT.num2(t.total)] },
+          { titulo: 'Horas extras a pagar e observações', colunas: [{ t: 'FUNCIONÁRIO', w: 0.3 }, { t: 'HORAS EXTRAS', w: 0.35 }, { t: 'OBSERVAÇÃO', w: 0.35 }],
+            linhas: he.length ? he.map(function (x) { return [x.f.nome, x.r.he || '—', x.r.obs || '']; }) : [['NENHUMA HORA EXTRA INFORMADA', '', '']] }
+        ],
+        rodape: ['Valores informados pela Forneria Toscana para o fechamento da folha de ' + nomeMes(st.mes) + '. Gerado em ' + FT.ddmmaaaa(FT.hoje()) + '.', '', '', '______________________________________________', 'RESPONSÁVEL · FORNERIA TOSCANA']
+      });
+      FT.baixarArquivo(bytes, 'Fechamento_folha_' + st.mes + '.pdf');
+    } catch (e) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(e), true); }
+    finally { b.disabled = false; b.textContent = txt; }
+  }
+  function excel() {
+    if (typeof XLSX === 'undefined') { FT.aviso('O gerador de planilhas não carregou. Confira a internet e recarregue a página.', true); return; }
+    if (!travado() && !confirm('O fechamento ainda está em aberto. Gerar o Excel mesmo assim?')) return;
+    const l = linhasExport(), t = soma(), r2 = function (v) { return Math.round((+v || 0) * 100) / 100; };
+    const rows = [['FECHAMENTO DA FOLHA DE PAGAMENTO · FORNERIA TOSCANA · CNPJ 09.385.499/0001-77'], ['MÊS DE REFERÊNCIA: ' + nomeMes(st.mes) + (travado() ? ' · FINALIZADO EM ' + FT.ddmmaaaa(FT.dataSP(st.dados.finalizadoEm)) : ' · EM ABERTO')], [],
+      ['FUNCIONÁRIO', 'CARGO', 'TIPO', 'CONSUMO INTERNO', 'EMPRÉSTIMO', 'ADIANTAMENTO / VALE', 'TOTAL A DESCONTAR', 'HORAS EXTRAS A PAGAR', 'OBSERVAÇÃO']];
+    l.forEach(function (x) { rows.push([x.f.nome, x.f.cargo || '', FT.nomeTipo(x.f.tipo || '').toUpperCase(), r2(x.r.consumo), r2(x.r.emprestimo), r2(x.r.adiantamento), r2(x.tot), x.r.he || '', x.r.obs || '']); });
+    rows.push(['TOTAL', '', '', r2(t.consumo), r2(t.emprestimo), r2(t.adiantamento), r2(t.total), '', '']);
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [36, 22, 12, 16, 14, 18, 18, 36, 36].map(function (w) { return { wch: w }; });
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'FECHAMENTO');
+    XLSX.writeFile(wb, 'Fechamento_folha_' + st.mes + '.xlsx');
+  }
+
+  let montado = false;
+  FT.telas.fechamento = {
+    abrir: async function () { if (!montado) { montado = true; montar(); } await irPara(st.mes || mesPadrao()); },
+    sair: function () { if (!st.salvo) salvarAgora(); }
+  };
+})();
+
 /* Forneria Toscana — envio de holerites aos funcionários (folha de pagamento)
  * - holerite do sistema: guardado como página HTML no momento do envio
  * - holerite da contabilidade: PDF importado (um PDF com todos ou um por funcionário),
@@ -9169,7 +9417,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
