@@ -956,6 +956,9 @@ table.lista.vp-dias .num { min-width: 64px; }
 .lg-fer { background: transparent !important; border: 0 !important; color: #c95f17; font-style: normal; font-size: 11px; line-height: 10px; text-align: center; }
 .pg td.col-dia.escala { position: relative; }
 .pg td.col-dia.escala::before { content: "◆"; position: absolute; top: 2px; left: 4px; font-size: 8px; color: var(--accent); }
+.pg td.pg-recibo { white-space: nowrap; }
+.pg td.pg-recibo .btn { padding: 5px 9px; font-size: 12px; }
+.pg-rec-ok { display: block; font-size: 10.5px; color: var(--bom, #1d7a3b); margin-top: 2px; }
 
 </style>
 </head>
@@ -4932,11 +4935,12 @@ window.FT_CONFIG = {
     });
 
     const tab = $('#pg-tabela');
+    tab.addEventListener('click', function (e) { const b = e.target.closest('[data-recibo]'); if (b) enviarRecibo(b.dataset.recibo, !!b.dataset.trocar); });
     tab.addEventListener('change', function (e) {
       const el = e.target, p = pessoa(el.dataset.p); if (!p) return;
       const d = el.dataset.dia;
       if (el.classList.contains('t')) { p.dias[d] = p.dias[d] || { t: false, entrega: 0 }; p.dias[d].t = el.checked; el.closest('td').classList.toggle('marcado', el.checked); mudou(); }
-      else if (el.classList.contains('pago')) { p.pago = el.checked; el.closest('tr').classList.toggle('linha-paga', el.checked); mudou(); }
+      else if (el.classList.contains('pago')) { p.pago = el.checked; p.pagoEm = el.checked ? FT.hoje() : null; el.closest('tr').classList.toggle('linha-paga', el.checked); mudou(); }
       else if (el.classList.contains('val')) { const v = valorDe(p, el); el.value = v ? FT.num2(v) : ''; }
     });
     tab.addEventListener('input', function (e) {
@@ -4959,7 +4963,7 @@ window.FT_CONFIG = {
     $('#pg-rotulo').textContent = FT.rotuloSemana(semana);
     $('#pg-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
     try {
-      const funcs = await FT.obterFuncionarios();
+      const funcs = await FT.obterFuncionarios(); st.funcs = funcs;
       const salvo = await FT.store.pagamento.ler(semana);
       st.existe = !!salvo;
       st.dados = salvo ? C.sincronizarPessoas(salvo, funcs) : C.novoPagamento(semana, funcs);
@@ -5095,11 +5099,11 @@ window.FT_CONFIG = {
     const dias = diasAbertos();
     const equipe = st.dados.pessoas.filter(function (p) { return p.tipo !== 'motoboy'; }).sort(ordenar);
     const motos = st.dados.pessoas.filter(function (p) { return p.tipo === 'motoboy'; }).sort(ordenar);
-    const nCol = 2 + dias.length + 9;
+    const nCol = 2 + dias.length + 10;
     let h = '<thead><tr><th class="col-nome">Colaborador</th><th class="num">Diária</th>' +
       dias.map(function (d) { return '<th class="col-dia"><span>' + FT.DIAS_CURTOS[FT.diaSemana(d)] + '</span><small>' + FT.ddmm(d) + '</small></th>'; }).join('') +
       '<th class="num">Dias</th><th class="num">Diárias</th><th class="num">Rateio 10%</th><th class="num">Entregas</th>' +
-      '<th class="num">Caixinha</th><th class="num">Adiant.</th><th class="num">Consumo</th><th class="num col-total">Total a pagar</th><th>Pago</th></tr></thead><tbody>';
+      '<th class="num">Caixinha</th><th class="num">Adiant.</th><th class="num">Consumo</th><th class="num col-total">Total a pagar</th><th>Pago</th><th class="num">Recibo</th></tr></thead><tbody>';
     const linha = function (p) {
       const moto = p.tipo === 'motoboy';
       let r = '<tr data-linha="' + esc(p.id) + '"' + (p.pago ? ' class="linha-paga"' : '') + '><th class="col-nome" scope="row"><b>' + esc(p.nome) + '</b><small>' + esc(FT.nomeTipo(p.tipo)) + (p.setor ? ' · ' + esc(FT.nomeSetor(p.setor)) : '') + '</small></th>' +
@@ -5113,7 +5117,7 @@ window.FT_CONFIG = {
       ['caixinha', 'adiantamento', 'consumo'].forEach(function (k) {
         r += '<td class="num"><input class="val inp-dinheiro" data-p="' + esc(p.id) + '" data-campo="' + k + '" id="pg-' + k + '-' + esc(p.id) + '" inputmode="decimal" placeholder="0,00" value="' + (+p[k] ? FT.num2(+p[k]) : '') + '" aria-label="' + k + ' de ' + esc(p.nome) + '"></td>';
       });
-      r += '<td class="num col-total" id="pg-tot-' + esc(p.id) + '"></td><td class="centro"><input type="checkbox" class="pago" data-p="' + esc(p.id) + '" id="pg-pago-' + esc(p.id) + '"' + (p.pago ? ' checked' : '') + ' aria-label="' + esc(p.nome) + ' já foi pago"></td></tr>';
+      r += '<td class="num col-total" id="pg-tot-' + esc(p.id) + '"></td><td class="centro"><input type="checkbox" class="pago" data-p="' + esc(p.id) + '" id="pg-pago-' + esc(p.id) + '"' + (p.pago ? ' checked' : '') + ' aria-label="' + esc(p.nome) + ' já foi pago"></td><td class="num pg-recibo" id="pg-rec-' + esc(p.id) + '"></td></tr>';
       return r;
     };
     if (equipe.length) h += '<tr class="grupo"><th colspan="' + nCol + '" scope="colgroup">Equipe · fixos e freelancers · entram no rateio</th></tr>' + equipe.map(linha).join('');
@@ -5121,7 +5125,7 @@ window.FT_CONFIG = {
     if (!equipe.length && !motos.length) h += '<tr><td colspan="' + nCol + '" class="vazio-lista">Sem colaboradores.</td></tr>';
     h += '</tbody><tfoot><tr><th class="col-nome">Total da semana</th><td></td>' +
       dias.map(function (d) { return '<td class="col-dia" id="pg-fd-' + d + '"></td>'; }).join('') +
-      '<td></td><td class="num" id="pg-f-diarias"></td><td class="num" id="pg-f-rateio"></td><td class="num" id="pg-f-entregas"></td><td class="num" id="pg-f-caixinha"></td><td class="num" id="pg-f-adiantamento"></td><td class="num" id="pg-f-consumo"></td><td class="num col-total" id="pg-f-total"></td><td></td></tr></tfoot>';
+      '<td></td><td class="num" id="pg-f-diarias"></td><td class="num" id="pg-f-rateio"></td><td class="num" id="pg-f-entregas"></td><td class="num" id="pg-f-caixinha"></td><td class="num" id="pg-f-adiantamento"></td><td class="num" id="pg-f-consumo"></td><td class="num col-total" id="pg-f-total"></td><td></td><td></td></tr></tfoot>';
     $('#pg-tabela').innerHTML = h;
   }
   function ordenar(a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); }
@@ -5135,6 +5139,11 @@ window.FT_CONFIG = {
       txt('pg-r-' + r.id, r.rateio ? FT.num2(r.rateio) : '—');
       txt('pg-en-' + r.id, r.entregas ? FT.num2(r.entregas) : '—');
       txt('pg-tot-' + r.id, FT.moeda(r.total));
+      const rec = document.getElementById('pg-rec-' + r.id), p = pessoa(String(r.id));
+      if (rec && p) {
+        const tem = r.nDias || r.total;
+        rec.innerHTML = tem ? FT.botaoWhats(fichaFunc(p), 'data-recibo="' + esc(p.id) + '"', p.reciboEm ? 'Reenviar recibo' : 'Enviar recibo') + (p.reciboEm ? '<small class="pg-rec-ok">✓ enviado ' + FT.ddmm(FT.dataSP(p.reciboEm)) + '</small>' : '') : '';
+      }
     });
     diasAbertos().forEach(function (d) {
       const c = calc.dias[d];
@@ -5152,6 +5161,45 @@ window.FT_CONFIG = {
       { t: 'Ajustes', v: FT.moeda(t.caixinha - t.adiantamento - t.consumo), s: 'Caixinha − adiantamentos − consumo' }
     ].map(function (k) { return '<article class="kpi' + (k.d ? ' kpi-destaque' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p><p class="kpi-s">' + esc(k.s) + '</p></article>'; }).join('');
   }
+  /* ---------- recibo no WhatsApp ---------- */
+  function fichaFunc(p) {
+    const f = (st.funcs || []).find(function (x) { return String(x.id) === String(p.id); });
+    return f || { id: p.id, nome: p.nome, telefone: p.telefone };
+  }
+  function reciboTexto(p) {
+    const calc = C.calcularPagamento(st.dados), r = calc.pessoas.find(function (x) { return String(x.id) === String(p.id); });
+    const moto = p.tipo === 'motoboy', m = function (v) { return FT.moeda(v); };
+    const fimSem = FT.somaDias(st.semana, 6);
+    const l = ['*RECIBO DE PAGAMENTO · FORNERIA TOSCANA*', '',
+      'COLABORADOR: ' + p.nome,
+      'SEMANA: ' + FT.ddmm(st.semana) + ' A ' + FT.ddmmaaaa(fimSem),
+      'DATA DO PAGAMENTO: ' + FT.ddmmaaaa(p.pagoEm || FT.hoje()), '',
+      '*DIAS TRABALHADOS (' + r.nDias + ')*'];
+    diasAbertos().forEach(function (d) {
+      const x = p.dias[d] || {}; if (!x.t && !(moto && +x.entrega)) return;
+      const diaria = x.t ? +p.diaria || 0 : 0, extra = moto ? +x.entrega || 0 : (x.t ? FT.r2(calc.dias[d].cota) : 0);
+      const partes = [];
+      if (diaria) partes.push('diária ' + FT.num2(diaria));
+      if (extra) partes.push((moto ? 'entregas ' : '10% ') + FT.num2(extra));
+      l.push('• ' + FT.DIAS_CURTOS[FT.diaSemana(d)].toUpperCase() + ' ' + FT.ddmm(d) + (partes.length ? ' – ' + partes.join(' + ') + ' = ' + FT.num2(diaria + extra) : ''));
+    });
+    if (!r.nDias) l.push('• nenhum dia nesta semana');
+    l.push('', '*VALORES*');
+    l.push('Diárias' + (r.nDias && +p.diaria ? ' (' + r.nDias + ' × ' + m(+p.diaria) + ')' : '') + ': ' + m(r.diarias));
+    if (moto) l.push('Taxas de entrega: ' + m(r.entregas));
+    else l.push('10% rateado: ' + m(r.rateio));
+    if (r.caixinha) l.push('Caixinha: ' + m(r.caixinha));
+    if (r.adiantamento) l.push('(−) Adiantamento/vale: ' + m(r.adiantamento));
+    if (r.consumo) l.push('(−) Consumo: ' + m(r.consumo));
+    l.push('', '*TOTAL ' + (p.pago ? 'PAGO' : 'A RECEBER') + ': ' + m(r.total) + '*', '', 'QUALQUER DÚVIDA, FALE COM O GERENTE.', 'FORNERIA TOSCANA');
+    return l.join('\n').toLocaleUpperCase('pt-BR');
+  }
+  async function enviarRecibo(id, trocar) {
+    const p = pessoa(id); if (!p) return;
+    const f = fichaFunc(p);
+    if (await FT.enviarWhats(f, reciboTexto(p), trocar)) { p.reciboEm = new Date().toISOString(); mudou(); }
+  }
+
   function desenharTudo() { desenharDias(); desenharTabela(); atualizarCalculos(); }
 
   /* ---------- ações ---------- */
