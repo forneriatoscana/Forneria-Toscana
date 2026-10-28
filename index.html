@@ -968,6 +968,38 @@ table.lista.vp-dias .num { min-width: 64px; }
 .fe .fe-sem { color: var(--ink-3); }
 .fe-nota { font-size: 12px; color: var(--ink-3); margin: 0; }
 
+/* ---------- Ficha técnica ---------- */
+.ft-filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ft-filtros input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; width: 260px; max-width: 100%; }
+.ft-cats { display: flex; flex-wrap: wrap; gap: 6px; }
+.ft-cat { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 12px; cursor: pointer; }
+.ft-cat.ativo { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ft-cat small { opacity: .7; }
+.ft-tab tbody tr { cursor: pointer; }
+.ft-tab tbody tr:hover td { background: var(--surface-2); }
+.ft-aviso { display: block; font-size: 11px; color: var(--aviso-ink); }
+.ft-alto { color: var(--ruim, #b3261e); }
+.ft-voltar { font-size: 13px; margin-bottom: 4px; display: inline-block; }
+.ft-cab { display: grid; grid-template-columns: 2fr 1.4fr 1fr 1fr 1fr; gap: 12px; }
+.ft-cab label { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--ink-2); letter-spacing: .03em; }
+.ft-cab label small { font-weight: 400; color: var(--ink-3); }
+.ft-cab input, .ft-itens input, .ft-itens select, .ft-preparo { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; text-transform: uppercase; width: 100%; }
+.ft-itens .ft-ing { min-width: 320px; }
+.ft-itens .ft-qtd { width: 100px; text-align: right; }
+.ft-itens select { width: 80px; }
+.ft-itens .ft-n { color: var(--ink-3); width: 32px; }
+.ft-itens .ft-pr { font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+.ft-itens .ft-cu { font-weight: 700; white-space: nowrap; }
+.ft-itens .ft-acoes { white-space: nowrap; }
+.ft-itens .ft-acoes .btn-icone { width: 28px; height: 28px; font-size: 14px; }
+.ft-itens tfoot td, .ft-itens tfoot th { font-weight: 700; }
+.ft-preparo { min-height: 110px; resize: vertical; text-transform: none; line-height: 1.5; }
+.ft-nota { font-size: 12px; color: var(--ink-3); margin: 0; }
+@media (max-width: 900px) { .ft-cab { grid-template-columns: 1fr 1fr; } .ft-itens .ft-ing { min-width: 200px; } }
+.ft-pu { display: flex; align-items: center; gap: 4px; justify-content: flex-end; font-size: 11px; color: var(--ink-3); margin-top: 3px; }
+.ft-itens .ft-pu input { width: 70px; padding: 3px 6px; font-size: 12px; text-align: right; }
+#ft-lista-v:not([hidden]), #ft-edit-v:not([hidden]) { display: grid; gap: 16px; min-width: 0; }
+
 </style>
 </head>
 <body>
@@ -1015,6 +1047,7 @@ table.lista.vp-dias .num { min-width: 64px; }
         <div class="menu-itens" id="mg-est" hidden>
           <a href="#est-contagem"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6v3H9z"/><path d="M7 5H5v16h14V5h-2"/><path d="M9 12l2 2 4-4M9 17h6"/></svg>Contagem de estoque</a>
           <a href="#est-produtos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l8-4 8 4-8 4z"/><path d="M4 7v10l8 4 8-4V7"/></svg>Produtos</a>
+          <a href="#fichas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/><circle cx="17" cy="17" r="0"/></svg>Ficha técnica</a>
           <a href="#est-notas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4M9 13h7M9 17h7"/></svg>Entrada de nota</a>
           <a href="#est-acerto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M4 17h6M18 4v6M15 7h6M14 17h7"/></svg>Acerto de estoque</a>
         </div>
@@ -1134,6 +1167,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     <section id="tela-est-produtos" class="tela" hidden></section>
     <section id="tela-est-notas" class="tela" hidden></section>
     <section id="tela-est-acerto" class="tela" hidden></section>
+    <section id="tela-fichas" class="tela" hidden></section>
     <section id="tela-compras" class="tela" hidden></section>
     <section id="tela-cotacao" class="tela" hidden></section>
     <section id="tela-fornecedores" class="tela" hidden></section>
@@ -2759,7 +2793,9 @@ window.FT_CONFIG = {
   const porNome = function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); };
   function limparProduto(p) {
     const n = function (v) { return v === '' || v == null || isNaN(+v) ? null : +v; };
-    return { nome: FT.mai(p.nome), unidade: FT.mai(p.unidade || 'UN') || 'UN', local: p.local ? FT.mai(p.local) : null, ordem: +p.ordem || 0, estoque_minimo: n(p.estoque_minimo), unidade_contagem: p.unidade_contagem ? FT.mai(p.unidade_contagem) : null, fator_contagem: n(p.fator_contagem) > 0 ? n(p.fator_contagem) : null, ativo: p.ativo !== false, obs: p.obs ? FT.mai(p.obs) : null };
+    const r = { nome: FT.mai(p.nome), unidade: FT.mai(p.unidade || 'UN') || 'UN', local: p.local ? FT.mai(p.local) : null, ordem: +p.ordem || 0, estoque_minimo: n(p.estoque_minimo), unidade_contagem: p.unidade_contagem ? FT.mai(p.unidade_contagem) : null, fator_contagem: n(p.fator_contagem) > 0 ? n(p.fator_contagem) : null, ativo: p.ativo !== false, obs: p.obs ? FT.mai(p.obs) : null };
+    if ('peso_unidade' in p) r.peso_unidade = n(p.peso_unidade) > 0 ? n(p.peso_unidade) : null;  // g ou ml em 1 unidade (ficha técnica)
+    return r;
   }
   function limparFornecedor(f) {
     const t = function (v) { return v ? FT.mai(v) : null; };
@@ -2773,6 +2809,14 @@ window.FT_CONFIG = {
   FT.limparProduto = limparProduto; FT.limparFornecedor = limparFornecedor;
 
   /* ---------------- Supabase ---------------- */
+  function limparFicha(f) {
+    return { nome: FT.mai(f.nome), categoria: f.categoria ? FT.mai(f.categoria) : null, porcoes: +f.porcoes > 0 ? +f.porcoes : 1,
+      peso_final: f.peso_final === '' || f.peso_final == null || !(+f.peso_final > 0) ? null : +f.peso_final,
+      preco_venda: f.preco_venda === '' || f.preco_venda == null || !(+f.preco_venda > 0) ? null : +f.preco_venda,
+      modo_preparo: f.modo_preparo || null, itens: (f.itens || []).filter(function (i) { return i && (i.nome || i.ref_id); }).map(function (i) {
+        return { tipo: i.tipo || 'livre', ref_id: i.ref_id || null, nome: FT.mai(i.nome || ''), qtd: +i.qtd || 0, un: i.un || 'G' };
+      }), ativo: f.ativo !== false };
+  }
   FT.estoqueSupabase = function (sb, ok) {
     const agora = function () { return new Date().toISOString(); };
     async function tudo(q) { const r = []; for (let i = 0; ; i += 1000) { const d = await ok(q().range(i, i + 999)); r.push.apply(r, d); if (d.length < 1000) break; } return r; }
@@ -2787,6 +2831,15 @@ window.FT_CONFIG = {
         salvarVarios: async function (lista) { return ok(sb.from('produtos').insert(lista.map(limparProduto)).select()); },
         reordenar: async function (lista) { for (let i = 0; i < lista.length; i++) await ok(sb.from('produtos').update({ ordem: lista[i].ordem }).eq('id', lista[i].id)); },
         remover: async function (id) { return ok(sb.from('produtos').delete().eq('id', id)); }
+      },
+      fichas: {
+        listar: async function () { return (await ok(sb.from('fichas_tecnicas').select('*'))).sort(porNome); },
+        salvar: async function (f) {
+          const d = Object.assign(limparFicha(f), { atualizado_em: new Date().toISOString() });
+          if (f.id) return ok(sb.from('fichas_tecnicas').update(d).eq('id', f.id).select().single());
+          return ok(sb.from('fichas_tecnicas').insert(d).select().single());
+        },
+        remover: async function (id) { return ok(sb.from('fichas_tecnicas').delete().eq('id', id)); }
       },
       fornecedores: {
         listar: async function () { return (await ok(sb.from('fornecedores').select('*'))).sort(porNome); },
@@ -2871,6 +2924,17 @@ window.FT_CONFIG = {
         salvarVarios: function (l) { return espera(l.map(function (p) { return salvarEm(db.produtos, {}, Object.assign(limparProduto(p), { estoque: 0 }), 'pr'); })); },
         reordenar: function (l) { l.forEach(function (x) { const p = db.produtos.find(function (y) { return y.id === x.id; }); if (p) p.ordem = x.ordem; }); return espera(null); },
         remover: function (pid) { db.produtos = db.produtos.filter(function (x) { return x.id !== pid; }); return espera(null); }
+      },
+      fichas: {
+        listar: function () { return espera((db.fichas = db.fichas || clonar(inicial.fichas || [])).slice().sort(porNome)); },
+        salvar: function (f) {
+          db.fichas = db.fichas || [];
+          const d = Object.assign(limparFicha(f), { atualizado_em: new Date().toISOString() });
+          let x = f.id && db.fichas.find(function (y) { return y.id === f.id; });
+          if (x) Object.assign(x, d); else { x = Object.assign({ id: 'ft' + Date.now() + Math.floor(Math.random() * 1000) }, d); db.fichas.push(x); }
+          return espera(x);
+        },
+        remover: function (id) { db.fichas = (db.fichas || []).filter(function (x) { return x.id !== id; }); return espera(null); }
       },
       fornecedores: {
         listar: function () { return espera(db.fornecedores.slice().sort(porNome)); },
@@ -8011,6 +8075,350 @@ window.FT_CONFIG = {
   FT.telas['est-acerto'] = { abrir: async function () { if (!montado) { montado = true; montar(); } await carregar(); } };
 })();
 
+/* Forneria Toscana — Estoque › Ficha técnica
+ * Cadastra o produto (ex.: CROSTINI) e entra nele colocando cada ingrediente e o peso.
+ * Os ingredientes vêm do cadastro do estoque (com o último preço de compra → custo) ou de outra ficha (ex.: MASSA). */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const UNS = ['G', 'KG', 'ML', 'L', 'UN'];
+  const CATS = ['ENTRADAS', 'PIZZA GRANDE', 'PIZZA BROTO', 'SOBREMESAS', 'DRINKS', 'MASSAS E BASES', 'MOLHOS'];
+  const st = { fichas: [], est: null, sel: null, busca: '', cat: '', salvo: true, salvando: false, erro: null };
+
+  /* ---------- conversões e custos ---------- */
+  const MASSA = { G: 1, KG: 1000 }, VOL = { ML: 1, L: 1000, LT: 1000 };
+  function gramas(qtd, un) { un = String(un || '').toUpperCase(); return MASSA[un] ? qtd * MASSA[un] : VOL[un] ? qtd * VOL[un] : 0; }
+  // custo por 1 unidade do estoque (ex.: por KG), pelo último preço de compra mais recente
+  function custoEstoque(pid) {
+    const vs = (st.est.vinculos || []).filter(function (v) { return v.produto_id === pid && v.ultimo_preco != null && +v.ultimo_preco > 0; })
+      .sort(function (a, b) { return String(b.atualizado_em || '').localeCompare(String(a.atualizado_em || '')); });
+    if (!vs.length) return null;
+    return +vs[0].ultimo_preco / (+vs[0].fator > 0 ? +vs[0].fator : 1);
+  }
+  // quantidade do item convertida para a unidade do produto do estoque
+  function naUnidade(qtd, un, unProd, pesoUn) {
+    un = String(un || '').toUpperCase(); unProd = String(unProd || '').toUpperCase();
+    if (MASSA[un] && MASSA[unProd]) return qtd * MASSA[un] / MASSA[unProd];
+    if (VOL[un] && VOL[unProd]) return qtd * VOL[un] / VOL[unProd];
+    if (un === 'UN' && !MASSA[unProd] && !VOL[unProd]) return qtd;
+    if (un === unProd) return qtd;
+    // produto contado por unidade (saco, lata, pacote): usa quanto pesa 1 unidade
+    if ((MASSA[un] || VOL[un]) && !MASSA[unProd] && !VOL[unProd] && +pesoUn > 0) return gramas(qtd, un) / +pesoUn;
+    return null;
+  }
+  // custo de um item da ficha (null = sem preço)
+  function custoItem(it, pilha) {
+    const q = +it.qtd || 0; if (!q) return 0;
+    if (it.tipo === 'produto') {
+      const p = st.est.prod[it.ref_id]; if (!p) return null;
+      const c = custoEstoque(p.id), n = naUnidade(q, it.un, p.unidade, p.peso_unidade);
+      return c == null || n == null ? null : c * n;
+    }
+    if (it.tipo === 'ficha') {
+      const f = st.fichas.find(function (x) { return x.id === it.ref_id; }); if (!f || (pilha || []).indexOf(f.id) >= 0) return null;
+      const r = resumo(f, (pilha || []).concat([f.id]));
+      if (r.custo == null) return null;
+      if (String(it.un).toUpperCase() === 'UN') return r.custo / (+f.porcoes || 1) * q;
+      const base = +f.peso_final || r.peso; if (!base) return null;
+      return r.custo / base * gramas(q, it.un);
+    }
+    return null;
+  }
+  function resumo(f, pilha) {
+    let peso = 0, un = 0, custo = 0, semPreco = 0;
+    (f.itens || []).forEach(function (it) {
+      const g = gramas(+it.qtd || 0, it.un); if (g) peso += g; else if (+it.qtd) un += +it.qtd;
+      const c = custoItem(it, pilha || [f.id]); if (c == null) { if (+it.qtd) semPreco++; } else custo += c;
+    });
+    const porc = +f.porcoes > 0 ? +f.porcoes : 1;
+    const r = { peso: peso, un: un, custo: (f.itens || []).length ? custo : null, semPreco: semPreco, porPorcao: custo / porc };
+    r.cmv = +f.preco_venda > 0 ? r.porPorcao / +f.preco_venda : null;
+    return r;
+  }
+  function peso(g) { return g >= 1000 ? FT.num2(g / 1000).replace(/,?0+$/, '').replace(/,$/, '') + ' kg' : (Math.round(g * 10) / 10).toLocaleString('pt-BR') + ' g'; }
+  function pct(v) { return (Math.round(v * 1000) / 10).toLocaleString('pt-BR') + '%'; }
+
+  /* ---------- tela ---------- */
+  function montar() {
+    $('#tela-fichas').innerHTML = '<div id="ft-lista-v"></div><div id="ft-edit-v" hidden></div>';
+    $('#ft-lista-v').innerHTML =
+      '<div class="cab-tela"><div><h1>Ficha técnica</h1><p>Cadastre o produto e entre nele colocando cada ingrediente e o peso. Com o último preço de compra do estoque, o sistema calcula o custo e o CMV de cada produto.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn" id="ft-nova">Nova ficha</button></div></div>' +
+      '<div class="ft-filtros"><input id="ft-busca" type="search" placeholder="Buscar produto" aria-label="Buscar produto" autocomplete="off"><div class="ft-cats" id="ft-cats"></div></div>' +
+      '<div class="rolagem"><table class="lista ft-tab" id="ft-tab"></table></div>';
+    $('#ft-nova').addEventListener('click', novaFicha);
+    $('#ft-busca').addEventListener('input', function (e) { st.busca = FT.semAcento(e.target.value); desenharLista(); });
+    $('#ft-cats').addEventListener('click', function (e) { const b = e.target.closest('[data-cat]'); if (!b) return; st.cat = st.cat === b.dataset.cat ? '' : b.dataset.cat; desenharLista(); });
+    $('#ft-tab').addEventListener('click', function (e) { const tr = e.target.closest('[data-id]'); if (tr) abrir(tr.dataset.id); });
+    $('#ft-tab').addEventListener('keydown', function (e) { if (e.key === 'Enter') { const tr = e.target.closest('[data-id]'); if (tr) abrir(tr.dataset.id); } });
+
+    const d = document.createElement('dialog'); d.id = 'dlg-ft-nova'; d.setAttribute('aria-labelledby', 'h-ft-nova');
+    d.innerHTML = '<form class="dlg form" id="ftn-form" novalidate><h2 id="h-ft-nova">Nova ficha técnica</h2>' +
+      '<label for="ftn-nome">Nome do produto<input id="ftn-nome" placeholder="ex.: CROSTINI" autocomplete="off" required></label>' +
+      '<label for="ftn-cat">Categoria<input id="ftn-cat" list="ft-cats-l" placeholder="ex.: ENTRADAS" autocomplete="off"></label><datalist id="ft-cats-l"></datalist>' +
+      '<p class="erro-form" id="ftn-erro"></p><div class="dlg-acoes"><span class="espaco"></span><button class="btn btn-sec" type="button" id="ftn-cancelar">Cancelar</button><button class="btn" type="submit">Criar e abrir</button></div></form>';
+    document.body.appendChild(d);
+    $('#ftn-cancelar').addEventListener('click', function () { d.close(); });
+    $('#ftn-form').addEventListener('submit', criar);
+  }
+
+  async function carregar() {
+    try {
+      const r = await Promise.all([FT.store.estoque.fichas.listar(), FT.est.carregar(true)]);
+      st.fichas = r[0]; st.est = r[1];
+      desenharLista();
+    } catch (e) { $('#ft-tab').innerHTML = '<tbody><tr><td class="vazio-lista">Não consegui carregar as fichas: ' + esc(FT.textoErro(e)) + '. Confira se o SQL da atualização 15 foi rodado no Supabase.</td></tr></tbody>'; }
+  }
+  function categorias() {
+    const s = {}; CATS.forEach(function (c) { s[c] = 1; }); st.fichas.forEach(function (f) { if (f.categoria) s[f.categoria] = 1; });
+    return Object.keys(s);
+  }
+  function desenharLista() {
+    const usadas = {}; st.fichas.forEach(function (f) { if (f.categoria) usadas[f.categoria] = (usadas[f.categoria] || 0) + 1; });
+    $('#ft-cats').innerHTML = Object.keys(usadas).sort().map(function (c) { return '<button type="button" class="ft-cat' + (st.cat === c ? ' ativo' : '') + '" data-cat="' + esc(c) + '" aria-pressed="' + (st.cat === c) + '">' + esc(c) + ' <small>' + usadas[c] + '</small></button>'; }).join('');
+    const l = st.fichas.filter(function (f) { return (!st.cat || f.categoria === st.cat) && (!st.busca || FT.semAcento(f.nome).indexOf(st.busca) >= 0); });
+    $('#ft-tab').innerHTML = '<thead><tr><th>Produto</th><th>Categoria</th><th class="num">Ingredientes</th><th class="num">Peso dos ingredientes</th><th class="num">Rende</th><th class="num">Custo total</th><th class="num">Custo por porção</th><th class="num">Preço de venda</th><th class="num">CMV</th></tr></thead><tbody>' +
+      (l.length ? l.map(function (f) {
+        const r = resumo(f);
+        return '<tr data-id="' + esc(f.id) + '" tabindex="0"><td><b>' + esc(f.nome) + '</b></td><td>' + esc(f.categoria || '—') + '</td><td class="num">' + (f.itens || []).length + '</td><td class="num">' + (r.peso ? peso(r.peso) : '—') + (r.un ? ' + ' + r.un + ' un' : '') + '</td>' +
+          '<td class="num">' + FT.num2(+f.porcoes || 1).replace(/,00$/, '') + '</td><td class="num">' + (r.custo != null ? FT.moeda(r.custo) : '—') + (r.semPreco ? '<small class="ft-aviso">' + r.semPreco + ' sem preço</small>' : '') + '</td>' +
+          '<td class="num">' + (r.custo != null ? FT.moeda(r.porPorcao) : '—') + '</td><td class="num">' + (+f.preco_venda ? FT.moeda(+f.preco_venda) : '—') + '</td><td class="num">' + (r.cmv != null ? '<b class="' + (r.cmv > 0.35 ? 'ft-alto' : '') + '">' + pct(r.cmv) + '</b>' : '—') + '</td></tr>';
+      }).join('') : '<tr><td colspan="9" class="vazio-lista">' + (st.fichas.length ? 'Nenhuma ficha encontrada.' : 'Nenhuma ficha ainda. Clique em "Nova ficha" e cadastre o primeiro produto (ex.: CROSTINI).') + '</td></tr>') + '</tbody>';
+  }
+
+  function novaFicha() {
+    $('#ftn-nome').value = ''; $('#ftn-cat').value = st.cat || ''; $('#ftn-erro').textContent = '';
+    $('#ft-cats-l').innerHTML = categorias().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('');
+    $('#dlg-ft-nova').showModal(); $('#ftn-nome').focus();
+  }
+  async function criar(e) {
+    e.preventDefault();
+    const nome = FT.mai($('#ftn-nome').value);
+    if (!nome) { $('#ftn-erro').textContent = 'Escreva o nome do produto.'; return; }
+    if (st.fichas.some(function (f) { return FT.semAcento(f.nome) === FT.semAcento(nome); })) { $('#ftn-erro').textContent = 'Já existe uma ficha com esse nome.'; return; }
+    try {
+      const f = await FT.store.estoque.fichas.salvar({ nome: nome, categoria: FT.mai($('#ftn-cat').value), porcoes: 1, itens: [] });
+      st.fichas.push(f); $('#dlg-ft-nova').close(); abrir(f.id, true);
+    } catch (x) { $('#ftn-erro').textContent = 'Não foi possível criar: ' + FT.textoErro(x); }
+  }
+
+  /* ---------- editor da ficha ---------- */
+  function opcoesIngr() {
+    const ops = []; st.ing = {};
+    st.est.produtos.filter(function (p) { return p.ativo !== false; }).forEach(function (p) { const t = p.nome + ' (' + p.unidade + ')'; st.ing[t] = { tipo: 'produto', ref_id: p.id, nome: p.nome }; ops.push(t); });
+    st.fichas.filter(function (f) { return f.id !== st.sel.id; }).forEach(function (f) { const t = '★ ' + f.nome + ' (ficha técnica)'; st.ing[t] = { tipo: 'ficha', ref_id: f.id, nome: f.nome }; ops.push(t); });
+    return ops.sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); }).map(function (t) { return '<option value="' + esc(t) + '">'; }).join('');
+  }
+  function rotuloIng(it) {
+    if (it.tipo === 'produto') { const p = st.est.prod[it.ref_id]; return p ? p.nome + ' (' + p.unidade + ')' : it.nome; }
+    if (it.tipo === 'ficha') return '★ ' + it.nome + ' (ficha técnica)';
+    return it.nome || '';
+  }
+  function abrir(id, nova) {
+    const f = st.fichas.find(function (x) { return x.id === id; }); if (!f) return;
+    st.sel = JSON.parse(JSON.stringify(f)); st.sel.itens = st.sel.itens || [];
+    if (!st.sel.itens.length) st.sel.itens.push({ tipo: 'livre', nome: '', qtd: 0, un: 'G' });
+    st.salvo = true; st.erro = null;
+    $('#ft-lista-v').hidden = true; $('#ft-edit-v').hidden = false;
+    const f2 = st.sel;
+    $('#ft-edit-v').innerHTML =
+      '<div class="cab-tela"><div><button type="button" class="link ft-voltar" id="ft-voltar">‹ Todas as fichas</button><h1 id="ft-titulo">' + esc(f2.nome) + '</h1></div>' +
+      '<div class="acoes-linha"><span class="pilula" id="ft-estado"></span><button type="button" class="btn btn-sec" id="ft-pdf">Baixar PDF</button><button type="button" class="btn btn-sec" id="ft-dup">Duplicar</button><button type="button" class="btn btn-sec btn-perigo" id="ft-excluir">Excluir</button></div></div>' +
+      '<div class="painel ft-cab"><label>Nome do produto<input id="ft-nome" value="' + esc(f2.nome) + '" autocomplete="off"></label>' +
+      '<label>Categoria<input id="ft-cat" list="ft-cats-e" value="' + esc(f2.categoria || '') + '" autocomplete="off"></label><datalist id="ft-cats-e">' + categorias().map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>' +
+      '<label>Rende (porções/unidades)<input id="ft-porcoes" inputmode="decimal" value="' + FT.num2(+f2.porcoes || 1).replace(/,00$/, '') + '"></label>' +
+      '<label>Peso pronto (g) <small>opcional</small><input id="ft-peso" inputmode="decimal" placeholder="soma dos ingredientes" value="' + (+f2.peso_final ? FT.num2(+f2.peso_final).replace(/,00$/, '') : '') + '"></label>' +
+      '<label>Preço de venda (R$) <small>opcional</small><input id="ft-preco" inputmode="decimal" placeholder="0,00" value="' + (+f2.preco_venda ? FT.num2(+f2.preco_venda) : '') + '"></label></div>' +
+      '<h2 class="h2-sec">Ingredientes</h2>' +
+      '<div class="rolagem"><table class="lista ft-itens" id="ft-itens"></table></div><datalist id="ft-ings">' + opcoesIngr() + '</datalist>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="ft-add">+ Adicionar ingrediente</button></div>' +
+      '<div class="kpis kpis-5" id="ft-kpis"></div>' +
+      '<h2 class="h2-sec">Modo de preparo <small>opcional</small></h2><textarea id="ft-preparo" class="ft-preparo" rows="5" placeholder="Passo a passo, tempo de forno, montagem…">' + esc(f2.modo_preparo || '') + '</textarea>' +
+      '<p class="ft-nota">O custo usa o último preço de compra de cada ingrediente (cadastro em Estoque › Produtos, nos fornecedores). Para produto comprado por unidade (saco, lata, pacote), informe uma vez quanto pesa 1 unidade e o sistema converte as gramas. Ingrediente marcado com ★ é outra ficha técnica (ex.: a massa): o custo dela entra proporcional ao peso usado. Tudo salva sozinho.</p>';
+    $('#ft-voltar').addEventListener('click', voltar);
+    $('#ft-add').addEventListener('click', function () { st.sel.itens.push({ tipo: 'livre', nome: '', qtd: 0, un: 'G' }); desenharItens(); focar(st.sel.itens.length - 1); });
+    $('#ft-pdf').addEventListener('click', function (e) { pdf(e.currentTarget); });
+    $('#ft-dup').addEventListener('click', duplicar);
+    $('#ft-excluir').addEventListener('click', excluir);
+    $('#ft-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
+    [['ft-nome', 'nome'], ['ft-cat', 'categoria'], ['ft-porcoes', 'porcoes'], ['ft-peso', 'peso_final'], ['ft-preco', 'preco_venda'], ['ft-preparo', 'modo_preparo']].forEach(function (x) {
+      const el = document.getElementById(x[0]);
+      el.addEventListener('input', function () {
+        const v = el.value;
+        st.sel[x[1]] = ['porcoes', 'peso_final', 'preco_venda'].indexOf(x[1]) >= 0 ? (v.trim() ? FT.lerValor(v) : null) : v;
+        if (x[1] === 'nome') $('#ft-titulo').textContent = FT.mai(v);
+        mudou(); totais();
+      });
+      el.addEventListener('change', function () { if (x[1] === 'nome' || x[1] === 'categoria') { el.value = FT.mai(el.value); st.sel[x[1]] = el.value; mudou(); } });
+    });
+    const tab = $('#ft-itens');
+    tab.addEventListener('input', function (e) {
+      const el = e.target, i = +el.dataset.i; if (isNaN(i) || el.dataset.pu) return;
+      const it = st.sel.itens[i];
+      if (el.dataset.c === 'ing') { const m = st.ing[el.value]; if (m) Object.assign(it, m); else Object.assign(it, { tipo: 'livre', ref_id: null, nome: el.value }); }
+      else if (el.dataset.c === 'qtd') it.qtd = el.value.trim() ? FT.lerValor(el.value) : 0;
+      else if (el.dataset.c === 'un') it.un = el.value;
+      mudou(); linha(i); totais();
+    });
+    tab.addEventListener('change', function (e) {
+      const el = e.target, i = +el.dataset.i; if (isNaN(i)) return;
+      const it = st.sel.itens[i];
+      if (el.dataset.c === 'ing') {
+        if (it.tipo === 'livre') { it.nome = FT.mai(el.value); el.value = it.nome; }
+        // unidade sugerida: produto em UN → UN; senão G
+        if (it.tipo === 'produto') { const p = st.est.prod[it.ref_id]; const un = String(p.unidade).toUpperCase(); if (VOL[un] && MASSA[it.un]) it.un = 'ML'; }
+        desenharItens();
+      }
+      if (el.dataset.c === 'qtd') el.value = +it.qtd ? FT.num2(+it.qtd).replace(/,00$/, '') : '';
+    });
+    tab.addEventListener('change', async function (e) {
+      const el = e.target; if (!el.dataset.pu) return;
+      const p = st.est.prod[el.dataset.pu]; if (!p) return;
+      const v = el.value.trim() ? FT.lerValor(el.value) : null;
+      try {
+        await FT.store.estoque.produtos.salvar(Object.assign({}, p, { peso_unidade: v }));
+        p.peso_unidade = v; FT.aviso('Peso de 1 ' + p.unidade + ' de ' + p.nome + ' salvo no cadastro do estoque.');
+        st.sel.itens.forEach(function (it, i) { linha(i); }); totais();
+      } catch (x) { FT.aviso('Não consegui salvar: ' + FT.textoErro(x) + '. Confira se o SQL da atualização 15 foi rodado.', true); }
+    });
+    tab.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.dataset.c === 'qtd') {
+        e.preventDefault(); const i = +e.target.dataset.i;
+        if (i === st.sel.itens.length - 1) { st.sel.itens.push({ tipo: 'livre', nome: '', qtd: 0, un: e.target.closest('tr').querySelector('[data-c=un]').value }); desenharItens(); }
+        focar(i + 1);
+      }
+    });
+    tab.addEventListener('click', function (e) {
+      const b = e.target.closest('[data-tirar]'); if (b) { st.sel.itens.splice(+b.dataset.tirar, 1); if (!st.sel.itens.length) st.sel.itens.push({ tipo: 'livre', nome: '', qtd: 0, un: 'G' }); mudou(); desenharItens(); return; }
+      const m = e.target.closest('[data-mover]'); if (m) { const i = +m.dataset.i, j = i + (+m.dataset.mover); if (j < 0 || j >= st.sel.itens.length) return; const t = st.sel.itens[i]; st.sel.itens[i] = st.sel.itens[j]; st.sel.itens[j] = t; mudou(); desenharItens(); }
+    });
+    desenharItens(); estado();
+    window.scrollTo(0, 0);
+    if (nova) focar(0);
+  }
+  function focar(i) { const el = document.querySelector('#ft-itens [data-c=ing][data-i="' + i + '"]'); if (el) el.focus(); }
+  function desenharItens() {
+    $('#ft-itens').innerHTML = '<thead><tr><th class="num">#</th><th>Ingrediente</th><th class="num">Quantidade</th><th>Unidade</th><th class="num">Preço de compra</th><th class="num">Custo</th><th></th></tr></thead><tbody>' +
+      st.sel.itens.map(function (it, i) {
+        return '<tr id="ft-l-' + i + '"><td class="num ft-n">' + (i + 1) + '</td>' +
+          '<td><input class="ft-ing" data-c="ing" data-i="' + i + '" list="ft-ings" value="' + esc(rotuloIng(it)) + '" placeholder="Digite: MUSSARELA, MASSA, PARMESÃO…" aria-label="Ingrediente ' + (i + 1) + '" autocomplete="off"></td>' +
+          '<td class="num"><input class="ft-qtd" data-c="qtd" data-i="' + i + '" inputmode="decimal" value="' + (+it.qtd ? FT.num2(+it.qtd).replace(/,00$/, '') : '') + '" placeholder="0" aria-label="Quantidade ' + (i + 1) + '"></td>' +
+          '<td><select data-c="un" data-i="' + i + '" aria-label="Unidade ' + (i + 1) + '">' + UNS.map(function (u) { return '<option' + (u === String(it.un || 'G').toUpperCase() ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select></td>' +
+          '<td class="num ft-pr" id="ft-pr-' + i + '"></td><td class="num ft-cu" id="ft-cu-' + i + '"></td>' +
+          '<td class="ft-acoes"><button type="button" class="btn-icone" data-mover="-1" data-i="' + i + '" aria-label="Subir">↑</button><button type="button" class="btn-icone" data-mover="1" data-i="' + i + '" aria-label="Descer">↓</button><button type="button" class="btn-icone" data-tirar="' + i + '" aria-label="Tirar ingrediente">×</button></td></tr>';
+      }).join('') + '</tbody><tfoot><tr><th></th><th>Total</th><td class="num" id="ft-f-peso"></td><td></td><td></td><td class="num" id="ft-f-custo"></td><td></td></tr></tfoot>';
+    st.sel.itens.forEach(function (it, i) { linha(i); });
+    totais();
+  }
+  function linha(i) {
+    const it = st.sel.itens[i], pr = document.getElementById('ft-pr-' + i), cu = document.getElementById('ft-cu-' + i); if (!pr) return;
+    let txt = '';
+    if (it.tipo === 'produto') {
+      const p = st.est.prod[it.ref_id], c = p && custoEstoque(p.id);
+      txt = c != null ? FT.moeda(c) + ' / ' + esc(p.unidade) : '<span class="ft-aviso">sem preço no estoque</span>';
+      const unP = p ? String(p.unidade).toUpperCase() : '', unI = String(it.un || '').toUpperCase();
+      if (p && !MASSA[unP] && !VOL[unP] && (MASSA[unI] || VOL[unI])) {
+        const vol = !!VOL[unI];
+        txt += '<label class="ft-pu">1 ' + esc(p.unidade) + ' tem <input data-pu="' + esc(p.id) + '" inputmode="decimal" value="' + (+p.peso_unidade ? FT.num2(+p.peso_unidade).replace(/,00$/, '') : '') + '" placeholder="?" aria-label="Quantos ' + (vol ? 'ml' : 'gramas') + ' tem 1 ' + esc(p.unidade) + ' de ' + esc(p.nome) + '"> ' + (vol ? 'ml' : 'g') + '</label>';
+      }
+    }
+    else if (it.tipo === 'ficha') { const f = st.fichas.find(function (x) { return x.id === it.ref_id; }); const r = f && resumo(f, [st.sel.id, f.id]); const base = f && (+f.peso_final || r.peso); txt = r && r.custo != null && base ? FT.moeda(r.custo / base * 1000) + ' / kg <small>ficha</small>' : '<span class="ft-aviso">ficha sem custo</span>'; }
+    else if (it.nome) txt = '<span class="ft-aviso">não está no estoque</span>';
+    pr.innerHTML = txt;
+    const c = custoItem(it, [st.sel.id]);
+    cu.innerHTML = !it.nome && !it.ref_id ? '' : c == null ? (+it.qtd ? '<span class="ft-aviso">—</span>' : '') : FT.moeda(c);
+  }
+  function totais() {
+    const r = resumo(st.sel), porc = +st.sel.porcoes > 0 ? +st.sel.porcoes : 1;
+    const fp = document.getElementById('ft-f-peso'); if (fp) fp.textContent = (r.peso ? peso(r.peso) : '—') + (r.un ? ' + ' + r.un + ' un' : '');
+    const fc = document.getElementById('ft-f-custo'); if (fc) fc.textContent = r.custo != null ? FT.moeda(r.custo) : '—';
+    const pv = +st.sel.preco_venda || 0;
+    $('#ft-kpis').innerHTML = [
+      ['Peso dos ingredientes', r.peso ? peso(r.peso) : '—', (+st.sel.peso_final ? 'pronto: ' + peso(+st.sel.peso_final) : 'soma do que vai na receita') + (r.un ? ' · + ' + r.un + ' un' : '')],
+      ['Custo total', r.custo != null ? FT.moeda(r.custo) : '—', r.semPreco ? r.semPreco + ' ingrediente(s) sem preço' : 'todos os ingredientes com preço', r.semPreco ? 'kpi-alerta' : ''],
+      ['Custo por porção', r.custo != null ? FT.moeda(r.porPorcao) : '—', 'rende ' + FT.num2(porc).replace(/,00$/, '') + (porc === 1 ? ' porção' : ' porções') + (r.peso ? ' · ' + peso((+st.sel.peso_final || r.peso) / porc) + ' cada' : '')],
+      ['Preço de venda', pv ? FT.moeda(pv) : '—', pv ? 'lucro bruto ' + FT.moeda(pv - r.porPorcao) + ' por porção' : 'informe para ver o CMV'],
+      ['CMV', r.cmv != null ? pct(r.cmv) : '—', r.cmv == null ? 'custo ÷ preço de venda' : r.semPreco ? 'incompleto: falta preço de ' + r.semPreco + ' ingrediente(s)' : r.cmv > 0.35 ? 'acima de 35%: custo alto' : 'custo ÷ preço de venda', r.cmv > 0.35 ? 'kpi-alerta' : '']
+    ].map(function (k) { return '<article class="kpi ' + (k[3] || '') + '"><h3>' + esc(k[0]) + '</h3><p class="kpi-v">' + k[1] + '</p><p class="kpi-s">' + esc(k[2]) + '</p></article>'; }).join('');
+  }
+
+  /* salvar automático */
+  function mudou() { st.salvo = false; st.erro = null; estado(); salvarDepois(); }
+  const salvarDepois = FT.debounce(function () { salvarAgora(); }, 900);
+  async function salvarAgora() {
+    if (st.salvo || st.salvando || !st.sel) return;
+    if (!FT.mai(st.sel.nome)) { st.erro = 'o produto precisa de um nome'; estado(); return; }
+    st.salvando = true; estado();
+    const d = JSON.parse(JSON.stringify(st.sel));
+    try {
+      const salvo = await FT.store.estoque.fichas.salvar(d);
+      const i = st.fichas.findIndex(function (x) { return x.id === d.id; });
+      if (i >= 0) st.fichas[i] = salvo || Object.assign(st.fichas[i], d);
+      if (st.sel && st.sel.id === d.id) st.salvo = true;
+    } catch (e) { st.erro = FT.textoErro(e); }
+    st.salvando = false; estado();
+    if (!st.salvo && !st.erro) salvarDepois();
+  }
+  function estado() {
+    const el = document.getElementById('ft-estado'); if (!el) return;
+    if (st.erro) { el.className = 'pilula erro'; el.textContent = 'Não salvou: ' + st.erro + ' · clique para tentar de novo'; return; }
+    if (st.salvando) { el.className = 'pilula'; el.textContent = 'Salvando…'; return; }
+    el.className = st.salvo ? 'pilula ok' : 'pilula'; el.textContent = st.salvo ? '✓ Salvo' : 'Alterações não salvas';
+  }
+  async function voltar() {
+    if (!st.salvo) await salvarAgora();
+    st.sel = null; $('#ft-edit-v').hidden = true; $('#ft-lista-v').hidden = false; desenharLista(); window.scrollTo(0, 0);
+  }
+  async function duplicar() {
+    if (!st.salvo) await salvarAgora();
+    let nome = st.sel.nome + ' (CÓPIA)', n = 2;
+    while (st.fichas.some(function (f) { return f.nome === nome; })) nome = st.sel.nome + ' (CÓPIA ' + (n++) + ')';
+    try {
+      const f = await FT.store.estoque.fichas.salvar(Object.assign({}, st.sel, { id: null, nome: nome }));
+      st.fichas.push(f); abrir(f.id); FT.aviso('Ficha duplicada: ' + nome + '. Mude o nome e ajuste os ingredientes.');
+    } catch (e) { FT.aviso('Não consegui duplicar: ' + FT.textoErro(e), true); }
+  }
+  let confirmar = false;
+  async function excluir(e) {
+    const b = e.currentTarget;
+    if (!confirmar) { confirmar = true; b.textContent = 'Confirmar exclusão'; setTimeout(function () { confirmar = false; if (b.isConnected) b.textContent = 'Excluir'; }, 5000); return; }
+    confirmar = false;
+    try {
+      await FT.store.estoque.fichas.remover(st.sel.id);
+      st.fichas = st.fichas.filter(function (f) { return f.id !== st.sel.id; });
+      st.salvo = true; FT.aviso('Ficha excluída.'); voltar();
+    } catch (x) { FT.aviso('Não consegui excluir: ' + FT.textoErro(x), true); }
+  }
+  async function pdf(b) {
+    if (!st.salvo) await salvarAgora();
+    const f = st.sel, r = resumo(f), txt = b.textContent; b.disabled = true; b.textContent = 'Gerando…';
+    try {
+      const its = f.itens.filter(function (it) { return it.nome || it.ref_id; });
+      const prep = []; String(f.modo_preparo || '').split(/\n/).forEach(function (par) {
+        let l = ''; par.split(' ').forEach(function (w) { if ((l + ' ' + w).length > 110) { prep.push(l); l = w; } else l = l ? l + ' ' + w : w; }); prep.push(l);
+      });
+      const porc = +f.porcoes > 0 ? +f.porcoes : 1;
+      const bytes = await FT.gerarPDF({
+        titulo: 'FICHA TÉCNICA', subtitulo: FT.mai(f.nome),
+        info: [['PRODUTO', FT.mai(f.nome)], ['CATEGORIA', f.categoria || '—'], ['RENDE', FT.num2(porc).replace(/,00$/, '') + (porc === 1 ? ' PORÇÃO' : ' PORÇÕES')], ['PESO', (r.peso ? peso(r.peso) : '—') + (+f.peso_final ? ' (PRONTO: ' + peso(+f.peso_final) + ')' : '')],
+          ['CUSTO TOTAL / POR PORÇÃO', r.custo != null ? FT.moeda(r.custo) + ' / ' + FT.moeda(r.porPorcao) : '—'], ['PREÇO DE VENDA / CMV', (+f.preco_venda ? FT.moeda(+f.preco_venda) : '—') + (r.cmv != null ? ' / ' + pct(r.cmv) : '')]],
+        blocos: [{ titulo: 'Ingredientes', colunas: [{ t: '#', w: 0.06, a: 'r' }, { t: 'INGREDIENTE', w: 0.5 }, { t: 'QUANTIDADE', w: 0.16, a: 'r' }, { t: 'UN', w: 0.08 }, { t: 'CUSTO', w: 0.2, a: 'r' }],
+          linhas: its.map(function (it, i) { const c = custoItem(it, [f.id]); return [String(i + 1), (it.tipo === 'ficha' ? '* ' : '') + it.nome, FT.num2(+it.qtd || 0).replace(/,00$/, ''), String(it.un || 'G').toUpperCase(), c == null ? '—' : FT.num2(c)]; }),
+          total: ['', 'TOTAL', r.peso ? peso(r.peso) : '', '', r.custo != null ? FT.num2(r.custo) : '—'] }],
+        rodape: prep.some(Boolean) ? ['MODO DE PREPARO'].concat(prep) : ['']
+      });
+      FT.baixarArquivo(bytes, ('Ficha tecnica ' + f.nome).replace(/[\\/:*?"<>|]+/g, '-') + '.pdf');
+    } catch (x) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(x), true); }
+    finally { b.disabled = false; b.textContent = txt; }
+  }
+
+  let montado = false;
+  FT.telas.fichas = {
+    abrir: async function () { if (!montado) { montado = true; montar(); } if (st.sel) { st.sel = null; $('#ft-edit-v').hidden = true; $('#ft-lista-v').hidden = false; } await carregar(); },
+    sair: function () { if (!st.salvo) salvarAgora(); }
+  };
+})();
+
 /* Forneria Toscana — Compras › Pedidos por fornecedor */
 (function () {
   'use strict';
@@ -9417,7 +9825,7 @@ window.FT_CONFIG = {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'fichas', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
