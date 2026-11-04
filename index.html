@@ -809,6 +809,13 @@ body.modo-previa .home-palco { height: calc(100vh - 110px); }
 .ct-conv { display: block; font-size: 11px; color: var(--accent); font-weight: 600; }
 
 .vp-modo { justify-self: start; }
+.vp-abas { display: flex; gap: 4px; border-bottom: 2px solid var(--line); }
+.vp-abas button { border: 0; background: none; padding: 10px 22px; font: 700 15px/1.2 var(--f-body); letter-spacing: .06em; color: var(--ink-3); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; border-radius: 8px 8px 0 0; }
+.vp-abas button:hover { color: var(--ink); background: var(--surface-2); }
+.vp-abas button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface); }
+.vp-kpis-bar { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1180px) { .vp-kpis-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .vp-kpis-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .vp-dias tr.vp-fds td { background: color-mix(in srgb, var(--accent-soft) 60%, transparent); }
 .vp-dias tr.vp-hoje td { box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
 .vp-dias tr.vp-fechado td { color: var(--muted); opacity: .55; }
@@ -4023,26 +4030,46 @@ window.FT_CONFIG = {
   };
 })();
 
-/* Forneria Toscana — Vendas por produto (reunião semanal da pizzaria)
- * Só pizzas (sabores grande e broto), entradas e sobremesas (banana na lenha, vulcano alpino, doce pecado). Quantidade por semana e total do mês. */
+/* Forneria Toscana — Vendas por produto (reunião semanal)
+ * Aba PIZZARIA: pizzas (sabores grande e broto), entradas e sobremesas (banana na lenha, vulcano alpino, doce pecado).
+ * Aba BAR: todas as bebidas (não alcoólicas, café e chá, cervejas, vinhos, drinks e caipirinhas, doses).
+ * Quantidade por semana e total do mês, ou dia a dia. */
 (function () {
   'use strict';
   const FT = window.FT, I = window.FTIndicadores;
   const $ = FT.$, esc = FT.esc;
-  const st = { mes: null, dados: null, modo: 'produtos' };
+  const st = { mes: null, dados: null, modo: 'produtos', area: 'pizzaria' };
 
-  const SECOES = [
-    { id: 'grande', nome: 'Pizzas grandes', nota: 'por sabor · meia pizza conta 0,5' },
-    { id: 'broto', nome: 'Pizzas broto', nota: 'por sabor · meia pizza conta 0,5' },
-    { id: 'entradas', nome: 'Entradas', nota: '' },
-    { id: 'sobremesas', nome: 'Sobremesas', nota: 'banana na lenha, vulcano alpino e doce pecado' }
+  const AREAS = [
+    { id: 'pizzaria', nome: 'Pizzaria', totNome: 'Total de pizzas', totSoma: ['grande', 'broto'], nota: 'pizzas grandes e broto contam meia pizza como 0,5' },
+    { id: 'bar', nome: 'Bar', totNome: 'Total de bebidas', totSoma: ['bebidas', 'cafe', 'cervejas', 'vinhos', 'drinks', 'doses'], nota: 'todas as bebidas vendidas' }
   ];
+  const SECOES = [
+    { id: 'grande', area: 'pizzaria', nome: 'Pizzas grandes', nota: 'por sabor · meia pizza conta 0,5' },
+    { id: 'broto', area: 'pizzaria', nome: 'Pizzas broto', nota: 'por sabor · meia pizza conta 0,5' },
+    { id: 'entradas', area: 'pizzaria', nome: 'Entradas', nota: '' },
+    { id: 'sobremesas', area: 'pizzaria', nome: 'Sobremesas', nota: 'banana na lenha, vulcano alpino e doce pecado' },
+    { id: 'bebidas', area: 'bar', nome: 'Bebidas não alcoólicas', nota: 'refrigerantes, águas, sucos' },
+    { id: 'cafe', area: 'bar', nome: 'Café e chá', nota: '' },
+    { id: 'cervejas', area: 'bar', nome: 'Cervejas', nota: '' },
+    { id: 'vinhos', area: 'bar', nome: 'Vinhos', nota: '' },
+    { id: 'drinks', area: 'bar', nome: 'Drinks e caipirinhas', nota: '' },
+    { id: 'doses', area: 'bar', nome: 'Doses', nota: '' }
+  ];
+  function secoesDa(area) { return SECOES.filter(function (s) { return s.area === area; }); }
+  function areaDe(id) { return AREAS.find(function (a) { return a.id === id; }); }
   function secaoDe(grupo, produto) {
     const g = FT.semAcento(grupo), p = FT.semAcento(produto);
     if (/BANANA NA LENHA|VULCANO ALPINO|DOCE PECADO/.test(p)) return 'sobremesas';
     if (g === 'PIZZA GRANDE') return 'grande';
     if (g === 'PIZZA BROTO') return 'broto';
     if (g === 'ENTRADAS' || g === 'ENTRADA') return 'entradas';
+    if (g === 'BEBIDAS' || g === 'BEBIDA') return 'bebidas';
+    if (g === 'CAFE E CHA' || g === 'CAFES' || g === 'CAFE') return 'cafe';
+    if (g === 'CERVEJAS' || g === 'CERVEJA') return 'cervejas';
+    if (g === 'VINHOS' || g === 'VINHO') return 'vinhos';
+    if (g === 'DRINKS' || g === 'DRINK' || g === 'CAIPIRINHAS' || g === 'CAIPIRINHA') return 'drinks';
+    if (g === 'DOSES' || g === 'DOSE') return 'doses';
     return null;
   }
   function nomeProduto(sec, produto) {
@@ -4056,6 +4083,7 @@ window.FT_CONFIG = {
     return r.toLocaleString('pt-BR', { minimumFractionDigits: Number.isInteger(r) ? 0 : 1, maximumFractionDigits: 1 });
   }
   function somaMes(chave, n) { const p = chave.split('-').map(Number); const d = new Date(p[0], p[1] - 1 + n, 1, 12); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function totArea(a, x) { return a.totSoma.reduce(function (t, k) { return t + (x[k] || 0); }, 0); }
 
   function calcular(linhas, semanas) {
     const sec = {}, porDia = {};
@@ -4071,18 +4099,21 @@ window.FT_CONFIG = {
       if (s === 'entradas') dd['e:' + n] = (dd['e:' + n] || 0) + q;
     });
     sec.porDia = porDia;
-    SECOES.forEach(function (s) { if (!sec[s.id].prod) return; sec[s.id].lista = Object.values(sec[s.id].prod).sort(function (a, b) { return b.total - a.total || (a.nome < b.nome ? -1 : 1); }); });
+    SECOES.forEach(function (s) { sec[s.id].lista = Object.values(sec[s.id].prod).sort(function (a, b) { return b.total - a.total || (a.nome < b.nome ? -1 : 1); }); });
     return sec;
   }
 
   function montar() {
     $('#tela-produtos').innerHTML =
-      '<div class="cab-tela"><div><h1>Vendas por produto</h1><p>Para a reunião semanal da pizzaria: quantidade vendida de cada pizza, entrada e sobremesa (banana na lenha, vulcano alpino e doce pecado), por semana e por dia.</p></div>' +
+      '<div class="cab-tela"><div><h1>Vendas por produto</h1><p>Para a reunião semanal: na aba Pizzaria, cada pizza, entrada e sobremesa; na aba Bar, todas as bebidas. Por semana e por dia.</p></div>' +
       '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="vp-excel">Baixar Excel</button><button type="button" class="btn" id="vp-imprimir">Imprimir</button></div></div>' +
       '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="vp-ant" aria-label="Mês anterior">‹</button>' +
       '<div class="nav-semana-t"><span>Mês</span><b id="vp-rotulo"></b></div>' +
       '<button type="button" class="btn-icone" id="vp-prox" aria-label="Próximo mês">›</button>' +
       '<button type="button" class="btn btn-sec btn-p" id="vp-atual">Mês atual</button></div></div>' +
+      '<div class="vp-abas" role="tablist" aria-label="Área">' + AREAS.map(function (a) {
+        return '<button type="button" role="tab" data-area="' + a.id + '" aria-selected="' + (a.id === st.area) + '">' + esc(a.nome) + '</button>';
+      }).join('') + '</div>' +
       '<div id="vp-msg" class="msg" hidden></div>' +
       '<div class="kpis kpis-4" id="vp-kpis"></div>' +
       '<div class="segmentado vp-modo" role="group" aria-label="Visão"><button type="button" data-modo="produtos" aria-pressed="true">Por produto (semanas)</button><button type="button" data-modo="dias" aria-pressed="false">Por dia</button></div>' +
@@ -4092,9 +4123,15 @@ window.FT_CONFIG = {
     $('#vp-atual').addEventListener('click', function () { ir(FT.hoje().slice(0, 7)); });
     $('#vp-imprimir').addEventListener('click', imprimir);
     $('#vp-excel').addEventListener('click', excel);
+    document.querySelector('#tela-produtos .vp-abas').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-area]'); if (!b) return; st.area = b.dataset.area;
+      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-selected', String(x === b)); });
+      if (st.dados) desenhar();
+    });
     document.querySelector('#tela-produtos .vp-modo').addEventListener('click', function (e) {
       const b = e.target.closest('[data-modo]'); if (!b) return; st.modo = b.dataset.modo;
-      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); desenhar();
+      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      if (st.dados) desenhar();
     });
   }
 
@@ -4122,85 +4159,108 @@ window.FT_CONFIG = {
     return h;
   }
 
-  function desenhar() {
-    const d = st.dados, hoje = FT.hoje();
-    const hojeIdx = d.semanas.findIndex(function (w) { return hoje >= w.inicio && hoje <= w.fim; });
-    const vazio = SECOES.every(function (s) { return !d.sec[s.id].total; });
-    $('#vp-msg').hidden = !vazio;
-    $('#vp-msg').innerHTML = 'Nenhuma venda neste mês. Importe o relatório de pedidos de venda em <a href="#importar">Importar planilhas</a>.';
-    $('#vp-kpis').innerHTML = SECOES.map(function (s) {
-      return '<article class="kpi"><h3>' + esc(s.nome) + '</h3><p class="kpi-v">' + (qtd(d.sec[s.id].total) || '0') + '</p><p class="kpi-s">' + d.sec[s.id].lista.length + ' produto(s) no mês</p></article>';
-    }).join('');
-    $('#vp-tabelas').innerHTML = st.modo === 'dias' ? diasHTML(d, true) : SECOES.map(function (s) { return tabelaHTML(s, d.sec[s.id], d.semanas, hojeIdx); }).join('');
+  // seções que aparecem na tela: na pizzaria todas; no bar só as que tiveram venda no mês
+  function secoesVisiveis(d, area) {
+    const l = secoesDa(area);
+    if (area !== 'bar') return l;
+    const com = l.filter(function (s) { return d.sec[s.id].total; });
+    return com.length ? com : l;
+  }
+  function semanasHTML(d, area, hojeIdx) {
+    return secoesVisiveis(d, area).map(function (s) { return tabelaHTML(s, d.sec[s.id], d.semanas, hojeIdx); }).join('');
   }
 
-  // colunas da visão por dia: cada entrada separada, com o total de entradas ao lado
-  function colunasDia(d) {
+  function desenhar() {
+    const d = st.dados, hoje = FT.hoje(), area = areaDe(st.area), secs = secoesDa(st.area);
+    const hojeIdx = d.semanas.findIndex(function (w) { return hoje >= w.inicio && hoje <= w.fim; });
+    const vazio = secs.every(function (s) { return !d.sec[s.id].total; });
+    $('#vp-msg').hidden = !vazio;
+    $('#vp-msg').innerHTML = 'Nenhuma venda ' + (st.area === 'bar' ? 'de bebidas ' : '') + 'neste mês. Importe o relatório de pedidos de venda em <a href="#importar">Importar planilhas</a>.';
+    const k = $('#vp-kpis');
+    k.className = 'kpis ' + (secs.length > 4 ? 'vp-kpis-bar' : 'kpis-4');
+    k.innerHTML = secs.map(function (s) {
+      return '<article class="kpi"><h3>' + esc(s.nome) + '</h3><p class="kpi-v">' + (qtd(d.sec[s.id].total) || '0') + '</p><p class="kpi-s">' + d.sec[s.id].lista.length + ' produto(s) no mês</p></article>';
+    }).join('');
+    $('#vp-tabelas').innerHTML = st.modo === 'dias' ? diasHTML(d, st.area, true) : semanasHTML(d, st.area, hojeIdx);
+    void area;
+  }
+
+  // colunas da visão por dia
+  function colunasDia(d, area) {
+    if (area === 'bar') {
+      const c = secoesVisiveis(d, 'bar').map(function (s) { return { k: s.id, nome: s.nome }; });
+      return c;
+    }
     const c = [{ k: 'grande', nome: 'Pizzas grandes' }, { k: 'broto', nome: 'Pizzas broto' }];
     (d.sec.entradas.lista || []).forEach(function (p) { c.push({ k: 'e:' + p.nome, nome: p.nome, ent: true }); });
     c.push({ k: 'entradas', nome: 'Total entradas', totEnt: true }, { k: 'sobremesas', nome: 'Sobremesas' });
     return c;
   }
   // dia a dia: quanto saiu de cada categoria em cada dia, e a média por dia da semana
-  function diasHTML(d, tela) {
+  function diasHTML(d, areaId, tela) {
+    const a = areaDe(areaId);
     const ini = d.semanas[0].inicio, fim = d.semanas[d.semanas.length - 1].fim, hoje = FT.hoje();
-    const cdef = colunasDia(d), cols = cdef.map(function (x) { return x.k; }), nomes = {}, cls = {};
+    const cdef = colunasDia(d, areaId), cols = cdef.map(function (x) { return x.k; }), nomes = {}, cls = {};
     cdef.forEach(function (x) { nomes[x.k] = x.nome; cls[x.k] = x.ent ? ' vp-ent' : x.totEnt ? ' vp-totent' : ''; });
     const dias = [], tot = {}, porDs = {};
     for (let dt = ini; dt <= fim; dt = FT.somaDias(dt, 1)) dias.push(dt);
-    let h = '<section class="vp-sec"><h2>Por dia <small>pizzas grandes e broto contam meia pizza como 0,5</small></h2><div class="rolagem"><table class="lista vp-tab vp-dias"><thead><tr><th>Data</th><th>Dia</th>' +
-      cols.map(function (c) { return '<th class="num' + cls[c] + '">' + esc(nomes[c]) + '</th>'; }).join('') + '<th class="num vp-tot">Total de pizzas</th></tr></thead><tbody>';
+    let h = '<section class="vp-sec"><h2>Por dia <small>' + esc(a.nota) + '</small></h2><div class="rolagem"><table class="lista vp-tab vp-dias"><thead><tr><th>Data</th><th>Dia</th>' +
+      cols.map(function (c) { return '<th class="num' + cls[c] + '">' + esc(nomes[c]) + '</th>'; }).join('') + '<th class="num vp-tot">' + esc(a.totNome) + '</th></tr></thead><tbody>';
     dias.forEach(function (dt) {
       const x = d.sec.porDia[dt] || {}, ds = FT.diaSemana(dt), tem = cols.some(function (c) { return x[c]; });
       cols.forEach(function (c) { tot[c] = (tot[c] || 0) + (x[c] || 0); });
-      if (tem) { const m = porDs[ds] = porDs[ds] || { n: 0 }; m.n++; cols.forEach(function (c) { m[c] = (m[c] || 0) + (x[c] || 0); }); }
+      if (tem) { const m = porDs[ds] = porDs[ds] || { n: 0, t: 0 }; m.n++; m.t += totArea(a, x); cols.forEach(function (c) { m[c] = (m[c] || 0) + (x[c] || 0); }); }
       h += '<tr class="' + (ds === 0 || ds === 6 ? 'vp-fds' : '') + (tem ? '' : ' vp-fechado') + (dt === hoje && tela ? ' vp-hoje' : '') + '"><td>' + FT.ddmm(dt) + '</td><td>' + FT.DIAS[ds].toUpperCase() + '</td>' +
-        cols.map(function (c) { return '<td class="num' + cls[c] + '">' + qtd(x[c]) + '</td>'; }).join('') + '<td class="num vp-tot">' + qtd((x.grande || 0) + (x.broto || 0)) + '</td></tr>';
+        cols.map(function (c) { return '<td class="num' + cls[c] + '">' + qtd(x[c]) + '</td>'; }).join('') + '<td class="num vp-tot">' + qtd(totArea(a, x)) + '</td></tr>';
     });
-    h += '</tbody><tfoot><tr><td colspan="2">Total do mês</td>' + cols.map(function (c) { return '<td class="num' + cls[c] + '">' + (qtd(tot[c]) || '0') + '</td>'; }).join('') + '<td class="num vp-tot">' + (qtd((tot.grande || 0) + (tot.broto || 0)) || '0') + '</td></tr></tfoot></table></div></section>';
+    const totMes = a.totSoma.reduce(function (t, k) { return t + (d.sec[k] ? d.sec[k].total : 0); }, 0);
+    h += '</tbody><tfoot><tr><td colspan="2">Total do mês</td>' + cols.map(function (c) { return '<td class="num' + cls[c] + '">' + (qtd(tot[c]) || '0') + '</td>'; }).join('') + '<td class="num vp-tot">' + (qtd(totMes) || '0') + '</td></tr></tfoot></table></div></section>';
     const ordem = [1, 2, 3, 4, 5, 6, 0];
     h += '<section class="vp-sec"><h2>Média por dia da semana <small>só os dias com venda</small></h2><div class="rolagem"><table class="lista vp-tab"><thead><tr><th>Dia da semana</th>' +
-      cols.map(function (c) { return '<th class="num' + cls[c] + '">' + esc(nomes[c]) + '</th>'; }).join('') + '<th class="num vp-tot">Pizzas (média)</th></tr></thead><tbody>' +
+      cols.map(function (c) { return '<th class="num' + cls[c] + '">' + esc(nomes[c]) + '</th>'; }).join('') + '<th class="num vp-tot">' + esc(a.totNome.replace(/^Total de /, '').replace(/^./, function (z) { return z.toUpperCase(); })) + ' (média)</th></tr></thead><tbody>' +
       ordem.map(function (ds) {
         const m = porDs[ds]; if (!m || !m.n) return '';
-        return '<tr><td><b>' + FT.DIAS[ds].toUpperCase() + '</b> <small>(' + m.n + ' dia' + (m.n > 1 ? 's' : '') + ' com venda)</small></td>' + cols.map(function (c) { return '<td class="num' + cls[c] + '">' + (qtd(m[c] / m.n) || '0') + '</td>'; }).join('') + '<td class="num vp-tot">' + (qtd(((m.grande || 0) + (m.broto || 0)) / m.n) || '0') + '</td></tr>';
+        return '<tr><td><b>' + FT.DIAS[ds].toUpperCase() + '</b> <small>(' + m.n + ' dia' + (m.n > 1 ? 's' : '') + ' com venda)</small></td>' + cols.map(function (c) { return '<td class="num' + cls[c] + '">' + (qtd(m[c] / m.n) || '0') + '</td>'; }).join('') + '<td class="num vp-tot">' + (qtd(m.t / m.n) || '0') + '</td></tr>';
       }).join('') + '</tbody></table></div></section>';
     return h;
   }
 
   function imprimir() {
     const d = st.dados; if (!d) return;
+    const a = areaDe(st.area);
     let area = document.getElementById('impressao');
     if (!area) { area = document.createElement('div'); area.id = 'impressao'; document.body.appendChild(area); }
-    area.innerHTML = '<div class="vp-imp"><header><b>FORNERIA TOSCANA</b><span>VENDAS POR PRODUTO · ' + esc(I.nomeMes(st.mes).toUpperCase()) + '</span></header>' +
-      (st.modo === 'dias' ? diasHTML(d, false) : SECOES.map(function (s) { return tabelaHTML(s, d.sec[s.id], d.semanas, -1); }).join('')) + '</div>';
+    area.innerHTML = '<div class="vp-imp"><header><b>FORNERIA TOSCANA</b><span>VENDAS POR PRODUTO · ' + esc(a.nome.toUpperCase()) + ' · ' + esc(I.nomeMes(st.mes).toUpperCase()) + '</span></header>' +
+      (st.modo === 'dias' ? diasHTML(d, st.area, false) : semanasHTML(d, st.area, -1)) + '</div>';
     window.print();
   }
 
   function excel() {
     if (typeof XLSX === 'undefined') { FT.aviso('O gerador de planilhas não carregou. Confira a internet e recarregue a página.', true); return; }
     const d = st.dados; if (!d) return;
-    const rows = [];
     const r1 = function (v) { return Math.round(v * 10) / 10; };
-    SECOES.forEach(function (s) {
-      const o = d.sec[s.id];
-      rows.push([s.nome.toUpperCase()]);
-      rows.push(['PRODUTO'].concat(d.semanas.map(function (w) { return w.rotulo.toUpperCase() + ' (' + w.periodo + ')'; })).concat(['TOTAL DO MÊS']));
-      o.lista.forEach(function (p) { rows.push([p.nome].concat(p.sem.map(r1)).concat([r1(p.total)])); });
-      rows.push(['TOTAL'].concat(o.sem.map(r1)).concat([r1(o.total)]));
-      rows.push([]);
+    const wb = XLSX.utils.book_new();
+    AREAS.forEach(function (a) {
+      const rows = [];
+      secoesVisiveis(d, a.id).forEach(function (s) {
+        const o = d.sec[s.id];
+        rows.push([s.nome.toUpperCase()]);
+        rows.push(['PRODUTO'].concat(d.semanas.map(function (w) { return w.rotulo.toUpperCase() + ' (' + w.periodo + ')'; })).concat(['TOTAL DO MÊS']));
+        o.lista.forEach(function (p) { rows.push([p.nome].concat(p.sem.map(r1)).concat([r1(p.total)])); });
+        rows.push(['TOTAL'].concat(o.sem.map(r1)).concat([r1(o.total)]));
+        rows.push([]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 38 }].concat(d.semanas.map(function () { return { wch: 16 }; })).concat([{ wch: 14 }]);
+      XLSX.utils.book_append_sheet(wb, ws, a.nome.toUpperCase());
+      const cdef = colunasDia(d, a.id), cab = ['DATA', 'DIA'].concat(cdef.map(function (x) { return x.nome.toUpperCase(); })).concat([a.totNome.toUpperCase()]), dd = [cab];
+      for (let dt = d.semanas[0].inicio; dt <= d.semanas[d.semanas.length - 1].fim; dt = FT.somaDias(dt, 1)) {
+        const x = d.sec.porDia[dt] || {};
+        dd.push([FT.ddmmaaaa(dt), FT.DIAS[FT.diaSemana(dt)].toUpperCase()].concat(cdef.map(function (c) { return r1(x[c.k] || 0); })).concat([r1(totArea(a, x))]));
+      }
+      const ws2 = XLSX.utils.aoa_to_sheet(dd); ws2['!cols'] = cab.map(function () { return { wch: 16 }; });
+      XLSX.utils.book_append_sheet(wb, ws2, (a.nome + ' por dia').toUpperCase());
     });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{ wch: 38 }].concat(d.semanas.map(function () { return { wch: 16 }; })).concat([{ wch: 14 }]);
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'PRODUTOS');
-    // aba dia a dia
-    const cdef = colunasDia(d), cab = ['DATA', 'DIA'].concat(cdef.map(function (x) { return x.nome.toUpperCase(); })).concat(['TOTAL DE PIZZAS']), dd = [cab];
-    for (let dt = d.semanas[0].inicio; dt <= d.semanas[d.semanas.length - 1].fim; dt = FT.somaDias(dt, 1)) {
-      const x = d.sec.porDia[dt] || {};
-      dd.push([FT.ddmmaaaa(dt), FT.DIAS[FT.diaSemana(dt)].toUpperCase()].concat(cdef.map(function (c) { return r1(x[c.k] || 0); })).concat([r1((x.grande || 0) + (x.broto || 0))]));
-    }
-    const ws2 = XLSX.utils.aoa_to_sheet(dd); ws2['!cols'] = cab.map(function () { return { wch: 16 }; });
-    XLSX.utils.book_append_sheet(wb, ws2, 'POR DIA');
     XLSX.writeFile(wb, 'vendas_por_produto_' + st.mes + '.xlsx');
   }
 
