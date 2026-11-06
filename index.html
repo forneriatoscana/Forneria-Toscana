@@ -887,6 +887,30 @@ table.lista.vp-dias .num { min-width: 64px; }
 .fx-dinl th.fx-rot { box-shadow: inset 3px 0 0 #c9a227; }
 
 /* ---------- WhatsApp ---------- */
+/* ---------- reservas ---------- */
+.rs-dias { display: grid; gap: 14px; }
+.rs-dia { display: grid; gap: 10px; }
+.rs-dia-cab { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.rs-dia-cab h2 { font-size: 18px; }
+.rs-dia-cab p { margin: 2px 0 0; color: var(--ink-2); font-size: 13.5px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rs-hoje { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.rs-passado { opacity: .72; }
+.rs-tab td { vertical-align: top; }
+.rs-tab td small { display: block; font-size: 11.5px; color: var(--ink-3); }
+.rs-tab td.rs-obs { white-space: normal; min-width: 16em; color: var(--ink-2); }
+.rs-sem { color: var(--ink-3); }
+.rs-vazio { text-align: center; display: grid; gap: 10px; justify-items: center; padding: 30px; }
+.rs-vazio p { margin: 0; color: var(--ink-2); }
+#tela-reservas .barra input[type="search"] { margin-left: auto; width: min(260px, 100%); }
+#dlg-reserva textarea { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: var(--surface); font: inherit; resize: vertical; }
+.rs-dest-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rs-previa { margin: 0; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; font: 13px/1.45 var(--f-body); white-space: pre-wrap; max-height: 34vh; overflow: auto; }
+.rs-envio-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rs-envio-lista li { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.rs-envio-lista li > div { display: grid; gap: 2px; justify-items: start; }
+.rs-envio-lista li span:not(.chip-ok):not(.chip-parcial) { font-size: 13px; color: var(--ink-3); }
+@media (max-width: 560px) { .rs-dest-grade { grid-template-columns: 1fr; } #tela-reservas .barra input[type="search"] { margin-left: 0; } }
+
 .wz-bt { display: inline-grid; justify-items: end; gap: 2px; }
 .wz-bt small { font-size: 11px; color: var(--ink-3); white-space: nowrap; }
 .wz-bt small .link { font-size: 11px; }
@@ -1031,6 +1055,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     </div>
     <nav>
       <a class="menu-home" href="#home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9v11.5h13V9"/><path d="M10 20.5v-6h4v6"/></svg>Home</a>
+      <a class="menu-home" href="#reservas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 15l2.3 2.3 4.7-4.6"/></svg>Reservas</a>
       <div class="menu-grupo" data-grupo="dash">
         <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-dash"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5" rx="1.5"/><rect x="13.5" y="11" width="7.5" height="10" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/></svg><span>Dashboard</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="menu-itens" id="mg-dash" hidden>
@@ -1162,6 +1187,7 @@ table.lista.vp-dias .num { min-width: 64px; }
       </div>
     </section>
 
+    <section id="tela-reservas" class="tela" hidden></section>
     <section id="tela-produtos" class="tela" hidden></section>
     <section id="tela-descontos" class="tela" hidden></section>
     <section id="tela-pagamento" class="tela" hidden></section>
@@ -3042,6 +3068,15 @@ window.FT_CONFIG = {
         },
         remover: async function (id) { return ok(sb.from('funcionarios').delete().eq('id', id)); }
       },
+      reservas: {
+        listar: async function (de, ate) { return ok(sb.from('reservas').select('*').gte('data', de).lte('data', ate).order('data').order('hora', { nullsFirst: false }).limit(2000)); },
+        salvar: async function (r) {
+          const d = { data: r.data, hora: r.hora || null, nome: r.nome, pessoas: r.pessoas, telefone: r.telefone || null, observacao: r.observacao || null, atualizado_em: new Date().toISOString() };
+          if (r.id) return ok(sb.from('reservas').update(d).eq('id', r.id).select());
+          return ok(sb.from('reservas').insert(d).select());
+        },
+        remover: async function (id) { return ok(sb.from('reservas').delete().eq('id', id)); }
+      },
       config: {
         ler: async function (chave) { const d = await ok(sb.from('configuracoes').select('valor').eq('chave', chave).maybeSingle()); return d ? d.valor : null; },
         salvar: async function (chave, valor) { return ok(sb.from('configuracoes').upsert({ chave: chave, valor: valor, atualizado_em: new Date().toISOString() })); }
@@ -3281,6 +3316,17 @@ window.FT_CONFIG = {
         },
         salvarVarios: function (lista) { const r = lista.map(function (f) { f = Object.assign(clonar(f), FT.limparFuncionario(f)); f.id = 'p' + (seq++); f.ativo = true; db.funcionarios.push(f); return f; }); return espera(r); },
         remover: function (id) { db.funcionarios = db.funcionarios.filter(function (x) { return x.id !== id; }); return espera(null); }
+      },
+      reservas: {
+        listar: function (de, ate) { db.reservas = db.reservas || []; return espera(db.reservas.filter(function (r) { return r.data >= de && r.data <= ate; }).map(clonar)); },
+        salvar: function (r) {
+          db.reservas = db.reservas || [];
+          const x = clonar(r);
+          if (x.id) { const i = db.reservas.findIndex(function (y) { return y.id === x.id; }); if (i >= 0) db.reservas[i] = x; }
+          else { x.id = 'rs' + (seq++); db.reservas.push(x); }
+          return espera([clonar(x)]);
+        },
+        remover: function (id) { db.reservas = (db.reservas || []).filter(function (r) { return r.id !== id; }); return espera(null); }
       },
       config: {
         ler: function (k) { return espera(db.config[k] == null ? null : db.config[k]); },
@@ -9880,12 +9926,272 @@ window.FT_CONFIG = {
   FT.telas.pastas = { abrir: async function () { if (!$('#pa-kpis')) montar(); await carregar(true); } };
 })();
 
+/* Forneria Toscana — Reservas
+ * Cadastro das reservas da casa (nome, data, horário, pessoas, observação) e envio do dia
+ * pelo WhatsApp para o líder do salão, líder da pizzaria, líder do bar e caixa. */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const PAPEIS = [
+    { id: 'salao', nome: 'Líder do salão' },
+    { id: 'pizzaria', nome: 'Líder da pizzaria' },
+    { id: 'bar', nome: 'Líder do bar' },
+    { id: 'caixa', nome: 'Caixa' }
+  ];
+  const st = { visao: 'proximas', mes: null, lista: [], funcs: [], destinos: {}, envios: {}, editando: null, diaEnvio: null };
+  const MAIUSC = function (s) { return String(s == null ? '' : s).trim().replace(/\s+/g, ' ').toUpperCase(); };
+
+  function somaMes(chave, n) { const p = chave.split('-').map(Number); const d = new Date(p[0], p[1] - 1 + n, 1, 12); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+  function fimMes(chave) { const p = chave.split('-').map(Number); const d = new Date(p[0], p[1], 0, 12); return FT.iso(d); }
+  function hora(h) { return h ? String(h).slice(0, 5) : ''; }
+  function pessoasTxt(n) { return n + ' pessoa' + (n === 1 ? '' : 's'); }
+  function nomeMes(chave) { return window.FTIndicadores ? window.FTIndicadores.nomeMes(chave) : chave; }
+  function ordenar(a, b) { return a.data < b.data ? -1 : a.data > b.data ? 1 : (hora(a.hora) || '99') < (hora(b.hora) || '99') ? -1 : (hora(a.hora) || '99') > (hora(b.hora) || '99') ? 1 : (a.nome < b.nome ? -1 : 1); }
+  function func(id) { return st.funcs.find(function (f) { return f.id === id; }); }
+
+  function textoDia(data) {
+    const rs = st.lista.filter(function (r) { return r.data === data; }).sort(ordenar);
+    const tot = rs.reduce(function (t, r) { return t + (+r.pessoas || 0); }, 0);
+    let t = '*RESERVAS · ' + FT.DIAS[FT.diaSemana(data)].toUpperCase() + ' ' + FT.ddmmaaaa(data) + '*\n';
+    t += rs.length + ' reserva' + (rs.length === 1 ? '' : 's') + ' · ' + pessoasTxt(tot) + '\n';
+    rs.forEach(function (r, i) {
+      t += '\n' + (i + 1) + ') ' + (hora(r.hora) ? hora(r.hora) + ' · ' : '') + MAIUSC(r.nome) + ' · ' + pessoasTxt(+r.pessoas || 0);
+      if (r.observacao) t += '\n   OBS: ' + MAIUSC(r.observacao);
+    });
+    return t.toUpperCase();
+  }
+
+  function montar() {
+    $('#tela-reservas').innerHTML =
+      '<div class="cab-tela"><div><h1>Reservas</h1><p>Todas as reservas da casa. Em cada dia, envie a lista pelo WhatsApp para o líder do salão, da pizzaria, do bar e para o caixa.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="rs-destinos">Quem recebe no WhatsApp</button><button type="button" class="btn" id="rs-nova">+ Nova reserva</button></div></div>' +
+      '<div class="kpis kpis-4" id="rs-kpis"></div>' +
+      '<div class="barra"><div class="segmentado" role="group" aria-label="Visão" id="rs-visao"><button type="button" data-v="proximas" aria-pressed="true">Próximas</button><button type="button" data-v="mes" aria-pressed="false">Por mês</button></div>' +
+      '<div class="nav-semana" id="rs-navmes" hidden><button type="button" class="btn-icone" id="rs-ant" aria-label="Mês anterior">‹</button><div class="nav-semana-t"><span>Mês</span><b id="rs-rotulo"></b></div><button type="button" class="btn-icone" id="rs-prox" aria-label="Próximo mês">›</button></div>' +
+      '<input type="search" id="rs-busca" placeholder="Buscar pelo nome" aria-label="Buscar pelo nome"></div>' +
+      '<div id="rs-aviso" class="msg erro" hidden></div>' +
+      '<div id="rs-dias" class="rs-dias"></div>' +
+      // diálogo da reserva
+      '<dialog id="dlg-reserva" aria-labelledby="h-reserva"><form class="dlg form" id="rs-form" novalidate><h2 id="h-reserva">Nova reserva</h2>' +
+      '<label for="rs-nome">Nome de quem reservou<input id="rs-nome" required autocomplete="off"></label>' +
+      '<div class="grade2"><label for="rs-data">Data<input type="date" id="rs-data" required></label><label for="rs-hora">Horário (opcional)<input type="time" id="rs-hora"></label></div>' +
+      '<div class="grade2"><label for="rs-pessoas">Quantidade de pessoas<input type="number" id="rs-pessoas" min="1" step="1" inputmode="numeric" required></label><label for="rs-tel">Telefone do cliente (opcional)<input id="rs-tel" inputmode="tel" autocomplete="off"></label></div>' +
+      '<label for="rs-obs">Observação<textarea id="rs-obs" rows="3" placeholder="Aniversário, mesa na varanda, cadeirão, restrição alimentar…"></textarea></label>' +
+      '<p class="erro-form" id="rs-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><button type="button" class="btn btn-perigo" id="rs-excluir" hidden>Excluir reserva</button><span class="espaco"></span><button type="button" class="btn btn-sec" id="rs-cancelar">Cancelar</button><button type="submit" class="btn" id="rs-salvar">Salvar</button></div></form></dialog>' +
+      // diálogo de quem recebe
+      '<dialog id="dlg-rs-dest" aria-labelledby="h-rs-dest"><form class="dlg form" id="rs-dest-form" novalidate><h2 id="h-rs-dest">Quem recebe as reservas</h2>' +
+      '<p>Escolha uma pessoa para cada função. O celular fica no cadastro do funcionário: se ainda não tiver, o sistema pede uma vez no primeiro envio.</p>' +
+      '<div class="rs-dest-grade" id="rs-dest-campos"></div>' +
+      '<p class="erro-form" id="rs-dest-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><span class="espaco"></span><button type="button" class="btn btn-sec" id="rs-dest-cancelar">Cancelar</button><button type="submit" class="btn">Salvar</button></div></form></dialog>' +
+      // diálogo de envio do dia
+      '<dialog id="dlg-rs-envio" aria-labelledby="h-rs-envio"><div class="dlg"><h2 id="h-rs-envio">Enviar reservas</h2>' +
+      '<pre class="rs-previa" id="rs-envio-texto"></pre><ul class="rs-envio-lista" id="rs-envio-lista"></ul>' +
+      '<div class="dlg-acoes"><button type="button" class="btn btn-sec" id="rs-envio-dest">Trocar quem recebe</button><span class="espaco"></span><button type="button" class="btn" id="rs-envio-fechar">Fechar</button></div></div></dialog>';
+
+    $('#rs-nova').addEventListener('click', function () { abrirReserva(null); });
+    $('#rs-destinos').addEventListener('click', abrirDestinos);
+    $('#rs-visao').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-v]'); if (!b) return; st.visao = b.dataset.v;
+      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      carregar();
+    });
+    $('#rs-ant').addEventListener('click', function () { st.mes = somaMes(st.mes, -1); carregar(); });
+    $('#rs-prox').addEventListener('click', function () { st.mes = somaMes(st.mes, 1); carregar(); });
+    $('#rs-busca').addEventListener('input', desenhar);
+    $('#rs-dias').addEventListener('click', function (e) {
+      const ed = e.target.closest('[data-editar]'); if (ed) { abrirReserva(st.lista.find(function (r) { return r.id === ed.dataset.editar; })); return; }
+      const en = e.target.closest('[data-enviar]'); if (en) { abrirEnvio(en.dataset.enviar); return; }
+      const nv = e.target.closest('[data-nova]'); if (nv) abrirReserva({ data: nv.dataset.nova });
+    });
+    $('#rs-cancelar').addEventListener('click', function () { $('#dlg-reserva').close(); });
+    $('#rs-form').addEventListener('submit', salvarReserva);
+    $('#rs-excluir').addEventListener('click', excluirReserva);
+    $('#rs-dest-cancelar').addEventListener('click', function () { $('#dlg-rs-dest').close(); });
+    $('#rs-dest-form').addEventListener('submit', salvarDestinos);
+    $('#rs-envio-fechar').addEventListener('click', function () { $('#dlg-rs-envio').close(); });
+    $('#rs-envio-dest').addEventListener('click', function () { $('#dlg-rs-envio').close(); abrirDestinos(); });
+    $('#rs-envio-lista').addEventListener('click', enviarPara);
+    window.addEventListener('hashchange', function () { ['#dlg-reserva', '#dlg-rs-dest', '#dlg-rs-envio'].forEach(function (d) { const x = document.querySelector(d); if (x && x.open) x.close(); }); });
+  }
+
+  async function carregar() {
+    const hoje = FT.hoje();
+    $('#rs-navmes').hidden = st.visao !== 'mes';
+    $('#rs-rotulo').textContent = nomeMes(st.mes).toUpperCase();
+    try {
+      const de = st.visao === 'mes' ? st.mes + '-01' : hoje;
+      const ate = st.visao === 'mes' ? fimMes(st.mes) : FT.somaDias(hoje, 400);
+      const r = await Promise.all([
+        FT.store.reservas.listar(de, ate),
+        FT.store.funcionarios.listar(),
+        FT.store.config.ler('reservas_destinos'),
+        FT.store.config.ler('reservas_envios')
+      ]);
+      st.lista = r[0] || []; st.funcs = r[1] || []; st.destinos = r[2] || {}; st.envios = r[3] || {};
+      $('#rs-aviso').hidden = true;
+      desenhar();
+    } catch (e) {
+      const semTabela = /reservas/i.test(FT.textoErro(e)) && /exist|schema|relation|find/i.test(FT.textoErro(e));
+      $('#rs-aviso').hidden = false;
+      $('#rs-aviso').textContent = semTabela ? 'A tabela de reservas ainda não existe. Rode o arquivo supabase-atualizacao-17-reservas.sql no Supabase e recarregue a página.' : 'Não consegui carregar as reservas: ' + FT.textoErro(e);
+      st.lista = []; desenhar();
+    }
+  }
+
+  function desenhar() {
+    const hoje = FT.hoje(), sete = FT.somaDias(hoje, 6);
+    const doDia = st.lista.filter(function (r) { return r.data === hoje; });
+    const semana = st.lista.filter(function (r) { return r.data >= hoje && r.data <= sete; });
+    const soma = function (l) { return l.reduce(function (t, r) { return t + (+r.pessoas || 0); }, 0); };
+    const kp = st.visao === 'mes'
+      ? [['Reservas no mês', st.lista.length, nomeMes(st.mes)], ['Pessoas no mês', soma(st.lista), 'somando todas as reservas'],
+         ['Dias com reserva', new Set(st.lista.map(function (r) { return r.data; })).size, 'no mês'], ['Média por reserva', st.lista.length ? (soma(st.lista) / st.lista.length).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) : '0', 'pessoas']]
+      : [['Reservas hoje', doDia.length, FT.DIAS[FT.diaSemana(hoje)] + ' ' + FT.ddmm(hoje)], ['Pessoas hoje', soma(doDia), 'somando as reservas de hoje'],
+         ['Próximos 7 dias', semana.length, 'reservas até ' + FT.ddmm(sete)], ['Pessoas em 7 dias', soma(semana), 'reservadas']];
+    $('#rs-kpis').innerHTML = kp.map(function (k) { return '<article class="kpi"><h3>' + esc(k[0]) + '</h3><p class="kpi-v">' + esc(String(k[1])) + '</p><p class="kpi-s">' + esc(k[2]) + '</p></article>'; }).join('');
+
+    const busca = FT.semAcento($('#rs-busca').value || '');
+    const lista = st.lista.filter(function (r) { return !busca || FT.semAcento(r.nome).indexOf(busca) >= 0 || FT.semAcento(r.observacao || '').indexOf(busca) >= 0; }).sort(ordenar);
+    const dias = {};
+    lista.forEach(function (r) { (dias[r.data] = dias[r.data] || []).push(r); });
+    const datas = Object.keys(dias).sort();
+    if (!datas.length) {
+      $('#rs-dias').innerHTML = '<div class="painel rs-vazio"><p>' + (busca ? 'Nenhuma reserva encontrada com essa busca.' : st.visao === 'mes' ? 'Nenhuma reserva neste mês.' : 'Nenhuma reserva a partir de hoje.') + '</p><button type="button" class="btn" data-nova="' + (st.visao === 'mes' && st.mes !== hoje.slice(0, 7) ? st.mes + '-01' : hoje) + '">+ Nova reserva</button></div>';
+      return;
+    }
+    $('#rs-dias').innerHTML = datas.map(function (d) {
+      const rs = dias[d], tot = soma(rs), ds = FT.diaSemana(d);
+      const env = st.envios[d] || {}, txt = textoDia(d);
+      const enviados = PAPEIS.filter(function (p) { return env[p.id]; });
+      const mudou = enviados.some(function (p) { return env[p.id].texto !== txt; });
+      const estado = !enviados.length ? '<span class="chip-parcial">Não enviado</span>'
+        : mudou ? '<span class="chip-parcial">Mudou depois do envio</span>'
+        : '<span class="chip-ok">Enviado ' + enviados.length + '/4</span>';
+      return '<section class="painel rs-dia' + (d === hoje ? ' rs-hoje' : '') + (d < hoje ? ' rs-passado' : '') + '">' +
+        '<header class="rs-dia-cab"><div><h2>' + (d === hoje ? 'Hoje · ' : '') + esc(FT.DIAS[ds]) + ' ' + FT.ddmmaaaa(d) + '</h2>' +
+        '<p>' + rs.length + ' reserva' + (rs.length === 1 ? '' : 's') + ' · <b>' + pessoasTxt(tot) + '</b> ' + estado + '</p></div>' +
+        '<div class="acoes-linha"><button type="button" class="btn btn-sec btn-p" data-nova="' + d + '">+ Reserva neste dia</button><button type="button" class="btn btn-p btn-whats" data-enviar="' + d + '">Enviar no WhatsApp</button></div></header>' +
+        '<div class="rolagem"><table class="lista rs-tab"><thead><tr><th>Horário</th><th>Nome</th><th class="num">Pessoas</th><th>Observação</th><th></th></tr></thead><tbody>' +
+        rs.map(function (r) {
+          return '<tr><td>' + (hora(r.hora) || '<span class="rs-sem">—</span>') + '</td><td><b>' + esc(r.nome) + '</b>' + (r.telefone ? '<small>' + esc(FT.telFormatado(r.telefone)) + '</small>' : '') + '</td>' +
+            '<td class="num"><b>' + (+r.pessoas || 0) + '</b></td><td class="rs-obs">' + esc(r.observacao || '') + '</td>' +
+            '<td class="num"><button type="button" class="btn btn-sec btn-p" data-editar="' + esc(r.id) + '">Editar</button></td></tr>';
+        }).join('') + '</tbody></table></div></section>';
+    }).join('');
+  }
+
+  function abrirReserva(r) {
+    st.editando = r && r.id ? r : null;
+    $('#h-reserva').textContent = st.editando ? 'Editar reserva' : 'Nova reserva';
+    $('#rs-nome').value = r && r.nome || '';
+    $('#rs-data').value = r && r.data || FT.hoje();
+    $('#rs-hora').value = r && hora(r.hora) || '';
+    $('#rs-pessoas').value = r && r.pessoas || '';
+    $('#rs-tel').value = r && r.telefone ? FT.telFormatado(r.telefone) : '';
+    $('#rs-obs').value = r && r.observacao || '';
+    $('#rs-erro').textContent = '';
+    $('#rs-excluir').hidden = !st.editando;
+    $('#dlg-reserva').showModal();
+    (r && r.data && !st.editando ? $('#rs-nome') : $('#rs-nome')).focus();
+  }
+
+  async function salvarReserva(e) {
+    e.preventDefault();
+    const nome = MAIUSC($('#rs-nome').value), data = $('#rs-data').value, pessoas = parseInt($('#rs-pessoas').value, 10);
+    const tel = FT.telNumeros($('#rs-tel').value);
+    if (!nome) { $('#rs-erro').textContent = 'Digite o nome de quem reservou.'; $('#rs-nome').focus(); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) { $('#rs-erro').textContent = 'Escolha a data da reserva.'; $('#rs-data').focus(); return; }
+    if (!(pessoas > 0)) { $('#rs-erro').textContent = 'Digite a quantidade de pessoas.'; $('#rs-pessoas').focus(); return; }
+    if (tel && !FT.telValido(tel)) { $('#rs-erro').textContent = 'Telefone do cliente com DDD (10 ou 11 números), ou deixe em branco.'; $('#rs-tel').focus(); return; }
+    const reg = { data: data, hora: $('#rs-hora').value || null, nome: nome, pessoas: pessoas, telefone: tel || null, observacao: MAIUSC($('#rs-obs').value) || null };
+    if (st.editando) reg.id = st.editando.id;
+    const b = $('#rs-salvar'); b.disabled = true;
+    try {
+      await FT.store.reservas.salvar(reg);
+      $('#dlg-reserva').close();
+      FT.aviso('Reserva de ' + nome + ' salva para ' + FT.ddmm(data) + '.');
+      if (st.visao === 'mes' && data.slice(0, 7) !== st.mes) st.mes = data.slice(0, 7);
+      await carregar();
+    } catch (x) { $('#rs-erro').textContent = 'Não consegui salvar: ' + FT.textoErro(x); }
+    finally { b.disabled = false; }
+  }
+
+  async function excluirReserva() {
+    const r = st.editando; if (!r) return;
+    if (!confirm('Excluir a reserva de ' + r.nome + ' (' + FT.ddmm(r.data) + ')?')) return;
+    try { await FT.store.reservas.remover(r.id); $('#dlg-reserva').close(); FT.aviso('Reserva excluída.'); await carregar(); }
+    catch (x) { $('#rs-erro').textContent = 'Não consegui excluir: ' + FT.textoErro(x); }
+  }
+
+  function abrirDestinos() {
+    const ativos = st.funcs.filter(function (f) { return f.ativo !== false; });
+    $('#rs-dest-campos').innerHTML = PAPEIS.map(function (p) {
+      return '<label for="rs-d-' + p.id + '">' + esc(p.nome) + '<select id="rs-d-' + p.id + '" data-papel="' + p.id + '"><option value="">— ninguém —</option>' +
+        ativos.map(function (f) { return '<option value="' + esc(f.id) + '"' + (st.destinos[p.id] === f.id ? ' selected' : '') + '>' + esc(f.nome) + '</option>'; }).join('') + '</select></label>';
+    }).join('');
+    $('#rs-dest-erro').textContent = '';
+    $('#dlg-rs-dest').showModal();
+  }
+
+  async function salvarDestinos(e) {
+    e.preventDefault();
+    const d = {};
+    document.querySelectorAll('#rs-dest-campos select').forEach(function (s) { if (s.value) d[s.dataset.papel] = s.value; });
+    try { await FT.store.config.salvar('reservas_destinos', d); st.destinos = d; $('#dlg-rs-dest').close(); FT.aviso('Destinatários das reservas salvos.'); desenhar(); }
+    catch (x) { $('#rs-dest-erro').textContent = 'Não consegui salvar: ' + FT.textoErro(x); }
+  }
+
+  function abrirEnvio(data) {
+    st.diaEnvio = data;
+    $('#h-rs-envio').textContent = 'Enviar reservas de ' + FT.DIAS[FT.diaSemana(data)].toLowerCase() + ' ' + FT.ddmm(data);
+    desenharEnvio();
+    $('#dlg-rs-envio').showModal();
+  }
+  function desenharEnvio() {
+    const data = st.diaEnvio, txt = textoDia(data), env = st.envios[data] || {};
+    $('#rs-envio-texto').textContent = txt;
+    $('#rs-envio-lista').innerHTML = PAPEIS.map(function (p) {
+      const f = func(st.destinos[p.id]), e = env[p.id];
+      const est = !e ? '' : e.texto !== txt ? '<span class="chip-parcial">Mudou desde o envio</span>' : '<span class="chip-ok">Enviado ' + esc(e.quando || '') + '</span>';
+      return '<li><div><b>' + esc(p.nome) + '</b><span>' + (f ? esc(f.nome) : 'ninguém escolhido') + '</span>' + est + '</div>' +
+        (f ? FT.botaoWhats(f, 'data-papel="' + p.id + '"', e ? 'Enviar de novo' : 'Enviar') : '<button type="button" class="btn btn-sec btn-p" data-escolher="1">Escolher pessoa</button>') + '</li>';
+    }).join('');
+  }
+  async function enviarPara(e) {
+    if (e.target.closest('[data-escolher]')) { $('#dlg-rs-envio').close(); abrirDestinos(); return; }
+    const b = e.target.closest('[data-papel]'); if (!b) return;
+    const papel = b.dataset.papel, f = func(st.destinos[papel]); if (!f) return;
+    const data = st.diaEnvio, txt = textoDia(data);
+    const foi = await FT.enviarWhats(f, txt, !!b.dataset.trocar);
+    if (!foi) { if (!$('#dlg-rs-envio').open) $('#dlg-rs-envio').showModal(); return; }
+    const agora = new Date();
+    const env = st.envios[data] = st.envios[data] || {};
+    env[papel] = { texto: txt, quando: FT.ddmm(FT.hoje()) + ' ' + String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0'), para: f.nome };
+    // guarda só os envios dos últimos 60 dias
+    const corte = FT.somaDias(FT.hoje(), -60);
+    Object.keys(st.envios).forEach(function (k) { if (k < corte) delete st.envios[k]; });
+    try { await FT.store.config.salvar('reservas_envios', st.envios); } catch (x) { console.error(x); }
+    if (!$('#dlg-rs-envio').open) $('#dlg-rs-envio').showModal();
+    desenharEnvio(); desenhar();
+  }
+
+  let montado = false;
+  FT.telas.reservas = {
+    abrir: async function () {
+      if (!montado) { montado = true; st.mes = FT.hoje().slice(0, 7); montar(); }
+      await carregar();
+    }
+  };
+})();
+
 /* Forneria Toscana — login, menu lateral e navegação entre telas */
 (function () {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'fichas', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'reservas', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'fichas', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
