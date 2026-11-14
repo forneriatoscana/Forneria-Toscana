@@ -887,6 +887,33 @@ table.lista.vp-dias .num { min-width: 64px; }
 .fx-dinl th.fx-rot { box-shadow: inset 3px 0 0 #c9a227; }
 
 /* ---------- WhatsApp ---------- */
+/* ---------- fila de espera ---------- */
+.fl-add { display: grid; grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.fl-add label, .fl-pes { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.fl-nome input { font-size: 17px; padding: 10px 12px !important; }
+.fl-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.fl-chips button { min-width: 40px; height: 42px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-weight: 700; font-size: 15px; cursor: pointer; }
+.fl-chips button:hover { border-color: var(--accent); }
+.fl-chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.fl-chips input { width: 58px; height: 42px; text-align: center; font-weight: 700; }
+.fl-btn-add { height: 44px; font-size: 15px; padding: 0 20px; }
+.fl-add .erro-form { grid-column: 1 / -1; }
+.fl-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fl-item { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; }
+.fl-pos { font: 700 24px/1 var(--f-display); color: var(--ink-3); text-align: center; }
+.fl-proximo { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.fl-proximo .fl-pos { color: var(--accent); }
+.fl-chamado { background: var(--aviso-bg); border-color: transparent; }
+.fl-info { display: grid; gap: 2px; min-width: 0; }
+.fl-info b { font-size: 17px; }
+.fl-pess { font-weight: 700; color: var(--accent); }
+.fl-info small { color: var(--ink-3); font-size: 12.5px; }
+.fl-tempo.longo { color: var(--ruim); font-weight: 700; }
+.fl-acoes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.fl-vazio { color: var(--ink-3); background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: 18px; text-align: center; }
+@media (max-width: 1000px) { .fl-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .fl-nome, .fl-pes { grid-column: 1 / -1; } .fl-btn-add { grid-column: 1 / -1; } }
+@media (max-width: 600px) { .fl-add { grid-template-columns: minmax(0, 1fr); } .fl-item { grid-template-columns: 40px minmax(0, 1fr); } .fl-acoes { grid-column: 1 / -1; justify-content: stretch; } .fl-acoes .btn { flex: 1; } }
+
 /* ---------- reservas ---------- */
 .rs-dias { display: grid; gap: 14px; }
 .rs-dia { display: grid; gap: 10px; }
@@ -1056,6 +1083,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     <nav>
       <a class="menu-home" href="#home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9v11.5h13V9"/><path d="M10 20.5v-6h4v6"/></svg>Home</a>
       <a class="menu-home" href="#reservas"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 15l2.3 2.3 4.7-4.6"/></svg>Reservas</a>
+      <a class="menu-home" href="#fila"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.3"/><circle cx="12" cy="7" r="2.3"/><circle cx="18" cy="7" r="2.3"/><path d="M2.5 15c.4-2.4 1.8-3.6 3.5-3.6s3.1 1.2 3.5 3.6M8.5 15c.4-2.4 1.8-3.6 3.5-3.6s3.1 1.2 3.5 3.6M14.5 15c.4-2.4 1.8-3.6 3.5-3.6s3.1 1.2 3.5 3.6"/><path d="M3 20h18"/></svg>Fila de espera</a>
       <div class="menu-grupo" data-grupo="dash">
         <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-dash"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="9" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="5" rx="1.5"/><rect x="13.5" y="11" width="7.5" height="10" rx="1.5"/><rect x="3" y="15" width="7.5" height="6" rx="1.5"/></svg><span>Dashboard</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="menu-itens" id="mg-dash" hidden>
@@ -1188,6 +1216,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     </section>
 
     <section id="tela-reservas" class="tela" hidden></section>
+    <section id="tela-fila" class="tela" hidden></section>
     <section id="tela-produtos" class="tela" hidden></section>
     <section id="tela-descontos" class="tela" hidden></section>
     <section id="tela-pagamento" class="tela" hidden></section>
@@ -3068,6 +3097,14 @@ window.FT_CONFIG = {
         },
         remover: async function (id) { return ok(sb.from('funcionarios').delete().eq('id', id)); }
       },
+      fila: {
+        listar: async function (dia) { return ok(sb.from('fila_espera').select('*').eq('dia', dia).order('chegada')); },
+        salvar: async function (r) {
+          const d = Object.assign({}, r); delete d.id;
+          if (r.id) return ok(sb.from('fila_espera').update(d).eq('id', r.id).select());
+          return ok(sb.from('fila_espera').insert(d).select());
+        }
+      },
       reservas: {
         listar: async function (de, ate) { return ok(sb.from('reservas').select('*').gte('data', de).lte('data', ate).order('data').order('hora', { nullsFirst: false }).limit(2000)); },
         salvar: async function (r) {
@@ -3316,6 +3353,14 @@ window.FT_CONFIG = {
         },
         salvarVarios: function (lista) { const r = lista.map(function (f) { f = Object.assign(clonar(f), FT.limparFuncionario(f)); f.id = 'p' + (seq++); f.ativo = true; db.funcionarios.push(f); return f; }); return espera(r); },
         remover: function (id) { db.funcionarios = db.funcionarios.filter(function (x) { return x.id !== id; }); return espera(null); }
+      },
+      fila: {
+        listar: function (dia) { db.fila = db.fila || []; return espera(db.fila.filter(function (r) { return r.dia === dia; }).map(clonar)); },
+        salvar: function (r) {
+          db.fila = db.fila || [];
+          if (r.id) { const x = db.fila.find(function (y) { return y.id === r.id; }); if (x) Object.assign(x, clonar(r)); return espera([clonar(x)]); }
+          const n = clonar(r); n.id = 'fl' + (seq++); db.fila.push(n); return espera([clonar(n)]);
+        }
       },
       reservas: {
         listar: function (de, ate) { db.reservas = db.reservas || []; return espera(db.reservas.filter(function (r) { return r.data >= de && r.data <= ate; }).map(clonar)); },
@@ -10186,12 +10231,187 @@ window.FT_CONFIG = {
   };
 })();
 
+/* Forneria Toscana — Fila de espera
+ * Anotar quem chegou (nome + pessoas), ver a ordem de chegada e o tempo de espera,
+ * chamar o próximo (com aviso opcional no WhatsApp do cliente) e marcar se sentou ou desistiu. */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const st = { dia: null, lista: [], timer: null, pessoas: 2, verFinal: false };
+  const MAIUSC = function (s) { return String(s == null ? '' : s).trim().replace(/\s+/g, ' ').toUpperCase(); };
+
+  // dia de operação: até as 5h da manhã ainda conta como a noite anterior
+  function diaOperacao() { const d = new Date(Date.now() - 5 * 3600 * 1000); return FT.iso(d); }
+  function minutos(de, ate) { return Math.max(0, Math.round(((ate ? new Date(ate) : new Date()) - new Date(de)) / 60000)); }
+  function tempo(m) { return m < 60 ? m + ' min' : Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0'); }
+  function hhmm(t) { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  function pessoasTxt(n) { return n + (n === 1 ? ' pessoa' : ' pessoas'); }
+
+  function montar() {
+    $('#tela-fila').innerHTML =
+      '<div class="cab-tela"><div><h1>Fila de espera</h1><p>Anote quem chegou, chame pela ordem e marque quando sentar. A lista atualiza sozinha a cada 20 segundos.</p></div>' +
+      '<div class="acoes-linha"><span class="pilula" id="fl-dia"></span></div></div>' +
+      '<form class="painel fl-add" id="fl-form" novalidate autocomplete="off">' +
+      '<label class="fl-nome" for="fl-nome">Nome do cliente<input id="fl-nome" placeholder="Nome" required></label>' +
+      '<div class="fl-pes"><span>Pessoas</span><div class="fl-chips" id="fl-chips">' +
+      [1, 2, 3, 4, 5, 6, 8].map(function (n) { return '<button type="button" data-p="' + n + '">' + n + '</button>'; }).join('') +
+      '<input type="number" id="fl-outro" min="1" step="1" inputmode="numeric" placeholder="+" aria-label="Outra quantidade"></div></div>' +
+      '<label class="fl-tel" for="fl-tel">Celular (opcional)<input id="fl-tel" inputmode="tel" placeholder="Para avisar no WhatsApp"></label>' +
+      '<label class="fl-obs" for="fl-obs">Observação (opcional)<input id="fl-obs" placeholder="Cadeirão, área externa…"></label>' +
+      '<button type="submit" class="btn fl-btn-add" id="fl-add">+ Entrar na fila</button>' +
+      '<p class="erro-form" id="fl-erro" role="alert"></p></form>' +
+      '<div class="kpis kpis-4" id="fl-kpis"></div>' +
+      '<div id="fl-aviso" class="msg erro" hidden></div>' +
+      '<section><div class="cab-secao"><h2>Aguardando</h2><p>Em ordem de chegada · o primeiro é o próximo a chamar</p></div><ol class="fl-lista" id="fl-aguardando"></ol></section>' +
+      '<section id="fl-sec-chamados"><div class="cab-secao"><h2>Chamados</h2><p>Já foram chamados e ainda não sentaram</p></div><ol class="fl-lista" id="fl-chamados"></ol></section>' +
+      '<section><div class="cab-secao"><h2>Já atendidos hoje</h2><button type="button" class="link" id="fl-ver-final"></button></div><div id="fl-finais"></div></section>';
+
+    marcarPessoas(2);
+    $('#fl-chips').addEventListener('click', function (e) { const b = e.target.closest('[data-p]'); if (!b) return; $('#fl-outro').value = ''; marcarPessoas(+b.dataset.p); });
+    $('#fl-outro').addEventListener('input', function (e) { const n = parseInt(e.target.value, 10); if (n > 0) marcarPessoas(n, true); });
+    $('#fl-tel').addEventListener('input', function (e) { const d = e.target.value.replace(/\D/g, '').slice(0, 11); e.target.value = d.length >= 10 ? FT.telFormatado(d) : d; });
+    $('#fl-form').addEventListener('submit', adicionar);
+    $('#fl-ver-final').addEventListener('click', function () { st.verFinal = !st.verFinal; desenhar(); });
+    $('#tela-fila').addEventListener('click', acao);
+  }
+  function marcarPessoas(n, doCampo) {
+    st.pessoas = n;
+    document.querySelectorAll('#fl-chips [data-p]').forEach(function (b) { b.setAttribute('aria-pressed', String(!doCampo && +b.dataset.p === n)); });
+  }
+
+  async function carregar(silencioso) {
+    st.dia = diaOperacao();
+    $('#fl-dia').textContent = FT.DIAS[FT.diaSemana(st.dia)] + ' ' + FT.ddmm(st.dia);
+    try {
+      st.lista = await FT.store.fila.listar(st.dia) || [];
+      $('#fl-aviso').hidden = true;
+    } catch (e) {
+      if (silencioso) return;
+      const t = FT.textoErro(e);
+      $('#fl-aviso').hidden = false;
+      $('#fl-aviso').textContent = /fila_espera/i.test(t) ? 'A tabela da fila ainda não existe. Rode o arquivo supabase-atualizacao-18-fila.sql no Supabase e recarregue a página.' : 'Não consegui carregar a fila: ' + t;
+      st.lista = [];
+    }
+    desenhar();
+  }
+
+  function desenhar() {
+    const ord = function (a, b) { return a.chegada < b.chegada ? -1 : 1; };
+    const ag = st.lista.filter(function (r) { return r.status === 'aguardando'; }).sort(ord);
+    const ch = st.lista.filter(function (r) { return r.status === 'chamado'; }).sort(function (a, b) { return a.chamado_em < b.chamado_em ? -1 : 1; });
+    const fin = st.lista.filter(function (r) { return r.status === 'sentou' || r.status === 'desistiu'; }).sort(function (a, b) { return a.finalizado_em > b.finalizado_em ? -1 : 1; });
+    const sent = fin.filter(function (r) { return r.status === 'sentou'; });
+    const media = sent.length ? Math.round(sent.reduce(function (t, r) { return t + minutos(r.chegada, r.chamado_em || r.finalizado_em); }, 0) / sent.length) : null;
+    const maior = ag.length ? minutos(ag[0].chegada) : 0;
+    const kp = [
+      ['Na fila', ag.length, pessoasTxt(ag.reduce(function (t, r) { return t + (+r.pessoas || 0); }, 0)) + ' aguardando'],
+      ['Espera do 1º da fila', ag.length ? tempo(maior) : '—', ag.length ? 'chegou às ' + hhmm(ag[0].chegada) : 'ninguém esperando'],
+      ['Espera média hoje', media == null ? '—' : tempo(media), 'até ser chamado'],
+      ['Atendidos hoje', sent.length, fin.length - sent.length ? (fin.length - sent.length) + ' desistiram' : 'nenhuma desistência']
+    ];
+    $('#fl-kpis').innerHTML = kp.map(function (k, i) { return '<article class="kpi' + (i === 1 && maior >= 30 ? ' kpi-alerta' : '') + '"><h3>' + esc(k[0]) + '</h3><p class="kpi-v">' + esc(String(k[1])) + '</p><p class="kpi-s">' + esc(k[2]) + '</p></article>'; }).join('');
+
+    $('#fl-aguardando').innerHTML = ag.length ? ag.map(function (r, i) {
+      const m = minutos(r.chegada);
+      return '<li class="fl-item' + (i === 0 ? ' fl-proximo' : '') + '"><span class="fl-pos">' + (i + 1) + 'º</span>' +
+        '<div class="fl-info"><b>' + esc(r.nome) + '</b><span class="fl-pess">' + pessoasTxt(+r.pessoas) + '</span>' +
+        '<small>chegou ' + hhmm(r.chegada) + ' · <span class="fl-tempo' + (m >= 30 ? ' longo' : '') + '">esperando ' + tempo(m) + '</span>' + (r.telefone ? ' · ' + esc(FT.telFormatado(r.telefone)) : '') + (r.observacao ? ' · ' + esc(r.observacao) : '') + '</small></div>' +
+        '<div class="fl-acoes"><button type="button" class="btn" data-chamar="' + esc(r.id) + '">Chamar</button>' +
+        '<button type="button" class="btn btn-sec btn-p" data-sentou="' + esc(r.id) + '">Sentou</button>' +
+        '<button type="button" class="btn btn-perigo btn-p" data-desistiu="' + esc(r.id) + '">Desistiu</button></div></li>';
+    }).join('') : '<li class="fl-vazio">Ninguém na fila.</li>';
+
+    $('#fl-sec-chamados').hidden = !ch.length;
+    $('#fl-chamados').innerHTML = ch.map(function (r) {
+      return '<li class="fl-item fl-chamado"><span class="fl-pos">📣</span>' +
+        '<div class="fl-info"><b>' + esc(r.nome) + '</b><span class="fl-pess">' + pessoasTxt(+r.pessoas) + '</span>' +
+        '<small>chamado às ' + hhmm(r.chamado_em) + ' (há ' + tempo(minutos(r.chamado_em)) + ') · esperou ' + tempo(minutos(r.chegada, r.chamado_em)) + '</small></div>' +
+        '<div class="fl-acoes"><button type="button" class="btn" data-sentou="' + esc(r.id) + '">Sentou</button>' +
+        (r.telefone ? '<button type="button" class="btn btn-p btn-whats" data-avisar="' + esc(r.id) + '">Avisar de novo</button>' : '') +
+        '<button type="button" class="btn btn-sec btn-p" data-voltar="' + esc(r.id) + '">Voltar para a fila</button>' +
+        '<button type="button" class="btn btn-perigo btn-p" data-desistiu="' + esc(r.id) + '">Desistiu</button></div></li>';
+    }).join('');
+
+    $('#fl-ver-final').textContent = fin.length ? (st.verFinal ? 'Esconder' : 'Ver os ' + fin.length) : '';
+    $('#fl-finais').innerHTML = !fin.length ? '<p class="vazio-bloco">Ninguém atendido ainda hoje.</p>' : !st.verFinal ? '' :
+      '<div class="rolagem"><table class="lista"><thead><tr><th>Nome</th><th class="num">Pessoas</th><th>Chegou</th><th>Esperou</th><th>Situação</th><th></th></tr></thead><tbody>' +
+      fin.map(function (r) {
+        return '<tr><td><b>' + esc(r.nome) + '</b></td><td class="num">' + (+r.pessoas) + '</td><td>' + hhmm(r.chegada) + '</td><td>' + tempo(minutos(r.chegada, r.chamado_em || r.finalizado_em)) + '</td>' +
+          '<td>' + (r.status === 'sentou' ? '<span class="chip-ok">Sentou ' + hhmm(r.finalizado_em) + '</span>' : '<span class="chip-parcial">Desistiu</span>') + '</td>' +
+          '<td class="num"><button type="button" class="link" data-voltar="' + esc(r.id) + '">Voltar para a fila</button></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }
+
+  async function adicionar(e) {
+    e.preventDefault();
+    const nome = MAIUSC($('#fl-nome').value), pessoas = parseInt($('#fl-outro').value, 10) || st.pessoas, tel = FT.telNumeros($('#fl-tel').value);
+    if (!nome) { $('#fl-erro').textContent = 'Digite o nome do cliente.'; $('#fl-nome').focus(); return; }
+    if (tel && !FT.telValido(tel)) { $('#fl-erro').textContent = 'Celular com DDD (10 ou 11 números), ou deixe em branco.'; $('#fl-tel').focus(); return; }
+    $('#fl-erro').textContent = '';
+    const b = $('#fl-add'); b.disabled = true;
+    try {
+      await FT.store.fila.salvar({ dia: diaOperacao(), nome: nome, pessoas: pessoas, telefone: tel || null, observacao: MAIUSC($('#fl-obs').value) || null, status: 'aguardando', chegada: new Date().toISOString() });
+      $('#fl-nome').value = ''; $('#fl-tel').value = ''; $('#fl-obs').value = ''; $('#fl-outro').value = ''; marcarPessoas(2);
+      await carregar();
+      const pos = st.lista.filter(function (r) { return r.status === 'aguardando'; }).length;
+      FT.aviso(nome + ' entrou na fila em ' + pos + 'º lugar.');
+      $('#fl-nome').focus();
+    } catch (x) { $('#fl-erro').textContent = 'Não consegui adicionar: ' + FT.textoErro(x); }
+    finally { b.disabled = false; }
+  }
+
+  function textoAviso(r) {
+    return ('Olá, ' + String(r.nome).split(' ')[0] + '! Sua mesa na Forneria Toscana está pronta. Por favor, venha até a recepção.').toUpperCase();
+  }
+  function avisarWhats(r) {
+    const url = FT.linkWhats(r.telefone, textoAviso(r));
+    const j = window.open(url, '_blank'); if (!j) window.location.href = url;
+  }
+
+  async function mudar(id, dados, msg) {
+    try { await FT.store.fila.salvar(Object.assign({ id: id }, dados)); if (msg) FT.aviso(msg); await carregar(); }
+    catch (x) { FT.aviso('Não consegui atualizar: ' + FT.textoErro(x), true); }
+  }
+
+  async function acao(e) {
+    const b = e.target.closest('[data-chamar],[data-sentou],[data-desistiu],[data-voltar],[data-avisar]'); if (!b) return;
+    const id = b.dataset.chamar || b.dataset.sentou || b.dataset.desistiu || b.dataset.voltar || b.dataset.avisar;
+    const r = st.lista.find(function (x) { return x.id === id; }); if (!r) return;
+    const agora = new Date().toISOString();
+    if (b.dataset.chamar) {
+      if (r.telefone) avisarWhats(r); // abre no clique, antes de salvar, para o navegador não bloquear
+      await mudar(id, { status: 'chamado', chamado_em: agora }, r.nome + ' chamado' + (r.telefone ? ' e avisado no WhatsApp.' : '. Chame pelo nome na recepção.'));
+    } else if (b.dataset.avisar) {
+      avisarWhats(r);
+    } else if (b.dataset.sentou) {
+      await mudar(id, { status: 'sentou', chamado_em: r.chamado_em || agora, finalizado_em: agora }, r.nome + ' sentou.');
+    } else if (b.dataset.desistiu) {
+      if (!confirm(r.nome + ' desistiu e vai sair da fila?')) return;
+      await mudar(id, { status: 'desistiu', finalizado_em: agora }, r.nome + ' saiu da fila.');
+    } else if (b.dataset.voltar) {
+      await mudar(id, { status: 'aguardando', chamado_em: null, finalizado_em: null }, r.nome + ' voltou para a fila na posição de chegada.');
+    }
+  }
+
+  let montado = false;
+  FT.telas.fila = {
+    abrir: async function () {
+      if (!montado) { montado = true; montar(); }
+      await carregar();
+      clearInterval(st.timer);
+      st.timer = setInterval(function () { if (!document.hidden) carregar(true); }, 20000);
+      $('#fl-nome').focus();
+    },
+    sair: function () { clearInterval(st.timer); st.timer = null; }
+  };
+})();
+
 /* Forneria Toscana — login, menu lateral e navegação entre telas */
 (function () {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'reservas', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'fichas', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'reservas', 'fila', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'fichas', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
