@@ -887,6 +887,23 @@ table.lista.vp-dias .num { min-width: 64px; }
 .fx-dinl th.fx-rot { box-shadow: inset 3px 0 0 #c9a227; }
 
 /* ---------- WhatsApp ---------- */
+/* ---------- DRE ---------- */
+.matriz.dre thead th[data-mes] { cursor: pointer; }
+.matriz.dre thead th[data-mes]:hover { background: var(--accent-soft); }
+.matriz.dre .dre-ano { background: var(--surface-2); }
+.matriz.dre th[data-abrir] { cursor: pointer; }
+.dre-seta { display: inline-block; width: 14px; color: var(--ink-3); font-size: 11px; }
+.matriz.dre tr.dre-grupo th.col-rot { color: var(--ink); font-weight: 600; }
+.matriz.dre tr.linha-forte th, .matriz.dre tr.linha-forte td { background: var(--surface-2); border-top: 1px solid var(--ink-3); }
+.matriz.dre tr.linha-forte td.col-mes { background: var(--accent-soft); }
+.matriz.dre tr.dre-final th, .matriz.dre tr.dre-final td { font-size: 15.5px; border-top: 2px solid var(--accent); }
+.matriz.dre tr.dre-sub th.col-rot { padding-left: 30px; font-weight: 500; color: var(--ink-2); }
+.matriz.dre tr.dre-det th.col-rot { padding-left: 46px; font-weight: 400; font-size: 12px; color: var(--ink-3); white-space: normal; }
+.matriz.dre tr.dre-det td { font-size: 12.5px; color: var(--ink-3); }
+.matriz.dre td { min-width: 7.5em; }
+.matriz.dre th .chip-parcial { display: inline-block; margin-top: 2px; }
+.dre-extra .lista td, .dre-extra .lista th { white-space: normal; }
+
 /* ---------- fila de espera ---------- */
 .fl-add { display: grid; grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
 .fl-add label, .fl-pes { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
@@ -1096,6 +1113,7 @@ table.lista.vp-dias .num { min-width: 64px; }
         <button type="button" class="menu-tit" aria-expanded="false" aria-controls="mg-fin"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.5-1-1.6-1.6-2.8-1.6-1.6 0-2.8.9-2.8 2.2 0 3 5.8 1.5 5.8 4.4 0 1.3-1.3 2.2-3 2.2-1.3 0-2.5-.6-3-1.7M12 6v1.6M12 16.4V18"/></svg><span>Financeiro</span><svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
         <div class="menu-itens" id="mg-fin" hidden>
           <a href="#fluxo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/><path d="M3 21h18"/></svg>Fluxo de caixa</a>
+          <a href="#dre"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5z"/><path d="M8 7h8M8 11h8M8 15h4M14 15h2M8 18h8"/></svg>DRE</a>
           <a href="#analise"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16"/><path d="M8 16v-5M12 16V8M16 16v-3M20 16v-7"/></svg>Análise do caixa</a>
           <a href="#pagamento"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 9.5v6M18 9.5v6"/></svg>Pagamento 10%</a>
           <a href="#folha"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h9l4 4V21.5H6z"/><path d="M15 2.5v4h4M9 11h7M9 14.5h7M9 18h4"/></svg>Folha de pagamento</a>
@@ -1224,6 +1242,7 @@ table.lista.vp-dias .num { min-width: 64px; }
     <section id="tela-fechamento" class="tela" hidden></section>
     <section id="tela-escala" class="tela" hidden></section>
     <section id="tela-fluxo" class="tela" hidden></section>
+    <section id="tela-dre" class="tela" hidden></section>
     <section id="tela-analise" class="tela" hidden></section>
     <section id="tela-est-contagem" class="tela" hidden></section>
     <section id="tela-est-produtos" class="tela" hidden></section>
@@ -10406,12 +10425,338 @@ window.FT_CONFIG = {
   };
 })();
 
+/* Forneria Toscana — Financeiro › DRE gerencial
+ * Receita: vendas do Sischef (relatório de pedidos), sem a taxa de serviço (10%).
+ * Despesas: relatório de contas a pagar e receber (todas as contas, inclusive CAIXA DINHEIRO), pela data de vencimento.
+ * CMV pelas compras do mês. A taxa de serviço entra na receita e o pagamento do 10% (com as diárias) entra em Pessoal. */
+(function () {
+  'use strict';
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const st = { ano: null, mes: null, vendas: null, fluxo: null, abertos: {}, verPct: true };
+  const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const k = function (s) { return FT.semAcento(s); };
+
+  /* ---------- plano da DRE ---------- */
+  // receita por grupo do Sischef
+  function linhaReceita(grupo) {
+    const g = k(grupo);
+    if (/TAXA DE SERVICO/.test(g)) return 'rec_servico';
+    if (/TAXA DE ENTREGA/.test(g)) return 'rec_entrega';
+    if (/EVENTO/.test(g)) return 'rec_eventos';
+    if (/BEBIDA|CERVEJA|VINHO|DRINK|CAIPIRINHA|DOSE|CAFE/.test(g)) return 'rec_bar';
+    return 'rec_pizzaria';
+  }
+  // despesas por grupo + operação do financeiro
+  const TAXAS_CARTAO = /TAXAS CARTAO|CUSTO POR TRANSACAO|ALUGUEL MAQUINA|ANUIDADE CARTAO|SEGURO CARTAO/;
+  const FIN = /JUROS|IOF|CESTA MENSAL|TARIFA/;
+  const FORA_BANC = /ACERTO SALDO|ADIANTAMENTO DE SAIDA|PRONAMPE|BNDES|CAPITAL SOCIAL|FECHAMENTO CAIXA|SANGRIA|DESCONTOS CONCEDIDOS/;
+  function linhaDespesa(grupo, op) {
+    const g = k(grupo), o = k(op);
+    if (/^RECEITA/.test(g)) return /FINANCEIRA/.test(g) ? 'rec_fin' : null;
+    if (g === 'IMPOSTOS') return /DAS|SIMPLES/.test(o) ? 'ded_das' : 'adm';
+    if (g === 'BANCARIO') {
+      if (TAXAS_CARTAO.test(o)) return 'ded_cartao';
+      if (FIN.test(o)) return 'fin';
+      if (/FALTA DE CAIXA/.test(o)) return 'adm';
+      if (FORA_BANC.test(o)) return 'fora';
+      return 'fin';
+    }
+    if (g === 'CUSTOS DIRETOS') {
+      if (/ACERTO ESTOQUE|SOBRA|PROJECAO/.test(o)) return 'fora';
+      if (/HORTIFRUTI/.test(o)) return 'cmv_horti';
+      if (/BEBIDA/.test(o)) return 'cmv_bebidas';
+      if (/CAIXA DE PIZZA|DESCARTAVE/.test(o)) return 'cmv_embal';
+      return 'cmv_merc';
+    }
+    if (g === 'FOLHA DE PAGAMENTO') {
+      if (o === '10%' || /^10 ?%/.test(o)) return 'pes_dez';
+      if (/DISTRIBUICAO DE LUCRO|EMPRESTIMO FUNCIONARIO/.test(o)) return 'fora';
+      if (/PRO-?LABORE/.test(o)) return 'pes_prolabore';
+      if (/^DIARIA/.test(o)) return 'pes_diarias';
+      if (/FGTS|INSS|SINDICAL|PENSAO/.test(o)) return 'pes_encargos';
+      if (/SALARIO|ADIANTAMENTO|HORAS EXTRAS|COMISSAO|FERIAS|13|RESCISAO/.test(o)) return 'pes_salarios';
+      return 'pes_beneficios';
+    }
+    if (g === 'ADMINISTRATIVO') return 'adm';
+    if (g === 'CONSUMO') return 'consumo';
+    if (/MANUTENCAO/.test(g)) return 'manut';
+    if (g === 'MKT' || /MARKETING/.test(g)) return 'mkt';
+    if (g === 'VEICULOS' || g === 'VISITA TECNICA') return 'veic';
+    if (/AQUISICAO|INVESTIMENTO/.test(g)) return 'fora';
+    return 'outras';
+  }
+
+  // estrutura: [id, rótulo, tipo]  tipo: grupo (com linhas filhas), linha, total, fora
+  const ESTR = [
+    { id: 'RB', nome: 'Receita bruta de vendas', total: true, filhos: [['rec_pizzaria', 'Pizzaria (pizzas, entradas, sobremesas)'], ['rec_bar', 'Bar (bebidas)'], ['rec_entrega', 'Taxa de entrega'], ['rec_eventos', 'Eventos'], ['rec_servico', 'Taxa de serviço (10%)']] },
+    { id: 'DED', nome: '(-) Deduções', sinal: -1, filhos: [['ded_desc', 'Descontos concedidos'], ['ded_das', 'Simples Nacional (DAS)'], ['ded_cartao', 'Taxas de cartão e maquininha']] },
+    { id: 'RL', nome: '= Receita líquida', calc: ['RB', 'DED'], forte: true },
+    { id: 'CMV', nome: '(-) CMV · custo das mercadorias', sinal: -1, filhos: [['cmv_merc', 'Compra de mercadoria'], ['cmv_bebidas', 'Bebidas'], ['cmv_horti', 'Hortifruti'], ['cmv_embal', 'Caixas de pizza e descartáveis']] },
+    { id: 'LB', nome: '= Lucro bruto', calc: ['RL', 'CMV'], forte: true },
+    { id: 'PES', nome: '(-) Pessoal', sinal: -1, filhos: [['pes_dez', '10% e diárias pagos à equipe'], ['pes_salarios', 'Salários, vales, férias e 13º'], ['pes_diarias', 'Outras diárias'], ['pes_encargos', 'Encargos (INSS, FGTS, sindical)'], ['pes_beneficios', 'Benefícios, uniforme, exames e outros'], ['pes_prolabore', 'Pró-labore dos sócios']] },
+    { id: 'ADM', nome: '(-) Administrativo e ocupação', sinal: -1, filhos: [['adm', 'Aluguel, contabilidade, sistemas, IPTU, taxas…']] },
+    { id: 'CON', nome: '(-) Consumo (água, luz, gás, internet)', sinal: -1, filhos: [['consumo', 'Consumo']] },
+    { id: 'MAN', nome: '(-) Manutenção', sinal: -1, filhos: [['manut', 'Manutenção']] },
+    { id: 'MKT', nome: '(-) Marketing', sinal: -1, filhos: [['mkt', 'Marketing']] },
+    { id: 'VEI', nome: '(-) Veículos e visitas técnicas', sinal: -1, filhos: [['veic', 'Veículos e visitas']] },
+    { id: 'OUT', nome: '(-) Outras despesas', sinal: -1, filhos: [['outras', 'Sem classificação']] },
+    { id: 'RO', nome: '= Resultado operacional', calc: ['LB', 'PES', 'ADM', 'CON', 'MAN', 'MKT', 'VEI', 'OUT'], forte: true },
+    { id: 'FIN', nome: '(+/-) Resultado financeiro', filhos: [['rec_fin', 'Receitas financeiras'], ['fin', '(-) Juros, IOF e tarifas bancárias']], misto: true },
+    { id: 'LL', nome: '= Lucro líquido do mês', calc: ['RO', 'FIN'], forte: true, final: true }
+  ];
+  const SINAL_LINHA = { rec_fin: 1, fin: -1 };
+
+  /* ---------- cálculo ---------- */
+  function vazioMes() { return { v: {}, det: {}, vendas: 0, contas: 0, fora: {} }; }
+  function calcular(ano) {
+    const meses = {};
+    for (let m = 1; m <= 12; m++) meses[ano + '-' + String(m).padStart(2, '0')] = vazioMes();
+    const soma = function (x, l, val, det) { x.v[l] = (x.v[l] || 0) + val; if (det) { const d = x.det[l] = x.det[l] || {}; d[det] = (d[det] || 0) + val; } };
+    (st.vendas || []).forEach(function (r) {
+      const x = meses[String(r.data).slice(0, 7)]; if (!x) return;
+      const l = linhaReceita(r.grupo), bruto = +r.bruto || 0, desc = +r.desconto || 0;
+      x.vendas += bruto;
+      soma(x, l, bruto, String(r.grupo).toUpperCase());
+      if (desc) soma(x, 'ded_desc', desc, String(r.grupo).toUpperCase());
+    });
+    (st.fluxo || []).forEach(function (r) {
+      const x = meses[String(r.data).slice(0, 7)]; if (!x) return;
+      const v = +r.total || 0; if (!v) return;
+      const l = linhaDespesa(r.grupo, r.operacao);
+      if (r.tipo === 'receber' && l !== 'rec_fin') return; // recebimentos de vendas: a receita vem do Sischef
+      x.contas++;
+      const det = String(r.grupo).toUpperCase() + ' · ' + String(r.operacao).toUpperCase();
+      if (l === 'fora') { x.fora[det] = (x.fora[det] || 0) + (-v); return; }
+      if (!l) return;
+      soma(x, l, l === 'rec_fin' ? v : -v, det); // despesas guardadas positivas
+    });
+    Object.keys(meses).forEach(function (mes) {
+      const x = meses[mes], t = x.t = {};
+      ESTR.forEach(function (e) {
+        if (e.filhos) t[e.id] = e.filhos.reduce(function (s, f) { const val = x.v[f[0]] || 0; return s + (e.misto ? val * (SINAL_LINHA[f[0]] || 1) : val); }, 0);
+        else if (e.calc) {
+          t[e.id] = e.calc.reduce(function (s, id, i) {
+            const ee = ESTR.find(function (z) { return z.id === id; });
+            const val = t[id] || 0;
+            return i === 0 ? val : s + (ee.sinal === -1 ? -val : val);
+          }, 0);
+        }
+      });
+      x.tem = x.vendas > 0 || x.contas > 0;
+    });
+    return meses;
+  }
+
+  /* ---------- tela ---------- */
+  function montar() {
+    $('#tela-dre').innerHTML =
+      '<div class="cab-tela"><div><h1>DRE gerencial</h1><p>Resultado do mês: receita das vendas do Sischef e despesas do relatório de contas a pagar, pela data de vencimento.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="dre-excel">Baixar Excel</button><button type="button" class="btn" id="dre-pdf">Baixar PDF</button></div></div>' +
+      '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="dre-ant" aria-label="Ano anterior">‹</button><div class="nav-semana-t"><span>Ano</span><b id="dre-ano"></b></div><button type="button" class="btn-icone" id="dre-prox" aria-label="Próximo ano">›</button></div>' +
+      '<label class="switch"><input type="checkbox" id="dre-pct" checked> Mostrar % sobre a receita</label>' +
+      '<div class="acoes-linha"><button type="button" class="link" id="dre-abrir">Abrir todos os detalhes</button></div></div>' +
+      '<div id="dre-msg" class="msg" hidden></div>' +
+      '<div class="kpis kpis-5" id="dre-kpis"></div>' +
+      '<div class="rolagem"><table class="matriz dre" id="dre-tab"></table></div>' +
+      '<section class="painel dre-extra" id="dre-fora"></section>' +
+      '<div class="painel nota"><h3>Como ler</h3><ul>' +
+      '<li><b>Receita</b>: vendas do relatório de pedidos do Sischef (antes dos descontos), incluindo a taxa de serviço. O que é pago na tela Pagamento 10% (rateio do 10% e diárias) entra em Pessoal. Importe os pedidos de todo o mês em <a href="#importar">Importar planilhas</a>.</li>' +
+      '<li><b>Despesas</b>: relatório de contas a pagar e receber, pela data de vencimento, pagas ou não, inclusive o que saiu pelo CAIXA DINHEIRO.</li>' +
+      '<li><b>CMV</b>: tudo o que foi comprado de mercadoria no mês. Mês com compra grande para estoque fica com CMV mais alto.</li>' +
+      '<li><b>Fora da DRE</b>: compras de equipamentos e móveis, parcelas do PRONAMPE, distribuição de lucros, empréstimos a funcionários, acertos de saldo e de estoque. Não são despesa do mês, mas saem do caixa.</li>' +
+      '<li>Clique em uma linha para ver de onde vem cada valor. É uma visão de gestão; a DRE oficial continua com a contabilidade.</li></ul></div>';
+    $('#dre-ant').addEventListener('click', function () { ir(st.ano - 1); });
+    $('#dre-prox').addEventListener('click', function () { ir(st.ano + 1); });
+    $('#dre-pct').addEventListener('change', function () { st.verPct = this.checked; desenhar(); });
+    $('#dre-abrir').addEventListener('click', function () {
+      const abrir = !ESTR.every(function (e) { return !e.filhos || st.abertos[e.id]; });
+      ESTR.forEach(function (e) { if (e.filhos) st.abertos[e.id] = abrir; });
+      desenhar();
+    });
+    $('#dre-tab').addEventListener('click', function (e) {
+      const th = e.target.closest('[data-abrir]'); if (th) { st.abertos[th.dataset.abrir] = !st.abertos[th.dataset.abrir]; desenhar(); return; }
+      const c = e.target.closest('[data-mes]'); if (c) { st.mes = c.dataset.mes; desenhar(); }
+    });
+    $('#dre-excel').addEventListener('click', excel);
+    $('#dre-pdf').addEventListener('click', pdf);
+  }
+
+  async function ir(ano) {
+    st.ano = ano; $('#dre-ano').textContent = ano;
+    $('#dre-tab').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
+    try {
+      const r = await Promise.all([
+        st.vendasTodas ? Promise.resolve(null) : FT.store.indicadores.carregar(),
+        FT.store.fluxo.carregar(ano + '-01-01', ano + '-12-31')
+      ]);
+      if (r[0]) st.vendasTodas = r[0].vendasDia || [];
+      st.vendas = st.vendasTodas.filter(function (x) { return String(x.data).slice(0, 4) === String(ano); });
+      st.fluxo = r[1].resumo || [];
+      st.dados = calcular(ano);
+      const com = Object.keys(st.dados).filter(function (m) { return st.dados[m].tem; });
+      const hoje = FT.hoje().slice(0, 7);
+      if (!st.mes || st.mes.slice(0, 4) !== String(ano) || !st.dados[st.mes].tem) {
+        const comVendas = com.filter(function (m) { return st.dados[m].vendas > 0 && m <= hoje; });
+        st.mes = comVendas.length ? comVendas[comVendas.length - 1] : null;
+      }
+      desenhar();
+    } catch (e) { FT.aviso('Não consegui montar a DRE: ' + FT.textoErro(e), true); }
+  }
+
+  function mesesVisiveis() { return Object.keys(st.dados).filter(function (m) { return st.dados[m].vendas > 0; }); }
+  function rotMes(m) { return MESES[+m.slice(5) - 1] + '/' + m.slice(2, 4); }
+  function pctDe(v, rl) { return rl ? (v / rl * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : ''; }
+  // valor exibido com sinal: despesas aparecem negativas
+  function valExib(e, v) { return e.sinal === -1 ? -v : v; }
+
+  function desenhar() {
+    const d = st.dados, ms = mesesVisiveis();
+    const msg = $('#dre-msg');
+    const hoje = FT.hoje().slice(0, 7);
+    const semVendas = Object.keys(d).filter(function (m) { return !d[m].vendas && d[m].contas && m <= hoje; });
+    const semContas = ms.filter(function (m) { return !d[m].contas; });
+    const avisos = [];
+    if (semVendas.length) avisos.push('Sem vendas do Sischef importadas em <b>' + semVendas.map(rotMes).join(', ') + '</b>: esses meses não aparecem. Importe o relatório de pedidos em <a href="#importar">Importar planilhas</a>.');
+    if (semContas.length) avisos.push('Sem contas a pagar importadas em <b>' + semContas.map(rotMes).join(', ') + '</b>: as despesas desses meses estão faltando.');
+    msg.hidden = !avisos.length; msg.innerHTML = avisos.join('<br>');
+    if (!ms.length) { $('#dre-tab').innerHTML = ''; $('#dre-kpis').innerHTML = ''; $('#dre-fora').innerHTML = ''; return; }
+    if (!d[st.mes] || !d[st.mes].vendas) st.mes = ms[ms.length - 1];
+
+    // totais do ano
+    const ano = vazioMes(); ano.t = {};
+    ms.forEach(function (m) {
+      Object.keys(d[m].v).forEach(function (l) { ano.v[l] = (ano.v[l] || 0) + d[m].v[l]; });
+      Object.keys(d[m].t).forEach(function (l) { ano.t[l] = (ano.t[l] || 0) + d[m].t[l]; });
+      Object.keys(d[m].det).forEach(function (l) { const a = ano.det[l] = ano.det[l] || {}; Object.keys(d[m].det[l]).forEach(function (z) { a[z] = (a[z] || 0) + d[m].det[l][z]; }); });
+      Object.keys(d[m].fora).forEach(function (z) { ano.fora[z] = (ano.fora[z] || 0) + d[m].fora[z]; });
+    });
+    st.anoTot = ano;
+
+    // KPIs do mês selecionado
+    const x = d[st.mes] || d[ms[ms.length - 1]], t = x.t, rl = t.RL;
+    const kp = [
+      ['Receita líquida', FT.moeda(t.RL), 'bruta ' + FT.moeda(t.RB)],
+      ['CMV', FT.moeda(t.CMV), pctDe(t.CMV, rl) + ' da receita líquida'],
+      ['Pessoal', FT.moeda(t.PES), pctDe(t.PES, rl) + ' da receita líquida'],
+      ['Despesas fixas', FT.moeda(t.ADM + t.CON + t.MAN + t.MKT + t.VEI + t.OUT), pctDe(t.ADM + t.CON + t.MAN + t.MKT + t.VEI + t.OUT, rl) + ' da receita líquida'],
+      ['Lucro líquido', FT.moeda(t.LL), 'margem ' + (pctDe(t.LL, rl) || '—')]
+    ];
+    $('#dre-kpis').innerHTML = kp.map(function (q, i) {
+      return '<article class="kpi' + (i === 4 ? (t.LL >= 0 ? ' kpi-destaque' : ' kpi-alerta') : '') + '"><h3>' + esc(q[0]) + ' · ' + esc(rotMes(st.mes)) + '</h3><p class="kpi-v">' + esc(q[1]) + '</p><p class="kpi-s">' + esc(q[2]) + '</p></article>';
+    }).join('');
+
+    // tabela
+    const colsMes = ms.concat(['ANO']);
+    const cel = function (m) { return m === 'ANO' ? ano : d[m]; };
+    let h = '<thead><tr><th class="col-rot">Clique no mês para ver os indicadores dele</th>' + colsMes.map(function (m) {
+      return m === 'ANO' ? '<th class="dre-ano"><span class="th-t">Total ' + st.ano + '</span><span class="th-s">' + ms.length + ' mês(es)</span></th>'
+        : '<th class="' + (m === st.mes ? 'col-mes' : '') + '" data-mes="' + m + '"><span class="th-t">' + rotMes(m) + '</span>' + (!d[m].contas ? '<span class="th-s chip-parcial">incompleto</span>' : '<span class="th-s">&nbsp;</span>') + '</th>';
+    }).join('') + '</tr></thead><tbody>';
+    ESTR.forEach(function (e) {
+      const cls = (e.forte ? 'linha-forte' : '') + (e.final ? ' dre-final' : '') + (e.filhos ? ' dre-grupo' : '');
+      const aberto = st.abertos[e.id];
+      const temFilhos = e.filhos && (e.filhos.length > 1 || Object.keys(ano.det[e.filhos[0][0]] || {}).length > 0);
+      h += '<tr class="' + cls + '"><th class="col-rot"' + (temFilhos ? ' data-abrir="' + e.id + '"' : '') + '>' + (temFilhos ? '<span class="dre-seta">' + (aberto ? '▾' : '▸') + '</span>' : '') + esc(e.nome) + '</th>' +
+        colsMes.map(function (m) {
+          const c = cel(m), v = valExib(e, c.t[e.id] || 0);
+          return '<td class="num' + (m === st.mes ? ' col-mes' : '') + (v < 0 ? ' negativo' : '') + '">' + (c.t[e.id] ? FT.moeda(v) : '<span class="vazio">—</span>') + (st.verPct && e.id !== 'RB' && c.t.RL && c.t[e.id] ? '<small>' + pctDe(v, c.t.RL) + '</small>' : '') + '</td>';
+        }).join('') + '</tr>';
+      if (e.filhos && aberto) {
+        e.filhos.forEach(function (f) {
+          const sinal = e.misto ? (SINAL_LINHA[f[0]] || 1) : (e.sinal || 1);
+          if (!ms.some(function (m) { return d[m].v[f[0]]; }) && e.filhos.length > 1) return;
+          if (e.filhos.length > 1) {
+            h += '<tr class="dre-sub"><th class="col-rot">' + esc(f[1]) + '</th>' + colsMes.map(function (m) {
+              const v = (cel(m).v[f[0]] || 0) * sinal;
+              return '<td class="num' + (m === st.mes ? ' col-mes' : '') + '">' + (v ? FT.moeda(v) : '<span class="vazio">—</span>') + (st.verPct && v && cel(m).t.RL ? '<small>' + pctDe(v, cel(m).t.RL) + '</small>' : '') + '</td>';
+            }).join('') + '</tr>';
+          }
+          // detalhe (operações do financeiro / grupos do Sischef)
+          Object.keys(ano.det[f[0]] || {}).sort(function (a, b) { return Math.abs(ano.det[f[0]][b]) - Math.abs(ano.det[f[0]][a]); }).forEach(function (z) {
+            h += '<tr class="dre-det"><th class="col-rot">' + esc(z) + '</th>' + colsMes.map(function (m) {
+              const v = ((cel(m).det[f[0]] || {})[z] || 0) * sinal;
+              return '<td class="num' + (m === st.mes ? ' col-mes' : '') + '">' + (v ? FT.moeda(v) : '') + '</td>';
+            }).join('') + '</tr>';
+          });
+        });
+      }
+    });
+    $('#dre-tab').innerHTML = h + '</tbody>';
+
+    // fora da DRE
+    const fora = Object.keys(ano.fora).sort(function (a, b) { return ano.fora[b] - ano.fora[a]; });
+    $('#dre-fora').innerHTML = '<h3>Saídas de caixa fora da DRE · ' + esc(rotMes(st.mes)) + '</h3><p class="sub">Investimentos, empréstimos, retiradas e acertos. Não são despesa do mês, mas tiram dinheiro do caixa.</p>' +
+      (fora.length ? '<table class="lista"><tbody>' + fora.filter(function (z) { return x.fora[z]; }).map(function (z) { return '<tr><td>' + esc(z) + '</td><td class="num">' + FT.moeda(x.fora[z]) + '</td></tr>'; }).join('') +
+        '</tbody><tfoot><tr><th>Total do mês</th><th class="num">' + FT.moeda(Object.keys(x.fora).reduce(function (s, z) { return s + x.fora[z]; }, 0)) + '</th></tr></tfoot></table>' : '<p class="vazio-bloco">Nada neste ano.</p>');
+  }
+
+  /* ---------- exportar ---------- */
+  function linhasExport() {
+    const d = st.dados, ms = mesesVisiveis(), ano = st.anoTot, rows = [];
+    const cel = function (m) { return m === 'ANO' ? ano : d[m]; };
+    const cols = ms.concat(['ANO']);
+    ESTR.forEach(function (e) {
+      rows.push({ forte: !!(e.forte || e.filhos), nome: e.nome, vals: cols.map(function (m) { return valExib(e, cel(m).t[e.id] || 0); }), rl: cols.map(function (m) { return cel(m).t.RL || 0; }) });
+      if (e.filhos && e.filhos.length > 1) e.filhos.forEach(function (f) {
+        const sinal = e.misto ? (SINAL_LINHA[f[0]] || 1) : (e.sinal || 1);
+        if (!ms.some(function (m) { return d[m].v[f[0]]; })) return;
+        rows.push({ nome: '   ' + f[1], vals: cols.map(function (m) { return (cel(m).v[f[0]] || 0) * sinal; }), rl: cols.map(function (m) { return cel(m).t.RL || 0; }) });
+      });
+    });
+    return { cols: cols, rows: rows, ms: ms };
+  }
+  function excel() {
+    if (typeof XLSX === 'undefined' || !st.dados) return;
+    const L = linhasExport(), r2 = FT.r2;
+    const cab = ['DRE GERENCIAL ' + st.ano].concat(L.cols.map(function (m) { return m === 'ANO' ? 'TOTAL ' + st.ano : rotMes(m).toUpperCase(); }));
+    const aoa = [cab].concat(L.rows.map(function (r) { return [r.nome.toUpperCase()].concat(r.vals.map(r2)); }));
+    aoa.push([]); aoa.push(['% SOBRE A RECEITA LÍQUIDA']);
+    L.rows.forEach(function (r) { aoa.push([r.nome.toUpperCase()].concat(r.vals.map(function (v, i) { return r.rl[i] ? Math.round(v / r.rl[i] * 1000) / 10 : null; }))); });
+    const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 44 }].concat(L.cols.map(function () { return { wch: 14 }; }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'DRE ' + st.ano);
+    const fora = [['SAÍDAS FORA DA DRE'].concat(L.ms.map(function (m) { return rotMes(m).toUpperCase(); }))];
+    Object.keys(st.anoTot.fora).sort().forEach(function (z) { fora.push([z].concat(L.ms.map(function (m) { return r2(st.dados[m].fora[z] || 0); }))); });
+    const ws2 = XLSX.utils.aoa_to_sheet(fora); ws2['!cols'] = [{ wch: 52 }].concat(L.ms.map(function () { return { wch: 14 }; }));
+    XLSX.utils.book_append_sheet(wb, ws2, 'FORA DA DRE');
+    XLSX.writeFile(wb, 'dre_' + st.ano + '.xlsx');
+  }
+  async function pdf() {
+    if (!st.dados) return;
+    const b = $('#dre-pdf'); b.disabled = true;
+    try {
+      const L = linhasExport(), ult = L.cols.slice(-7); // até 6 meses + total, para caber na folha
+      const n = ult.length, w = 0.62 / n;
+      const colunas = [{ t: 'DRE', w: 0.38 }].concat(ult.map(function (m) { return { t: m === 'ANO' ? 'TOTAL ' + st.ano : rotMes(m).toUpperCase(), w: w, a: 'r' }; }));
+      const idx = ult.map(function (m) { return L.cols.indexOf(m); });
+      const linhas = [], dest = [];
+      L.rows.forEach(function (r) {
+        if (r.forte) dest.push(linhas.length);
+        linhas.push([r.nome.trim()].concat(idx.map(function (i) { const v = r.vals[i]; return v ? FT.moeda(v).replace('−', '-') + (r.rl[i] && !/^RECEITA BRUTA/i.test(r.nome) ? '  ' + pctDe(v, r.rl[i]) : '') : '-'; })));
+      });
+      const bytes = await FT.gerarPDF({ titulo: 'DRE GERENCIAL ' + st.ano, subtitulo: 'Forneria Toscana · CNPJ 09.385.499/0001-77', paisagem: true,
+        blocos: [{ colunas: colunas, linhas: linhas, destaques: dest }],
+        rodape: ['RECEITA: VENDAS DO SISCHEF (COM A TAXA DE SERVIÇO). DESPESAS: CONTAS A PAGAR PELA DATA DE VENCIMENTO. CMV PELAS COMPRAS DO MÊS.', 'VISÃO GERENCIAL. OS PERCENTUAIS SÃO SOBRE A RECEITA LÍQUIDA.'] });
+      FT.baixarArquivo(bytes, 'dre_' + st.ano + '.pdf');
+    } catch (e) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(e), true); }
+    finally { b.disabled = false; }
+  }
+
+  let montado = false;
+  FT.telas.dre = {
+    abrir: async function () {
+      if (!montado) { montado = true; montar(); }
+      st.vendasTodas = null; // recarrega as vendas a cada abertura
+      await ir(st.ano || +FT.hoje().slice(0, 4));
+    }
+  };
+})();
+
 /* Forneria Toscana — login, menu lateral e navegação entre telas */
 (function () {
   'use strict';
   const FT = window.FT;
   const $ = FT.$;
-  const TELAS = ['home', 'reservas', 'fila', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'fichas', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
+  const TELAS = ['home', 'reservas', 'fila', 'indicadores', 'produtos', 'descontos', 'pagamento', 'folha', 'fechamento', 'escala', 'fluxo', 'dre', 'analise', 'est-contagem', 'est-produtos', 'est-notas', 'est-acerto', 'fichas', 'compras', 'cotacao', 'fornecedores', 'ponto', 'pastas', 'funcionarios', 'usuarios', 'importar'];
   let atual = null;
 
   async function abrirTela() {
