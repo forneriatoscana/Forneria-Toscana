@@ -903,6 +903,13 @@ table.lista.vp-dias .num { min-width: 64px; }
 .matriz.dre td { min-width: 7.5em; }
 .matriz.dre th .chip-parcial { display: inline-block; margin-top: 2px; }
 .dre-extra .lista td, .dre-extra .lista th { white-space: normal; }
+.matriz.dre tr.dre-sec th, .matriz.dre tr.dre-sec td { font-weight: 700; color: var(--ink); border-top: 1px solid var(--line); }
+.matriz.dre .dre-av { text-align: right; font-size: 12.5px; color: var(--ink-3); min-width: 5.5em; background: var(--surface-2); }
+.matriz.dre .dre-ref { font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.dre-man-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--aviso-ink); background: var(--aviso-bg); border-radius: 4px; padding: 0 5px; vertical-align: 1px; }
+#dlg-dre-man { width: min(860px, calc(100vw - 24px)); }
+.dre-man-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; max-height: 52vh; overflow: auto; padding-right: 4px; }
+@media (max-width: 640px) { .dre-man-grade { grid-template-columns: 1fr; } }
 
 /* ---------- fila de espera ---------- */
 .fl-add { display: grid; grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
@@ -10425,158 +10432,272 @@ window.FT_CONFIG = {
   };
 })();
 
-/* Forneria Toscana — Financeiro › DRE gerencial
- * Receita: vendas do Sischef (relatório de pedidos), sem a taxa de serviço (10%).
- * Despesas: relatório de contas a pagar e receber (todas as contas, inclusive CAIXA DINHEIRO), pela data de vencimento.
- * CMV pelas compras do mês. A taxa de serviço entra na receita e o pagamento do 10% (com as diárias) entra em Pessoal. */
+/* Forneria Toscana — Financeiro › DRE (modelo "DRE Simplificado" · aba Dados financeiros)
+ * Cada linha da aba "Dados financeiros" é preenchida com os dados do sistema:
+ *  - Faturamento: vendas do Sischef (relatório de pedidos), já com descontos, taxa de serviço e entrega.
+ *  - Despesas: relatório de contas a pagar e receber, pela data de vencimento (inclui CAIXA DINHEIRO).
+ *  - 10%, entregas e diárias: tela Pagamento 10% (se a semana foi lançada lá); senão, a conta "10%" do financeiro.
+ *  - O que o sistema não tem (cortesias, nº de funcionários, condomínio…) pode ser lançado à mão por mês.
+ * A DRE segue as fórmulas da aba "DRE Simplificada". */
 (function () {
   'use strict';
   const FT = window.FT, $ = FT.$, esc = FT.esc;
-  const st = { ano: null, mes: null, vendas: null, fluxo: null, abertos: {}, verPct: true };
+  const st = { ano: null, mes: null, visao: 'mes', zeradas: false, abertos: {}, manuais: {} };
   const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const k = function (s) { return FT.semAcento(s); };
 
-  /* ---------- plano da DRE ---------- */
-  // receita por grupo do Sischef
-  function linhaReceita(grupo) {
-    const g = k(grupo);
-    if (/TAXA DE SERVICO/.test(g)) return 'rec_servico';
-    if (/TAXA DE ENTREGA/.test(g)) return 'rec_entrega';
-    if (/EVENTO/.test(g)) return 'rec_eventos';
-    if (/BEBIDA|CERVEJA|VINHO|DRINK|CAIPIRINHA|DOSE|CAFE/.test(g)) return 'rec_bar';
-    return 'rec_pizzaria';
-  }
-  // despesas por grupo + operação do financeiro
-  const TAXAS_CARTAO = /TAXAS CARTAO|CUSTO POR TRANSACAO|ALUGUEL MAQUINA|ANUIDADE CARTAO|SEGURO CARTAO/;
-  const FIN = /JUROS|IOF|CESTA MENSAL|TARIFA/;
-  const FORA_BANC = /ACERTO SALDO|ADIANTAMENTO DE SAIDA|PRONAMPE|BNDES|CAPITAL SOCIAL|FECHAMENTO CAIXA|SANGRIA|DESCONTOS CONCEDIDOS/;
-  function linhaDespesa(grupo, op) {
+  /* ---------- linhas da aba "Dados financeiros" (número = linha da planilha) ---------- */
+  const L = {
+    6: 'Faturamento Bruto: total salão + delivery',
+    7: 'Número de funcionários totais',
+    10: 'Taxa de serviço (gorjeta, 10%) repassada',
+    11: 'Consumo de sócios / Cortesias sem ser MKT / Permuta - Preço de Custo',
+    13: 'Custo da Mercadoria Vendida (CMV)',
+    14: 'Entregadores: Total de valor de entrega pago / Terceirizada',
+    15: 'Música ao vivo: pago ao músico',
+    16: 'Música ao vivo: alimentação bancada (preço de custo)',
+    17: 'Música ao vivo: valor arrecadado com couvert artístico',
+    18: 'Franquia: Royalties pagos',
+    19: 'Franquia: Taxa de propaganda',
+    20: 'Taxa paga para maquinetas: Cartão de Crédito e Débito',
+    21: 'Taxas de aplicativos: Marketplaces (ifood, aiqfome, etc)',
+    22: 'Marketing ifood (promoções/anúncios)',
+    23: 'Taxa paga para maquinetas: Tickets, vouchers refeição/alimentação',
+    24: 'Impostos com base nas vendas (DAS, DARF, IRPJ, CSLL, COFINS, PIS)',
+    26: 'Folha de pagamento: Salário líquido pago',
+    27: 'Freelancers/Diaristas do mês/Diária de Entregadores',
+    28: 'Imposto relacionado a funcionário: FGTS',
+    29: 'Imposto relacionado a funcionário: INSS/GPS',
+    30: 'Gratificações ou bonificações extras, sem ser gorjeta',
+    31: 'Refeições dos funcionários bancadas (preço de custo)',
+    32: 'Outros custos: Cursos/EPI/Sindicato/Seguro/Salário Família',
+    33: 'Rescisões/Férias',
+    34: 'Pró-labore (Caso a operação dependa 100% do sócio na operação)',
+    35: 'Pró-labore (Caso a operação NÃO dependa do sócio)',
+    36: 'Provisionamento 13o',
+    38: 'Aluguel',
+    39: 'Condomínio',
+    40: 'Imposto relacionado ao imóvel: IPTU',
+    42: 'Agência de marketing',
+    43: 'Tráfego Pago/Digital influencer /Rádio /Outdoor/Outros gastos de MKT',
+    45: 'Contabilidade',
+    46: 'Terceirizados: Advogacia / TI / Nutricionista / Responsável técnico',
+    47: 'Conta de Luz/Energia',
+    48: 'Conta de Água',
+    49: 'Internet/Celular',
+    50: 'Sistema gerencial/Controle de Ponto/Sistema de tablets/Outros sistemas/Responsável Técnico',
+    51: 'Gás/Lenha/Carvão',
+    52: 'Descartáveis (Bobina, papel filme, sacolas, etc)',
+    53: 'Segurança patrimonial',
+    54: 'Dedetização',
+    55: 'Combustível / Fretes / Despesas com veículos',
+    56: 'Material de Limpeza',
+    57: 'Material de Escritório / Informática / Papelaria / TI',
+    58: 'Aluguel de Equipamentos',
+    59: 'Outros: Seguro imóvel / Aplicativos / Lavanderia / Coleta de Lixo / Outro',
+    60: 'Manutenção Predial / Equipamentos / Utensílios / Corretiva / Preventiva',
+    61: 'Despesas bancárias / Tarifas de banco / Anuidades',
+    62: 'Rateio de custos',
+    64: 'Empréstimo da empresa: Bancário 1 / Outros empréstimos',
+    65: 'Empréstimo da empresa: Parcelamentos de impostos / Dívidas',
+    66: 'Investimento ou Repasses para Outras empresas',
+    67: 'Investimentos: Equipamentos / Reformas / Utensílios / Ampliações',
+    68: 'Retiradas de sócios / Distribuição de Lucro',
+    69: 'Empréstimo pessoal: dos sócios'
+  };
+  const ROWS = Object.keys(L).map(Number).sort(function (a, b) { return a - b; });
+  // linhas que o sistema não tem: lançamento manual por mês (somado ao que vier do sistema)
+  const MANUAIS = [7, 11, 15, 16, 17, 18, 19, 21, 22, 23, 31, 36, 39, 58, 62, 69];
+
+  /* ---------- de onde vem cada conta do financeiro ---------- */
+  // devolve o número da linha, 'dez' (pagamento do 10%) ou null (movimentação que não entra: acertos, sangria…)
+  function linhaConta(grupo, op) {
     const g = k(grupo), o = k(op);
-    if (/^RECEITA/.test(g)) return /FINANCEIRA/.test(g) ? 'rec_fin' : null;
-    if (g === 'IMPOSTOS') return /DAS|SIMPLES/.test(o) ? 'ded_das' : 'adm';
+    if (/^RECEITA/.test(g)) return null;
+    if (g === 'IMPOSTOS') return /DAS|SIMPLES/.test(o) ? 24 : /IPTU/.test(o) ? 40 : 59;
     if (g === 'BANCARIO') {
-      if (TAXAS_CARTAO.test(o)) return 'ded_cartao';
-      if (FIN.test(o)) return 'fin';
-      if (/FALTA DE CAIXA/.test(o)) return 'adm';
-      if (FORA_BANC.test(o)) return 'fora';
-      return 'fin';
+      if (/TAXAS CARTAO|CUSTO POR TRANSACAO|ALUGUEL MAQUINA/.test(o)) return 20;
+      if (/PRONAMPE|BNDES/.test(o)) return 64;
+      if (/CAPITAL SOCIAL/.test(o)) return 66;
+      if (/FALTA DE CAIXA/.test(o)) return 59;
+      if (/ACERTO SALDO|ADIANTAMENTO DE SAIDA|FECHAMENTO CAIXA|SANGRIA|DESCONTOS CONCEDIDOS/.test(o)) return null;
+      return 61; // tarifas, cesta, anuidade, seguro cartão, IOF, juros
     }
     if (g === 'CUSTOS DIRETOS') {
-      if (/ACERTO ESTOQUE|SOBRA|PROJECAO/.test(o)) return 'fora';
-      if (/HORTIFRUTI/.test(o)) return 'cmv_horti';
-      if (/BEBIDA/.test(o)) return 'cmv_bebidas';
-      if (/CAIXA DE PIZZA|DESCARTAVE/.test(o)) return 'cmv_embal';
-      return 'cmv_merc';
+      if (/ACERTO ESTOQUE|SOBRA|PROJECAO/.test(o)) return null;
+      if (/CAIXA DE PIZZA|DESCARTAVE/.test(o)) return 52;
+      return 13;
     }
     if (g === 'FOLHA DE PAGAMENTO') {
-      if (o === '10%' || /^10 ?%/.test(o)) return 'pes_dez';
-      if (/DISTRIBUICAO DE LUCRO|EMPRESTIMO FUNCIONARIO/.test(o)) return 'fora';
-      if (/PRO-?LABORE/.test(o)) return 'pes_prolabore';
-      if (/^DIARIA/.test(o)) return 'pes_diarias';
-      if (/FGTS|INSS|SINDICAL|PENSAO/.test(o)) return 'pes_encargos';
-      if (/SALARIO|ADIANTAMENTO|HORAS EXTRAS|COMISSAO|FERIAS|13|RESCISAO/.test(o)) return 'pes_salarios';
-      return 'pes_beneficios';
+      if (o === '10%' || /^10 ?%/.test(o)) return 'dez';
+      if (/EMPRESTIMO FUNCIONARIO/.test(o)) return null;
+      if (/DISTRIBUICAO DE LUCRO/.test(o)) return 68;
+      if (/PRO-?LABORE/.test(o)) return 34;
+      if (/^DIARIA/.test(o)) return 27;
+      if (/PARCELAMENTO/.test(o)) return 65;
+      if (/FGTS/.test(o)) return 28;
+      if (/INSS/.test(o)) return 29;
+      if (/COMISSAO/.test(o)) return 30;
+      if (/JANTAR/.test(o)) return 31;
+      if (/RESCISAO|FERIAS/.test(o)) return 33;
+      if (/13/.test(o)) return 36;
+      if (/SALARIO|ADIANTAMENTO|HORAS EXTRAS|PENSAO/.test(o)) return 26;
+      return 32; // cursos, sindicato, seguro de vida, exame, uniforme, cestas, vale-transporte, confraternização
     }
-    if (g === 'ADMINISTRATIVO') return 'adm';
-    if (g === 'CONSUMO') return 'consumo';
-    if (/MANUTENCAO/.test(g)) return 'manut';
-    if (g === 'MKT' || /MARKETING/.test(g)) return 'mkt';
-    if (g === 'VEICULOS' || g === 'VISITA TECNICA') return 'veic';
-    if (/AQUISICAO|INVESTIMENTO/.test(g)) return 'fora';
-    return 'outras';
+    if (g === 'ADMINISTRATIVO') {
+      if (/^ALUGUEL/.test(o)) return 38;
+      if (/CONTABILIDADE/.test(o)) return 45;
+      if (/ADVOCATICIO|CONSULTORIA/.test(o)) return 46;
+      if (/SISTEMA|CERTIFICADO/.test(o)) return 50;
+      if (/MONITORAMENTO/.test(o)) return 53;
+      if (/DEDETIZACAO/.test(o)) return 54;
+      if (/FRETES/.test(o)) return 55;
+      if (/LIMPEZA|HIGIENE/.test(o)) return 56;
+      if (/ESCRITORIO/.test(o)) return 57;
+      return 59; // cartório, seguro predial…
+    }
+    if (g === 'CONSUMO') return /ENERGIA/.test(o) ? 47 : /AGUA/.test(o) ? 48 : /GAS/.test(o) ? 51 : 49;
+    if (/MANUTENCAO/.test(g)) return 60;
+    if (g === 'MKT' || /MARKETING/.test(g)) return /AGENCIA/.test(o) ? 42 : 43;
+    if (g === 'VEICULOS') return /CONSORCIO/.test(o) ? 67 : 55;
+    if (g === 'VISITA TECNICA') return 55;
+    if (/AQUISICAO|INVESTIMENTO/.test(g)) return 67;
+    return 59;
   }
 
-  // estrutura: [id, rótulo, tipo]  tipo: grupo (com linhas filhas), linha, total, fora
-  const ESTR = [
-    { id: 'RB', nome: 'Receita bruta de vendas', total: true, filhos: [['rec_pizzaria', 'Pizzaria (pizzas, entradas, sobremesas)'], ['rec_bar', 'Bar (bebidas)'], ['rec_entrega', 'Taxa de entrega'], ['rec_eventos', 'Eventos'], ['rec_servico', 'Taxa de serviço (10%)']] },
-    { id: 'DED', nome: '(-) Deduções', sinal: -1, filhos: [['ded_desc', 'Descontos concedidos'], ['ded_das', 'Simples Nacional (DAS)'], ['ded_cartao', 'Taxas de cartão e maquininha']] },
-    { id: 'RL', nome: '= Receita líquida', calc: ['RB', 'DED'], forte: true },
-    { id: 'CMV', nome: '(-) CMV · custo das mercadorias', sinal: -1, filhos: [['cmv_merc', 'Compra de mercadoria'], ['cmv_bebidas', 'Bebidas'], ['cmv_horti', 'Hortifruti'], ['cmv_embal', 'Caixas de pizza e descartáveis']] },
-    { id: 'LB', nome: '= Lucro bruto', calc: ['RL', 'CMV'], forte: true },
-    { id: 'PES', nome: '(-) Pessoal', sinal: -1, filhos: [['pes_dez', '10% e diárias pagos à equipe'], ['pes_salarios', 'Salários, vales, férias e 13º'], ['pes_diarias', 'Outras diárias'], ['pes_encargos', 'Encargos (INSS, FGTS, sindical)'], ['pes_beneficios', 'Benefícios, uniforme, exames e outros'], ['pes_prolabore', 'Pró-labore dos sócios']] },
-    { id: 'ADM', nome: '(-) Administrativo e ocupação', sinal: -1, filhos: [['adm', 'Aluguel, contabilidade, sistemas, IPTU, taxas…']] },
-    { id: 'CON', nome: '(-) Consumo (água, luz, gás, internet)', sinal: -1, filhos: [['consumo', 'Consumo']] },
-    { id: 'MAN', nome: '(-) Manutenção', sinal: -1, filhos: [['manut', 'Manutenção']] },
-    { id: 'MKT', nome: '(-) Marketing', sinal: -1, filhos: [['mkt', 'Marketing']] },
-    { id: 'VEI', nome: '(-) Veículos e visitas técnicas', sinal: -1, filhos: [['veic', 'Veículos e visitas']] },
-    { id: 'OUT', nome: '(-) Outras despesas', sinal: -1, filhos: [['outras', 'Sem classificação']] },
-    { id: 'RO', nome: '= Resultado operacional', calc: ['LB', 'PES', 'ADM', 'CON', 'MAN', 'MKT', 'VEI', 'OUT'], forte: true },
-    { id: 'FIN', nome: '(+/-) Resultado financeiro', filhos: [['rec_fin', 'Receitas financeiras'], ['fin', '(-) Juros, IOF e tarifas bancárias']], misto: true },
-    { id: 'LL', nome: '= Lucro líquido do mês', calc: ['RO', 'FIN'], forte: true, final: true }
-  ];
-  const SINAL_LINHA = { rec_fin: 1, fin: -1 };
-
-  /* ---------- cálculo ---------- */
-  function vazioMes() { return { v: {}, det: {}, vendas: 0, contas: 0, fora: {} }; }
-  function calcular(ano) {
+  /* ---------- dados financeiros por mês ---------- */
+  function calcularDados(ano) {
     const meses = {};
-    for (let m = 1; m <= 12; m++) meses[ano + '-' + String(m).padStart(2, '0')] = vazioMes();
-    const soma = function (x, l, val, det) { x.v[l] = (x.v[l] || 0) + val; if (det) { const d = x.det[l] = x.det[l] || {}; d[det] = (d[det] || 0) + val; } };
-    (st.vendas || []).forEach(function (r) {
+    for (let m = 1; m <= 12; m++) meses[ano + '-' + String(m).padStart(2, '0')] = { v: {}, det: {}, vendas: 0, contas: 0, pg10: false, dezFin: 0 };
+    const soma = function (x, r, val, det) { x.v[r] = (x.v[r] || 0) + val; const d = x.det[r] = x.det[r] || {}; d[det] = (d[det] || 0) + val; };
+    st.vendas.forEach(function (r) {
       const x = meses[String(r.data).slice(0, 7)]; if (!x) return;
-      const l = linhaReceita(r.grupo), bruto = +r.bruto || 0, desc = +r.desconto || 0;
-      x.vendas += bruto;
-      soma(x, l, bruto, String(r.grupo).toUpperCase());
-      if (desc) soma(x, 'ded_desc', desc, String(r.grupo).toUpperCase());
+      const liq = (+r.bruto || 0) - (+r.desconto || 0); if (!liq) return;
+      x.vendas += liq; soma(x, 6, liq, 'VENDAS SISCHEF · ' + String(r.grupo).toUpperCase());
     });
-    (st.fluxo || []).forEach(function (r) {
+    st.maoObra.forEach(function (r) {
       const x = meses[String(r.data).slice(0, 7)]; if (!x) return;
-      const v = +r.total || 0; if (!v) return;
-      const l = linhaDespesa(r.grupo, r.operacao);
-      if (r.tipo === 'receber' && l !== 'rec_fin') return; // recebimentos de vendas: a receita vem do Sischef
+      x.pg10 = true;
+      const mot = r.tipo === 'motoboy';
+      if (+r.diaria) soma(x, 27, +r.diaria, 'PAGAMENTO 10% · DIÁRIAS ' + (mot ? 'MOTOBOYS' : 'EQUIPE'));
+      if (+r.dez_porcento) { if (mot) soma(x, 14, +r.dez_porcento, 'PAGAMENTO 10% · TAXAS DE ENTREGA'); else soma(x, 10, +r.dez_porcento, 'PAGAMENTO 10% · RATEIO DO 10%'); }
+    });
+    st.fluxo.forEach(function (r) {
+      const x = meses[String(r.data).slice(0, 7)]; if (!x || r.tipo === 'receber') return;
+      const v = -(+r.total || 0); if (!v) return;
+      const lin = linhaConta(r.grupo, r.operacao); if (lin == null) return;
       x.contas++;
       const det = String(r.grupo).toUpperCase() + ' · ' + String(r.operacao).toUpperCase();
-      if (l === 'fora') { x.fora[det] = (x.fora[det] || 0) + (-v); return; }
-      if (!l) return;
-      soma(x, l, l === 'rec_fin' ? v : -v, det); // despesas guardadas positivas
+      if (lin === 'dez') { x.dezFin += v; return; }
+      soma(x, lin, v, det);
     });
-    Object.keys(meses).forEach(function (mes) {
-      const x = meses[mes], t = x.t = {};
-      ESTR.forEach(function (e) {
-        if (e.filhos) t[e.id] = e.filhos.reduce(function (s, f) { const val = x.v[f[0]] || 0; return s + (e.misto ? val * (SINAL_LINHA[f[0]] || 1) : val); }, 0);
-        else if (e.calc) {
-          t[e.id] = e.calc.reduce(function (s, id, i) {
-            const ee = ESTR.find(function (z) { return z.id === id; });
-            const val = t[id] || 0;
-            return i === 0 ? val : s + (ee.sinal === -1 ? -val : val);
-          }, 0);
-        }
-      });
-      x.tem = x.vendas > 0 || x.contas > 0;
+    Object.keys(meses).forEach(function (m) {
+      const x = meses[m];
+      // sem a semana lançada na tela Pagamento 10%, usa a conta "10%" do financeiro
+      if (!x.pg10 && x.dezFin) soma(x, 10, x.dezFin, 'FOLHA DE PAGAMENTO · 10% (FINANCEIRO)');
+      const man = st.manuais[m] || {};
+      MANUAIS.forEach(function (r) { if (+man[r] && r !== 7) soma(x, r, +man[r], 'LANÇADO À MÃO'); });
+      x.v[7] = +man[7] || st.nFunc; x.funcManual = !!+man[7];
     });
     return meses;
   }
 
+  /* ---------- DRE Simplificada (mesmas fórmulas da planilha) ---------- */
+  function dre(v) {
+    const g = function (r) { return v[r] || 0; };
+    const s = function () { let t = 0; for (let i = 0; i < arguments.length; i++) t += g(arguments[i]); return t; };
+    const d = {};
+    d.fat = g(6);
+    d.ded = s(10, 11); d.liq = d.fat - d.ded;
+    d.cmv = g(13);
+    d.entreg = g(14); d.musica = s(15, 16, 18, 19); d.tarifas = s(20, 21, 23); d.impostos = g(24);
+    d.outrosCV = d.tarifas + d.impostos + d.entreg + d.musica;
+    d.cv = d.cmv + d.outrosCV;
+    d.mc = d.fat - d.cv;                       // planilha: Faturamento bruto − custos variáveis
+    d.cmo = s(26, 27, 28, 29, 30, 31, 32, 33, 34, 36);
+    d.ocup = s(38, 39, 40);
+    d.mkt = s(42, 22, 43);
+    d.outrosCF = s(45, 46, 35, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62);
+    d.df = d.cmo + d.ocup + d.mkt + d.outrosCF;
+    d.ro = d.liq - d.cv - d.df;
+    d.naoOp = s(64, 65, 66, 67, 68, 69);
+    d.sobra = d.ro - d.naoOp;
+    d.mcPct = d.liq ? d.mc / d.liq : 0;
+    d.pe = d.mcPct > 0 ? d.df / d.mcPct : null;
+    d.peEco = d.mcPct > 0 ? (d.df + d.naoOp) / d.mcPct : null;
+    d.func = v[7] || 0;
+    d.produt = d.func ? d.fat / d.func : null;
+    d.couvert = g(17); d.saldoBanda = d.couvert - g(15) - g(16);
+    return d;
+  }
+  // estrutura da tela: [tipo, rótulo, chave (dre) ou linhas]
+  const ESTR = [
+    ['tot', 'Faturamento Bruto: total salão + delivery', 'fat', [6], 'fat'],
+    ['grp', 'Deduções', 'ded', [10, 11]],
+    ['tot', 'Faturamento Líquido', 'liq'],
+    ['sec', 'Custos Variáveis (-)', 'cv'],
+    ['grp', 'Custo da Mercadoria Vendida (CMV)', 'cmv', [13]],
+    ['grp', 'Entregadores', 'entreg', [14]],
+    ['grp', 'Música ao vivo / Royalties', 'musica', [15, 16, 18, 19]],
+    ['grp', 'Tarifas de Cartões / Marketplaces', 'tarifas', [20, 21, 23]],
+    ['grp', 'Impostos sob vendas', 'impostos', [24]],
+    ['tot', 'Margem de Contribuição (Bruta)', 'mc'],
+    ['sec', 'Despesas Fixas (-)', 'df'],
+    ['grp', 'CMO - Custo de Mão de Obra', 'cmo', [26, 27, 28, 29, 30, 31, 32, 33, 34, 36]],
+    ['grp', 'Ocupação', 'ocup', [38, 39, 40]],
+    ['grp', 'Marketing', 'mkt', [42, 22, 43]],
+    ['grp', 'Outros Custos Fixos', 'outrosCF', [45, 46, 35, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62]],
+    ['tot', 'Resultado Operacional', 'ro', null, 'forte'],
+    ['grp', 'Saídas não operacionais (sócios, empréstimos e investimentos)', 'naoOp', [64, 65, 66, 67, 68, 69]],
+    ['tot', 'Sobra (+) ou Falta (−) de caixa', 'sobra', null, 'final']
+  ];
+
   /* ---------- tela ---------- */
   function montar() {
     $('#tela-dre').innerHTML =
-      '<div class="cab-tela"><div><h1>DRE gerencial</h1><p>Resultado do mês: receita das vendas do Sischef e despesas do relatório de contas a pagar, pela data de vencimento.</p></div>' +
-      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="dre-excel">Baixar Excel</button><button type="button" class="btn" id="dre-pdf">Baixar PDF</button></div></div>' +
+      '<div class="cab-tela"><div><h1>DRE Simplificado</h1><p>No modelo da planilha "DRE Simplificado": cada linha da aba Dados financeiros vem das vendas do Sischef, das contas a pagar e da tela Pagamento 10%. O que o sistema não tem você lança à mão.</p></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="dre-manual">Lançar valores à mão</button><button type="button" class="btn btn-sec" id="dre-excel">Baixar Excel</button><button type="button" class="btn" id="dre-pdf">Baixar PDF</button></div></div>' +
       '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="dre-ant" aria-label="Ano anterior">‹</button><div class="nav-semana-t"><span>Ano</span><b id="dre-ano"></b></div><button type="button" class="btn-icone" id="dre-prox" aria-label="Próximo ano">›</button></div>' +
-      '<label class="switch"><input type="checkbox" id="dre-pct" checked> Mostrar % sobre a receita</label>' +
-      '<div class="acoes-linha"><button type="button" class="link" id="dre-abrir">Abrir todos os detalhes</button></div></div>' +
+      '<div class="segmentado" role="group" aria-label="Colunas" id="dre-visao"><button type="button" data-v="mes" aria-pressed="true">Mensal</button><button type="button" data-v="tri" aria-pressed="false">Trimestral</button></div>' +
+      '<label class="switch"><input type="checkbox" id="dre-zeradas"> Mostrar linhas zeradas</label>' +
+      '<div class="acoes-linha"><button type="button" class="link" id="dre-abrir">Abrir todas as linhas</button></div></div>' +
       '<div id="dre-msg" class="msg" hidden></div>' +
       '<div class="kpis kpis-5" id="dre-kpis"></div>' +
       '<div class="rolagem"><table class="matriz dre" id="dre-tab"></table></div>' +
-      '<section class="painel dre-extra" id="dre-fora"></section>' +
-      '<div class="painel nota"><h3>Como ler</h3><ul>' +
-      '<li><b>Receita</b>: vendas do relatório de pedidos do Sischef (antes dos descontos), incluindo a taxa de serviço. O que é pago na tela Pagamento 10% (rateio do 10% e diárias) entra em Pessoal. Importe os pedidos de todo o mês em <a href="#importar">Importar planilhas</a>.</li>' +
-      '<li><b>Despesas</b>: relatório de contas a pagar e receber, pela data de vencimento, pagas ou não, inclusive o que saiu pelo CAIXA DINHEIRO.</li>' +
-      '<li><b>CMV</b>: tudo o que foi comprado de mercadoria no mês. Mês com compra grande para estoque fica com CMV mais alto.</li>' +
-      '<li><b>Fora da DRE</b>: compras de equipamentos e móveis, parcelas do PRONAMPE, distribuição de lucros, empréstimos a funcionários, acertos de saldo e de estoque. Não são despesa do mês, mas saem do caixa.</li>' +
-      '<li>Clique em uma linha para ver de onde vem cada valor. É uma visão de gestão; a DRE oficial continua com a contabilidade.</li></ul></div>';
+      '<section class="painel"><h3>Indicadores</h3><p class="sub" id="dre-ind-sub"></p><div class="rolagem"><table class="matriz dre" id="dre-ind"></table></div></section>' +
+      '<div class="painel nota"><h3>De onde vem cada linha</h3><ul>' +
+      '<li><b>Faturamento</b>: vendas do Sischef já sem os descontos, com taxa de serviço e taxa de entrega. Um mês só aparece depois de importar os pedidos dele.</li>' +
+      '<li><b>Taxa de serviço repassada, entregas e diárias</b>: da tela Pagamento 10%. Se o mês não tiver semanas lançadas lá, usa a conta "10%" do financeiro.</li>' +
+      '<li><b>Despesas</b>: relatório de contas a pagar, pela data de vencimento, inclusive CAIXA DINHEIRO. CMV = compras de mercadoria, bebidas e hortifruti do mês.</li>' +
+      '<li><b>Fora</b>: acertos de saldo e de estoque, sangria, fechamento de caixa, empréstimo a funcionário e "descontos concedidos" do banco (o desconto já sai do faturamento).</li>' +
+      '<li><b>Nº de funcionários</b>: os ativos no cadastro hoje. Para um mês passado, lance o número certo à mão.</li>' +
+      '<li>Clique em uma linha para ver as contas que formam o valor. É uma visão de gestão; a DRE oficial continua com a contabilidade.</li></ul></div>' +
+      '<dialog id="dlg-dre-man" aria-labelledby="h-dre-man"><form class="dlg form" id="dre-man-form" novalidate><h2 id="h-dre-man">Valores lançados à mão</h2>' +
+      '<p>Linhas da planilha que o sistema não tem. O valor é somado ao do sistema (se houver). Deixe em branco o que não se aplica.</p>' +
+      '<label for="dre-man-mes">Mês<select id="dre-man-mes"></select></label><div class="dre-man-grade" id="dre-man-campos"></div>' +
+      '<p class="erro-form" id="dre-man-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><span class="espaco"></span><button type="button" class="btn btn-sec" id="dre-man-cancelar">Cancelar</button><button type="submit" class="btn">Salvar</button></div></form></dialog>';
     $('#dre-ant').addEventListener('click', function () { ir(st.ano - 1); });
     $('#dre-prox').addEventListener('click', function () { ir(st.ano + 1); });
-    $('#dre-pct').addEventListener('change', function () { st.verPct = this.checked; desenhar(); });
+    $('#dre-visao').addEventListener('click', function (e) {
+      const b = e.target.closest('[data-v]'); if (!b) return; st.visao = b.dataset.v;
+      this.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); desenhar();
+    });
+    $('#dre-zeradas').addEventListener('change', function () { st.zeradas = this.checked; desenhar(); });
     $('#dre-abrir').addEventListener('click', function () {
-      const abrir = !ESTR.every(function (e) { return !e.filhos || st.abertos[e.id]; });
-      ESTR.forEach(function (e) { if (e.filhos) st.abertos[e.id] = abrir; });
-      desenhar();
+      const grps = ESTR.filter(function (e) { return e[0] === 'grp'; });
+      const abrir = !grps.every(function (e) { return st.abertos[e[2]]; });
+      grps.forEach(function (e) { st.abertos[e[2]] = abrir; }); desenhar();
     });
     $('#dre-tab').addEventListener('click', function (e) {
-      const th = e.target.closest('[data-abrir]'); if (th) { st.abertos[th.dataset.abrir] = !st.abertos[th.dataset.abrir]; desenhar(); return; }
-      const c = e.target.closest('[data-mes]'); if (c) { st.mes = c.dataset.mes; desenhar(); }
+      const a = e.target.closest('[data-abrir]'); if (a) { st.abertos[a.dataset.abrir] = !st.abertos[a.dataset.abrir]; desenhar(); return; }
+      const l = e.target.closest('[data-linha]'); if (l) { st.abertos['L' + l.dataset.linha] = !st.abertos['L' + l.dataset.linha]; desenhar(); return; }
+      const c = e.target.closest('[data-col]'); if (c && c.dataset.col.length === 7) { st.mes = c.dataset.col; desenhar(); }
     });
+    $('#dre-manual').addEventListener('click', abrirManual);
+    $('#dre-man-mes').addEventListener('change', desenharManual);
+    $('#dre-man-cancelar').addEventListener('click', function () { $('#dlg-dre-man').close(); });
+    $('#dre-man-form').addEventListener('submit', salvarManual);
     $('#dre-excel').addEventListener('click', excel);
     $('#dre-pdf').addEventListener('click', pdf);
   }
@@ -10586,157 +10707,241 @@ window.FT_CONFIG = {
     $('#dre-tab').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
     try {
       const r = await Promise.all([
-        st.vendasTodas ? Promise.resolve(null) : FT.store.indicadores.carregar(),
-        FT.store.fluxo.carregar(ano + '-01-01', ano + '-12-31')
+        st.ind ? Promise.resolve(st.ind) : FT.store.indicadores.carregar(),
+        FT.store.fluxo.carregar(ano + '-01-01', ano + '-12-31'),
+        FT.store.funcionarios.listar(),
+        FT.store.config.ler('dre_manuais')
       ]);
-      if (r[0]) st.vendasTodas = r[0].vendasDia || [];
-      st.vendas = st.vendasTodas.filter(function (x) { return String(x.data).slice(0, 4) === String(ano); });
-      st.fluxo = r[1].resumo || [];
-      st.dados = calcular(ano);
-      const com = Object.keys(st.dados).filter(function (m) { return st.dados[m].tem; });
-      const hoje = FT.hoje().slice(0, 7);
-      if (!st.mes || st.mes.slice(0, 4) !== String(ano) || !st.dados[st.mes].tem) {
-        const comVendas = com.filter(function (m) { return st.dados[m].vendas > 0 && m <= hoje; });
-        st.mes = comVendas.length ? comVendas[comVendas.length - 1] : null;
-      }
-      desenhar();
+      st.ind = r[0];
+      const doAno = function (x) { return String(x.data).slice(0, 4) === String(ano); };
+      st.vendas = (st.ind.vendasDia || []).filter(doAno);
+      st.maoObra = (st.ind.maoObraDia || []).filter(doAno);
+      st.fluxo = (r[1].resumo || []).filter(doAno);
+      st.nFunc = (r[2] || []).filter(function (f) { return f.ativo !== false; }).length;
+      st.manuais = r[3] || {};
+      recalcular();
     } catch (e) { FT.aviso('Não consegui montar a DRE: ' + FT.textoErro(e), true); }
   }
+  function recalcular() {
+    st.dados = calcularDados(st.ano);
+    const ms = mesesComVendas();
+    if (!st.mes || !st.dados[st.mes] || !st.dados[st.mes].vendas) st.mes = ms[ms.length - 1] || null;
+    desenhar();
+  }
 
-  function mesesVisiveis() { return Object.keys(st.dados).filter(function (m) { return st.dados[m].vendas > 0; }); }
+  function mesesComVendas() { return Object.keys(st.dados).filter(function (m) { return st.dados[m].vendas > 0; }); }
   function rotMes(m) { return MESES[+m.slice(5) - 1] + '/' + m.slice(2, 4); }
-  function pctDe(v, rl) { return rl ? (v / rl * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : ''; }
-  // valor exibido com sinal: despesas aparecem negativas
-  function valExib(e, v) { return e.sinal === -1 ? -v : v; }
+  function pct(v, base) { return base ? (v / base * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%' : ''; }
+  function moeda(v) { return FT.moeda(v); }
+
+  // colunas: meses com vendas (ou trimestres) + total do ano
+  function colunas() {
+    const ms = mesesComVendas(), cols = [];
+    if (st.visao === 'tri') {
+      [1, 2, 3, 4].forEach(function (t) {
+        const mm = ms.filter(function (m) { return Math.ceil(+m.slice(5) / 3) === t; });
+        if (mm.length) cols.push({ id: 'T' + t, rot: t + 'º trimestre', sub: mm.map(rotMes).join(' · '), meses: mm });
+      });
+    } else ms.forEach(function (m) { cols.push({ id: m, rot: rotMes(m), sub: st.dados[m].contas ? '' : 'sem contas', meses: [m] }); });
+    if (ms.length) cols.push({ id: 'ANO', rot: 'Total ' + st.ano, sub: ms.length + ' mês(es)', meses: ms, ano: true });
+    cols.forEach(function (c) {
+      const v = {}, det = {};
+      c.meses.forEach(function (m) {
+        const x = st.dados[m];
+        Object.keys(x.v).forEach(function (r) { if (+r !== 7) v[r] = (v[r] || 0) + x.v[r]; });
+        Object.keys(x.det).forEach(function (r) { const a = det[r] = det[r] || {}; Object.keys(x.det[r]).forEach(function (z) { a[z] = (a[z] || 0) + x.det[r][z]; }); });
+      });
+      // nº de funcionários: média dos meses
+      v[7] = c.meses.length ? Math.round(c.meses.reduce(function (s, m) { return s + (st.dados[m].v[7] || 0); }, 0) / c.meses.length) : 0;
+      c.v = v; c.det = det; c.d = dre(v);
+    });
+    return cols;
+  }
 
   function desenhar() {
-    const d = st.dados, ms = mesesVisiveis();
-    const msg = $('#dre-msg');
-    const hoje = FT.hoje().slice(0, 7);
+    const d = st.dados, ms = mesesComVendas(), hoje = FT.hoje().slice(0, 7);
     const semVendas = Object.keys(d).filter(function (m) { return !d[m].vendas && d[m].contas && m <= hoje; });
     const semContas = ms.filter(function (m) { return !d[m].contas; });
-    const avisos = [];
-    if (semVendas.length) avisos.push('Sem vendas do Sischef importadas em <b>' + semVendas.map(rotMes).join(', ') + '</b>: esses meses não aparecem. Importe o relatório de pedidos em <a href="#importar">Importar planilhas</a>.');
-    if (semContas.length) avisos.push('Sem contas a pagar importadas em <b>' + semContas.map(rotMes).join(', ') + '</b>: as despesas desses meses estão faltando.');
-    msg.hidden = !avisos.length; msg.innerHTML = avisos.join('<br>');
-    if (!ms.length) { $('#dre-tab').innerHTML = ''; $('#dre-kpis').innerHTML = ''; $('#dre-fora').innerHTML = ''; return; }
-    if (!d[st.mes] || !d[st.mes].vendas) st.mes = ms[ms.length - 1];
-
-    // totais do ano
-    const ano = vazioMes(); ano.t = {};
+    const av = [];
+    if (semVendas.length) av.push('Sem vendas do Sischef importadas em <b>' + semVendas.map(rotMes).join(', ') + '</b>: esses meses não aparecem. Importe o relatório de pedidos em <a href="#importar">Importar planilhas</a>.');
     ms.forEach(function (m) {
-      Object.keys(d[m].v).forEach(function (l) { ano.v[l] = (ano.v[l] || 0) + d[m].v[l]; });
-      Object.keys(d[m].t).forEach(function (l) { ano.t[l] = (ano.t[l] || 0) + d[m].t[l]; });
-      Object.keys(d[m].det).forEach(function (l) { const a = ano.det[l] = ano.det[l] || {}; Object.keys(d[m].det[l]).forEach(function (z) { a[z] = (a[z] || 0) + d[m].det[l][z]; }); });
-      Object.keys(d[m].fora).forEach(function (z) { ano.fora[z] = (ano.fora[z] || 0) + d[m].fora[z]; });
+      const x = d[m]; if (!x.pg10 || !x.dezFin) return;
+      const tela = (x.det[10] ? Object.values(x.det[10]).reduce(function (a, b) { return a + b; }, 0) : 0) + (x.v[14] || 0) + Object.keys(x.det[27] || {}).filter(function (z) { return /^PAGAMENTO 10%/.test(z); }).reduce(function (a, z) { return a + x.det[27][z]; }, 0);
+      if (Math.abs(tela - x.dezFin) > Math.max(50, x.dezFin * 0.1)) av.push('<b>' + rotMes(m) + '</b>: a tela Pagamento 10% soma ' + moeda(tela) + ' e a conta "10%" do financeiro ' + moeda(x.dezFin) + '. A DRE usa a tela Pagamento 10%: confira se todas as semanas do mês foram lançadas lá.');
     });
-    st.anoTot = ano;
+    if (semContas.length) av.push('Sem contas a pagar importadas em <b>' + semContas.map(rotMes).join(', ') + '</b>: as despesas desses meses estão faltando.');
+    $('#dre-msg').hidden = !av.length; $('#dre-msg').innerHTML = av.join('<br>');
+    if (!ms.length) { $('#dre-tab').innerHTML = ''; $('#dre-kpis').innerHTML = ''; $('#dre-ind').innerHTML = ''; return; }
 
-    // KPIs do mês selecionado
-    const x = d[st.mes] || d[ms[ms.length - 1]], t = x.t, rl = t.RL;
+    const cols = colunas();
+    st.cols = cols;
+    // KPIs do mês escolhido
+    const x = dre(st.dados[st.mes].v);
     const kp = [
-      ['Receita líquida', FT.moeda(t.RL), 'bruta ' + FT.moeda(t.RB)],
-      ['CMV', FT.moeda(t.CMV), pctDe(t.CMV, rl) + ' da receita líquida'],
-      ['Pessoal', FT.moeda(t.PES), pctDe(t.PES, rl) + ' da receita líquida'],
-      ['Despesas fixas', FT.moeda(t.ADM + t.CON + t.MAN + t.MKT + t.VEI + t.OUT), pctDe(t.ADM + t.CON + t.MAN + t.MKT + t.VEI + t.OUT, rl) + ' da receita líquida'],
-      ['Lucro líquido', FT.moeda(t.LL), 'margem ' + (pctDe(t.LL, rl) || '—')]
+      ['Faturamento', moeda(x.fat), 'líquido ' + moeda(x.liq)],
+      ['Margem de contribuição', moeda(x.mc), pct(x.mc, x.liq) + ' · referência 45 a 60%'],
+      ['Prime cost (CMV + CMO)', pct(x.cmv + x.cmo, x.liq) || '—', 'CMV ' + pct(x.cmv, x.liq) + ' · CMO ' + pct(x.cmo, x.liq) + ' · ref. 50 a 60%'],
+      ['Resultado operacional', moeda(x.ro), pct(x.ro, x.liq) + ' · referência 10 a 15%'],
+      ['Sobra de caixa', moeda(x.sobra), 'depois de ' + moeda(x.naoOp) + ' não operacionais']
     ];
     $('#dre-kpis').innerHTML = kp.map(function (q, i) {
-      return '<article class="kpi' + (i === 4 ? (t.LL >= 0 ? ' kpi-destaque' : ' kpi-alerta') : '') + '"><h3>' + esc(q[0]) + ' · ' + esc(rotMes(st.mes)) + '</h3><p class="kpi-v">' + esc(q[1]) + '</p><p class="kpi-s">' + esc(q[2]) + '</p></article>';
+      return '<article class="kpi' + (i === 3 ? (x.ro >= 0 ? ' kpi-destaque' : ' kpi-alerta') : '') + (i === 4 && x.sobra < 0 ? ' kpi-alerta' : '') + '"><h3>' + esc(q[0]) + ' · ' + esc(rotMes(st.mes)) + '</h3><p class="kpi-v">' + esc(q[1]) + '</p><p class="kpi-s">' + esc(q[2]) + '</p></article>';
     }).join('');
 
-    // tabela
-    const colsMes = ms.concat(['ANO']);
-    const cel = function (m) { return m === 'ANO' ? ano : d[m]; };
-    let h = '<thead><tr><th class="col-rot">Clique no mês para ver os indicadores dele</th>' + colsMes.map(function (m) {
-      return m === 'ANO' ? '<th class="dre-ano"><span class="th-t">Total ' + st.ano + '</span><span class="th-s">' + ms.length + ' mês(es)</span></th>'
-        : '<th class="' + (m === st.mes ? 'col-mes' : '') + '" data-mes="' + m + '"><span class="th-t">' + rotMes(m) + '</span>' + (!d[m].contas ? '<span class="th-s chip-parcial">incompleto</span>' : '<span class="th-s">&nbsp;</span>') + '</th>';
-    }).join('') + '</tr></thead><tbody>';
+    const tdVal = function (c, v, base, cls) {
+      return '<td class="num' + (c.id === st.mes ? ' col-mes' : '') + (c.ano ? ' dre-ano' : '') + (cls || '') + (v < 0 ? ' negativo' : '') + '">' + (v ? moeda(v) : '<span class="vazio">—</span>') + (v && base ? '<small>' + pct(v, base) + '</small>' : '') + '</td>';
+    };
+    let h = '<thead><tr><th class="col-rot">Clique no mês para ver os números dele</th>' + cols.map(function (c) {
+      return '<th class="' + (c.id === st.mes ? 'col-mes' : '') + (c.ano ? ' dre-ano' : '') + '" data-col="' + c.id + '"><span class="th-t">' + esc(c.rot) + '</span><span class="th-s">' + (c.sub === 'sem contas' ? '<span class="chip-parcial">sem contas</span>' : esc(c.sub) || '&nbsp;') + '</span></th>';
+    }).join('') + '<th class="dre-av">AV ' + esc(rotMes(st.mes)) + '</th></tr></thead><tbody>';
+    const linhaVisivel = function (r) { return st.zeradas || cols.some(function (c) { return c.v[r]; }); };
     ESTR.forEach(function (e) {
-      const cls = (e.forte ? 'linha-forte' : '') + (e.final ? ' dre-final' : '') + (e.filhos ? ' dre-grupo' : '');
-      const aberto = st.abertos[e.id];
-      const temFilhos = e.filhos && (e.filhos.length > 1 || Object.keys(ano.det[e.filhos[0][0]] || {}).length > 0);
-      h += '<tr class="' + cls + '"><th class="col-rot"' + (temFilhos ? ' data-abrir="' + e.id + '"' : '') + '>' + (temFilhos ? '<span class="dre-seta">' + (aberto ? '▾' : '▸') + '</span>' : '') + esc(e.nome) + '</th>' +
-        colsMes.map(function (m) {
-          const c = cel(m), v = valExib(e, c.t[e.id] || 0);
-          return '<td class="num' + (m === st.mes ? ' col-mes' : '') + (v < 0 ? ' negativo' : '') + '">' + (c.t[e.id] ? FT.moeda(v) : '<span class="vazio">—</span>') + (st.verPct && e.id !== 'RB' && c.t.RL && c.t[e.id] ? '<small>' + pctDe(v, c.t.RL) + '</small>' : '') + '</td>';
-        }).join('') + '</tr>';
-      if (e.filhos && aberto) {
-        e.filhos.forEach(function (f) {
-          const sinal = e.misto ? (SINAL_LINHA[f[0]] || 1) : (e.sinal || 1);
-          if (!ms.some(function (m) { return d[m].v[f[0]]; }) && e.filhos.length > 1) return;
-          if (e.filhos.length > 1) {
-            h += '<tr class="dre-sub"><th class="col-rot">' + esc(f[1]) + '</th>' + colsMes.map(function (m) {
-              const v = (cel(m).v[f[0]] || 0) * sinal;
-              return '<td class="num' + (m === st.mes ? ' col-mes' : '') + '">' + (v ? FT.moeda(v) : '<span class="vazio">—</span>') + (st.verPct && v && cel(m).t.RL ? '<small>' + pctDe(v, cel(m).t.RL) + '</small>' : '') + '</td>';
-            }).join('') + '</tr>';
+      const tipo = e[0], chave = e[2], linhas = e[3];
+      if (tipo === 'grp' && !st.zeradas && !cols.some(function (c) { return c.d[chave]; })) return;
+      const temAbrir = tipo === 'grp' && linhas && linhas.some(linhaVisivel);
+      const aberto = st.abertos[chave];
+      const cls = tipo === 'tot' ? 'linha-forte' + (e[4] === 'final' ? ' dre-final' : '') : tipo === 'sec' ? 'dre-sec' : 'dre-grupo';
+      const sinal = tipo === 'grp' || tipo === 'sec' ? -1 : 1;
+      const base = function (c) { return chave === 'fat' ? 0 : c.d.liq; };
+      h += '<tr class="' + cls + '"><th class="col-rot"' + (temAbrir ? ' data-abrir="' + chave + '"' : '') + '>' + (temAbrir ? '<span class="dre-seta">' + (aberto ? '▾' : '▸') + '</span>' : '') + esc(e[1]) + '</th>' +
+        cols.map(function (c) { return tdVal(c, (chave === 'fat' || chave === 'naoOp' ? 1 : sinal) * c.d[chave] * (chave === 'naoOp' ? -1 : 1), base(c)); }).join('') +
+        '<td class="dre-av">' + avDe(chave, x) + '</td></tr>';
+      if (temAbrir && aberto) {
+        linhas.filter(linhaVisivel).forEach(function (r) {
+          const temDet = cols.some(function (c) { return c.det[r] && Object.keys(c.det[r]).length; });
+          h += '<tr class="dre-sub"><th class="col-rot"' + (temDet ? ' data-linha="' + r + '"' : '') + '>' + (temDet ? '<span class="dre-seta">' + (st.abertos['L' + r] ? '▾' : '▸') + '</span>' : '') + esc(L[r]) + (MANUAIS.indexOf(r) >= 0 ? ' <span class="dre-man-tag">à mão</span>' : '') + '</th>' +
+            cols.map(function (c) { return tdVal(c, -(c.v[r] || 0), c.d.liq); }).join('') + '<td class="dre-av"></td></tr>';
+          if (temDet && st.abertos['L' + r]) {
+            const zs = {}; cols.forEach(function (c) { Object.keys(c.det[r] || {}).forEach(function (z) { zs[z] = (zs[z] || 0) + Math.abs(c.det[r][z]); }); });
+            Object.keys(zs).sort(function (a, b) { return zs[b] - zs[a]; }).forEach(function (z) {
+              h += '<tr class="dre-det"><th class="col-rot">' + esc(z) + '</th>' + cols.map(function (c) { const v = (c.det[r] || {})[z] || 0; return '<td class="num' + (c.id === st.mes ? ' col-mes' : '') + '">' + (v ? moeda(-v) : '') + '</td>'; }).join('') + '<td class="dre-av"></td></tr>';
+            });
           }
-          // detalhe (operações do financeiro / grupos do Sischef)
-          Object.keys(ano.det[f[0]] || {}).sort(function (a, b) { return Math.abs(ano.det[f[0]][b]) - Math.abs(ano.det[f[0]][a]); }).forEach(function (z) {
-            h += '<tr class="dre-det"><th class="col-rot">' + esc(z) + '</th>' + colsMes.map(function (m) {
-              const v = ((cel(m).det[f[0]] || {})[z] || 0) * sinal;
-              return '<td class="num' + (m === st.mes ? ' col-mes' : '') + '">' + (v ? FT.moeda(v) : '') + '</td>';
-            }).join('') + '</tr>';
-          });
+        });
+      }
+      if (chave === 'fat' && st.abertos.fat) {
+        const zs = {}; cols.forEach(function (c) { Object.keys(c.det[6] || {}).forEach(function (z) { zs[z] = (zs[z] || 0) + c.det[6][z]; }); });
+        Object.keys(zs).sort(function (a, b) { return zs[b] - zs[a]; }).forEach(function (z) {
+          h += '<tr class="dre-det"><th class="col-rot">' + esc(z.replace('VENDAS SISCHEF · ', '')) + '</th>' + cols.map(function (c) { const v = (c.det[6] || {})[z] || 0; return '<td class="num' + (c.id === st.mes ? ' col-mes' : '') + '">' + (v ? moeda(v) : '') + '</td>'; }).join('') + '<td class="dre-av"></td></tr>';
         });
       }
     });
-    $('#dre-tab').innerHTML = h + '</tbody>';
+    $('#dre-tab').innerHTML = h.replace('<th class="col-rot">Faturamento Bruto', '<th class="col-rot" data-abrir="fat"><span class="dre-seta">' + (st.abertos.fat ? '▾' : '▸') + '</span>Faturamento Bruto') + '</tbody>';
 
-    // fora da DRE
-    const fora = Object.keys(ano.fora).sort(function (a, b) { return ano.fora[b] - ano.fora[a]; });
-    $('#dre-fora').innerHTML = '<h3>Saídas de caixa fora da DRE · ' + esc(rotMes(st.mes)) + '</h3><p class="sub">Investimentos, empréstimos, retiradas e acertos. Não são despesa do mês, mas tiram dinheiro do caixa.</p>' +
-      (fora.length ? '<table class="lista"><tbody>' + fora.filter(function (z) { return x.fora[z]; }).map(function (z) { return '<tr><td>' + esc(z) + '</td><td class="num">' + FT.moeda(x.fora[z]) + '</td></tr>'; }).join('') +
-        '</tbody><tfoot><tr><th>Total do mês</th><th class="num">' + FT.moeda(Object.keys(x.fora).reduce(function (s, z) { return s + x.fora[z]; }, 0)) + '</th></tr></tfoot></table>' : '<p class="vazio-bloco">Nada neste ano.</p>');
+    // indicadores
+    $('#dre-ind-sub').textContent = 'Fórmulas e referências da aba DRE Simplificada.';
+    const IND = [
+      ['Ponto de equilíbrio', function (z) { return z.pe == null ? '—' : moeda(z.pe); }, 'Despesas fixas ÷ margem de contribuição %'],
+      ['Ponto de equilíbrio econômico', function (z) { return z.peEco == null ? '—' : moeda(z.peEco); }, 'Inclui as saídas não operacionais'],
+      ['Número de funcionários totais', function (z) { return z.func ? String(z.func) : '—'; }, ''],
+      ['Despesas fixas totais', function (z) { return moeda(z.df) + ' · ' + pct(z.df, z.liq); }, ''],
+      ['Margem de contribuição', function (z) { return pct(z.mc, z.liq) || '—'; }, '45 a 60%'],
+      ['CMV', function (z) { return pct(z.cmv, z.liq) || '—'; }, 'depende do CMO'],
+      ['CMO', function (z) { return pct(z.cmo, z.liq) || '—'; }, 'depende do CMV'],
+      ['Prime cost (CMV + CMO)', function (z) { return pct(z.cmv + z.cmo, z.liq) || '—'; }, '50 a 60%'],
+      ['Produtividade (faturamento ÷ nº funcionários)', function (z) { return z.produt == null ? '—' : moeda(z.produt); }, 'R$ 10 a R$ 20 mil'],
+      ['Marketing', function (z) { return moeda(z.mkt) + ' · ' + pct(z.mkt, z.liq); }, ''],
+      ['Ocupação', function (z) { return moeda(z.ocup) + ' · ' + pct(z.ocup, z.liq); }, '5 a 7% (10% em shopping)'],
+      ['Resultado operacional', function (z) { return moeda(z.ro) + ' · ' + pct(z.ro, z.liq); }, '10 a 15%'],
+      ['Saídas não operacionais', function (z) { return moeda(z.naoOp); }, ''],
+      ['"Sobra" (+) ou "Falta" (−) de caixa', function (z) { return moeda(z.sobra); }, '']
+    ];
+    $('#dre-ind').innerHTML = '<thead><tr><th class="col-rot">Indicador</th><th class="dre-ref">Referência</th>' + cols.map(function (c) { return '<th class="' + (c.id === st.mes ? 'col-mes' : '') + (c.ano ? ' dre-ano' : '') + '"><span class="th-t">' + esc(c.rot) + '</span></th>'; }).join('') + '</tr></thead><tbody>' +
+      IND.map(function (i) { return '<tr><th class="col-rot">' + esc(i[0]) + '</th><td class="dre-ref">' + esc(i[2]) + '</td>' + cols.map(function (c) { return '<td class="num' + (c.id === st.mes ? ' col-mes' : '') + (c.ano ? ' dre-ano' : '') + '">' + esc(i[1](c.d)) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody>';
+  }
+  // AV da coluna escolhida (igual à planilha: % sobre o faturamento líquido; deduções e impostos sobre o bruto)
+  function avDe(chave, z) {
+    if (chave === 'fat') return z.liq ? pct(z.fat, z.liq) : '';
+    if (chave === 'ded') return pct(z.ded, z.fat);
+    if (chave === 'impostos') return pct(z.impostos, z.fat);
+    if (chave === 'liq') return '100,0%';
+    if (chave === 'naoOp') return pct(z.naoOp, z.liq);
+    return pct(z[chave], z.liq);
+  }
+
+  /* ---------- lançamentos à mão ---------- */
+  function abrirManual() {
+    const sel = $('#dre-man-mes');
+    sel.innerHTML = MESES.map(function (n, i) { const m = st.ano + '-' + String(i + 1).padStart(2, '0'); return '<option value="' + m + '"' + (m === st.mes ? ' selected' : '') + '>' + esc(n + '/' + st.ano) + '</option>'; }).join('');
+    desenharManual(); $('#dre-man-erro').textContent = ''; $('#dlg-dre-man').showModal();
+  }
+  function desenharManual() {
+    const m = $('#dre-man-mes').value, man = st.manuais[m] || {};
+    $('#dre-man-campos').innerHTML = MANUAIS.map(function (r) {
+      const ph = r === 7 ? 'hoje: ' + st.nFunc + ' ativos' : 'R$ 0,00';
+      return '<label for="dre-m-' + r + '">' + esc(L[r]) + '<input id="dre-m-' + r + '" data-r="' + r + '" inputmode="decimal" placeholder="' + esc(ph) + '" value="' + (man[r] ? String(man[r]).replace('.', ',') : '') + '"></label>';
+    }).join('');
+  }
+  async function salvarManual(e) {
+    e.preventDefault();
+    const m = $('#dre-man-mes').value, v = {};
+    let erro = '';
+    document.querySelectorAll('#dre-man-campos input').forEach(function (i) {
+      const t = i.value.trim(); if (!t) return;
+      const n = parseFloat(t.replace(/\./g, '').replace(',', '.'));
+      if (!isFinite(n) || n < 0) erro = 'Valor inválido em: ' + L[i.dataset.r]; else if (n) v[i.dataset.r] = n;
+    });
+    if (erro) { $('#dre-man-erro').textContent = erro; return; }
+    const todos = Object.assign({}, st.manuais); if (Object.keys(v).length) todos[m] = v; else delete todos[m];
+    try { await FT.store.config.salvar('dre_manuais', todos); st.manuais = todos; $('#dlg-dre-man').close(); FT.aviso('Valores de ' + rotMes(m) + ' salvos.'); recalcular(); }
+    catch (x) { $('#dre-man-erro').textContent = 'Não consegui salvar: ' + FT.textoErro(x); }
   }
 
   /* ---------- exportar ---------- */
-  function linhasExport() {
-    const d = st.dados, ms = mesesVisiveis(), ano = st.anoTot, rows = [];
-    const cel = function (m) { return m === 'ANO' ? ano : d[m]; };
-    const cols = ms.concat(['ANO']);
-    ESTR.forEach(function (e) {
-      rows.push({ forte: !!(e.forte || e.filhos), nome: e.nome, vals: cols.map(function (m) { return valExib(e, cel(m).t[e.id] || 0); }), rl: cols.map(function (m) { return cel(m).t.RL || 0; }) });
-      if (e.filhos && e.filhos.length > 1) e.filhos.forEach(function (f) {
-        const sinal = e.misto ? (SINAL_LINHA[f[0]] || 1) : (e.sinal || 1);
-        if (!ms.some(function (m) { return d[m].v[f[0]]; })) return;
-        rows.push({ nome: '   ' + f[1], vals: cols.map(function (m) { return (cel(m).v[f[0]] || 0) * sinal; }), rl: cols.map(function (m) { return cel(m).t.RL || 0; }) });
-      });
-    });
-    return { cols: cols, rows: rows, ms: ms };
-  }
   function excel() {
-    if (typeof XLSX === 'undefined' || !st.dados) return;
-    const L = linhasExport(), r2 = FT.r2;
-    const cab = ['DRE GERENCIAL ' + st.ano].concat(L.cols.map(function (m) { return m === 'ANO' ? 'TOTAL ' + st.ano : rotMes(m).toUpperCase(); }));
-    const aoa = [cab].concat(L.rows.map(function (r) { return [r.nome.toUpperCase()].concat(r.vals.map(r2)); }));
-    aoa.push([]); aoa.push(['% SOBRE A RECEITA LÍQUIDA']);
-    L.rows.forEach(function (r) { aoa.push([r.nome.toUpperCase()].concat(r.vals.map(function (v, i) { return r.rl[i] ? Math.round(v / r.rl[i] * 1000) / 10 : null; }))); });
-    const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 44 }].concat(L.cols.map(function () { return { wch: 14 }; }));
-    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'DRE ' + st.ano);
-    const fora = [['SAÍDAS FORA DA DRE'].concat(L.ms.map(function (m) { return rotMes(m).toUpperCase(); }))];
-    Object.keys(st.anoTot.fora).sort().forEach(function (z) { fora.push([z].concat(L.ms.map(function (m) { return r2(st.dados[m].fora[z] || 0); }))); });
-    const ws2 = XLSX.utils.aoa_to_sheet(fora); ws2['!cols'] = [{ wch: 52 }].concat(L.ms.map(function () { return { wch: 14 }; }));
-    XLSX.utils.book_append_sheet(wb, ws2, 'FORA DA DRE');
-    XLSX.writeFile(wb, 'dre_' + st.ano + '.xlsx');
+    if (typeof XLSX === 'undefined') { FT.aviso('O gerador de planilhas não carregou. Confira a internet e recarregue a página.', true); return; }
+    if (!st.dados) return;
+    const r2 = FT.r2, nomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const mesesAno = MESES.map(function (n, i) { return st.ano + '-' + String(i + 1).padStart(2, '0'); });
+    // aba 1: igual à aba "Dados financeiros" (mesmas linhas e colunas B..M), para colar na planilha
+    const aoa = [];
+    aoa[0] = ['Dados Financeiros: ' + st.ano + ' (gerado pelo sistema da Forneria Toscana)'];
+    aoa[1] = ['Valores positivos. Mesmas linhas da planilha: copie B6:M69 e cole na aba Dados financeiros.'];
+    aoa[2] = [''].concat(nomes);
+    aoa[3] = [''].concat(nomes.map(function (n, i) { return (Math.floor(i / 3) + 1) + '° Trimestre'; }));
+    for (let r = 5; r <= 69; r++) aoa[r - 1] = aoa[r - 1] || [];
+    ROWS.forEach(function (r) {
+      aoa[r - 1] = [L[r]].concat(mesesAno.map(function (m) { const x = st.dados[m]; if (!x.vendas) return null; return r === 7 ? (x.v[7] || null) : (x.v[r] ? r2(x.v[r]) : null); }));
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 62 }].concat(nomes.map(function () { return { wch: 13 }; }));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Dados financeiros');
+    // aba 2: DRE calculada
+    const cols = st.cols || colunas();
+    const d2 = [['DRE Simplificado ' + st.ano].concat(cols.map(function (c) { return c.rot.toUpperCase(); }))];
+    ESTR.forEach(function (e) {
+      const ch = e[2], neg = e[0] === 'grp' || e[0] === 'sec';
+      d2.push([(e[0] === 'tot' ? '' : '  ') + e[1]].concat(cols.map(function (c) { return r2((neg ? -1 : 1) * c.d[ch]); })));
+      if (e[0] === 'grp' && e[3]) e[3].forEach(function (r) { if (cols.some(function (c) { return c.v[r]; })) d2.push(['      ' + L[r]].concat(cols.map(function (c) { return r2(-(c.v[r] || 0)); }))); });
+    });
+    d2.push([]); d2.push(['Indicadores']);
+    [['Ponto de equilíbrio', 'pe'], ['Ponto de equilíbrio econômico', 'peEco'], ['Número de funcionários', 'func'], ['Produtividade (fat./funcionário)', 'produt']].forEach(function (i) { d2.push([i[0]].concat(cols.map(function (c) { return c.d[i[1]] == null ? null : r2(c.d[i[1]]); }))); });
+    [['Margem de contribuição %', 'mc'], ['CMV %', 'cmv'], ['CMO %', 'cmo'], ['Ocupação %', 'ocup'], ['Marketing %', 'mkt'], ['Resultado operacional %', 'ro']].forEach(function (i) { d2.push([i[0]].concat(cols.map(function (c) { return c.d.liq ? Math.round(c.d[i[1]] / c.d.liq * 1000) / 10 : null; }))); });
+    const ws2 = XLSX.utils.aoa_to_sheet(d2); ws2['!cols'] = [{ wch: 66 }].concat(cols.map(function () { return { wch: 14 }; }));
+    XLSX.utils.book_append_sheet(wb, ws2, 'DRE Simplificada');
+    XLSX.writeFile(wb, 'dre_simplificado_' + st.ano + '.xlsx');
   }
   async function pdf() {
     if (!st.dados) return;
     const b = $('#dre-pdf'); b.disabled = true;
     try {
-      const L = linhasExport(), ult = L.cols.slice(-7); // até 6 meses + total, para caber na folha
-      const n = ult.length, w = 0.62 / n;
-      const colunas = [{ t: 'DRE', w: 0.38 }].concat(ult.map(function (m) { return { t: m === 'ANO' ? 'TOTAL ' + st.ano : rotMes(m).toUpperCase(), w: w, a: 'r' }; }));
-      const idx = ult.map(function (m) { return L.cols.indexOf(m); });
+      const cols = (st.cols || colunas()).slice(-7);
+      const w = 0.58 / cols.length;
+      const colunasPdf = [{ t: 'DRE SIMPLIFICADO', w: 0.42 }].concat(cols.map(function (c) { return { t: c.rot.toUpperCase(), w: w, a: 'r' }; }));
       const linhas = [], dest = [];
-      L.rows.forEach(function (r) {
-        if (r.forte) dest.push(linhas.length);
-        linhas.push([r.nome.trim()].concat(idx.map(function (i) { const v = r.vals[i]; return v ? FT.moeda(v).replace('−', '-') + (r.rl[i] && !/^RECEITA BRUTA/i.test(r.nome) ? '  ' + pctDe(v, r.rl[i]) : '') : '-'; })));
+      const fmt = function (v, base) { return v ? FT.moeda(v).replace('−', '-') + (base ? '  ' + pct(v, base) : '') : '-'; };
+      ESTR.forEach(function (e) {
+        const ch = e[2], neg = e[0] === 'grp' || e[0] === 'sec';
+        if (e[0] === 'grp' && !cols.some(function (c) { return c.d[ch]; })) return;
+        if (e[0] !== 'grp') dest.push(linhas.length);
+        linhas.push([e[1]].concat(cols.map(function (c) { return fmt((neg ? -1 : 1) * c.d[ch], ch === 'fat' ? 0 : c.d.liq); })));
+        if (e[0] === 'grp' && e[3]) e[3].forEach(function (r) { if (cols.some(function (c) { return c.v[r]; })) linhas.push(['   ' + L[r]].concat(cols.map(function (c) { return fmt(-(c.v[r] || 0)); }))); });
       });
-      const bytes = await FT.gerarPDF({ titulo: 'DRE GERENCIAL ' + st.ano, subtitulo: 'Forneria Toscana · CNPJ 09.385.499/0001-77', paisagem: true,
-        blocos: [{ colunas: colunas, linhas: linhas, destaques: dest }],
-        rodape: ['RECEITA: VENDAS DO SISCHEF (COM A TAXA DE SERVIÇO). DESPESAS: CONTAS A PAGAR PELA DATA DE VENCIMENTO. CMV PELAS COMPRAS DO MÊS.', 'VISÃO GERENCIAL. OS PERCENTUAIS SÃO SOBRE A RECEITA LÍQUIDA.'] });
-      FT.baixarArquivo(bytes, 'dre_' + st.ano + '.pdf');
+      const ind = [['Margem de contribuição', function (z) { return pct(z.mc, z.liq); }], ['Prime cost (CMV + CMO)', function (z) { return pct(z.cmv + z.cmo, z.liq); }], ['Ponto de equilíbrio', function (z) { return z.pe == null ? '-' : FT.moeda(z.pe); }], ['Produtividade por funcionário', function (z) { return z.produt == null ? '-' : FT.moeda(z.produt); }], ['Ocupação', function (z) { return pct(z.ocup, z.liq); }]];
+      const bytes = await FT.gerarPDF({ titulo: 'DRE SIMPLIFICADO ' + st.ano, subtitulo: 'Forneria Toscana · CNPJ 09.385.499/0001-77', paisagem: true,
+        blocos: [{ colunas: colunasPdf, linhas: linhas, destaques: dest },
+          { titulo: 'Indicadores', colunas: colunasPdf.map(function (c, i) { return i ? c : { t: 'INDICADOR', w: c.w }; }), linhas: ind.map(function (i) { return [i[0]].concat(cols.map(function (c) { return i[1](c.d) || '-'; })); }) }],
+        rodape: ['FATURAMENTO: VENDAS DO SISCHEF SEM DESCONTOS. DESPESAS: CONTAS A PAGAR PELA DATA DE VENCIMENTO. PERCENTUAIS SOBRE O FATURAMENTO LÍQUIDO.', 'VISÃO GERENCIAL NO MODELO DRE SIMPLIFICADO.'] });
+      FT.baixarArquivo(bytes, 'dre_simplificado_' + st.ano + '.pdf');
     } catch (e) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(e), true); }
     finally { b.disabled = false; }
   }
@@ -10745,7 +10950,7 @@ window.FT_CONFIG = {
   FT.telas.dre = {
     abrir: async function () {
       if (!montado) { montado = true; montar(); }
-      st.vendasTodas = null; // recarrega as vendas a cada abertura
+      st.ind = null; // recarrega as vendas a cada abertura
       await ir(st.ano || +FT.hoje().slice(0, 4));
     }
   };
