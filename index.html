@@ -915,9 +915,15 @@ table.lista.vp-dias .num { min-width: 64px; }
 .fo-abas { margin-bottom: -4px; }
 #fo-mensal, #fo-decimo { display: grid; gap: 16px; }
 #fo-mensal[hidden], #fo-decimo[hidden] { display: none; }
-.pg.dc .dc-avos { width: 3.6em; text-align: center; padding: 5px 4px !important; }
 .pg.dc td small { display: block; font-size: 11px; color: var(--ink-3); }
-.pg.dc thead small { display: block; font-weight: 400; text-transform: none; }
+.pg.dc .col-nome { min-width: 16em; }
+.dc-val { display: inline-block; padding: 2px 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.dc-mais { color: var(--ink-3); font-weight: 700; }
+.pg.dc td.col-total { font-size: 15px; }
+.dc-lidos select { max-width: 18em; }
+.dc-lidos .inp-dinheiro { width: 8em; text-align: right; }
+.dc-aviso { display: block; color: var(--aviso-ink); font-size: 11.5px; margin-top: 2px; }
+.dc-lidos tr.conc-falta td { background: var(--aviso-bg); }
 
 /* ---------- fila de espera ---------- */
 .fl-add { display: grid; grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
@@ -1318,7 +1324,7 @@ window.FT_CONFIG = {
   FT.diaSemana = function (iso) { return FT.dataDe(iso).getDay(); }; // 0 = domingo
   FT.DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   FT.DIAS_CURTOS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  FT.MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro', '13º salário 1ª parcela', '13º salário 2ª parcela']; // 13 e 14: referências do 13º salário nos holerites
+  FT.MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   FT.ddmm = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1]; };
   FT.ddmmaaaa = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
   FT.rotuloSemana = function (seg) { return FT.ddmm(seg) + ' a ' + FT.ddmmaaaa(FT.somaDias(seg, 6)); };
@@ -6277,79 +6283,114 @@ window.FT_CONFIG = {
 })();
 
 /* Forneria Toscana — Folha de pagamento › aba 13º salário
- * 1ª parcela (até 30/11) e 2ª parcela (até 20/12) dos funcionários fixos, com o total a pagar.
- * Os holerites (do sistema e da contabilidade) vão para o Portal do Colaborador como a referência
- * AAAA-13 (1ª parcela) e AAAA-14 (2ª parcela). Valores guardados na configuração "decimo_AAAA_P". */
+ * Sobe o(s) PDF(s) de holerites do 13º da contabilidade; o sistema lê o VALOR LÍQUIDO de cada holerite,
+ * descobre de quem é (nome ou CPF), soma quando a pessoa tem mais de um holerite e mostra o total a pagar
+ * por colaborador. Guardado na configuração "decimo_AAAA". */
 (function () {
   'use strict';
-  const FT = window.FT, C = FT.calc, $ = FT.$, esc = FT.esc;
-  const st = { ano: null, parcela: 1, dados: null, salvo: true, salvando: false, erro: null, ativo: false };
+  const FT = window.FT, $ = FT.$, esc = FT.esc;
+  const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/legacy/build/pdf.min.mjs';
+  const PDFJS_WORKER = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.2.108/legacy/build/pdf.worker.min.mjs';
+  const st = { ano: null, dados: null, pessoas: [], arquivos: {}, verLidos: false };
+  const DINHEIRO = /(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2})(?!\d)/;
+    const chave = function () { return 'decimo_' + st.ano; };
+  const valor = function (s) { return +String(s).replace(/\./g, '').replace(',', '.'); };
 
-  function chaveMes() { return st.ano + '-' + (st.parcela === 1 ? '13' : '14'); }
-  function chaveCfg(ano, parc) { return 'decimo_' + ano + '_' + parc; }
-  function nomeRef() { return '13º SALÁRIO · ' + st.parcela + 'ª PARCELA/' + st.ano; }
-  function prazo() { return st.parcela === 1 ? '30/11/' + st.ano : '20/12/' + st.ano; }
-
-  /* ---------- cálculo ---------- */
-  function calcPessoa(p) {
-    const integral = FT.r2((+p.base || 0) * (+p.avos || 0) / 12);
-    const r = { id: p.id, integral: integral, descontos: FT.r2(+p.descontos || 0) };
-    if (st.parcela === 1) { r.bruto = p.valorManual != null && p.valorManual !== '' ? FT.r2(+p.valorManual) : FT.r2(integral / 2); r.adiant = 0; }
-    else { r.adiant = FT.r2(+p.adiant || 0); r.bruto = FT.r2(integral - r.adiant); }
-    r.liquido = FT.r2(r.bruto - r.descontos);
-    return r;
+  /* ---------- leitura do PDF ---------- */
+  let pdfjs = null;
+  async function carregarPdfjs() {
+    if (pdfjs) return pdfjs;
+    const m = await import(PDFJS); m.GlobalWorkerOptions.workerSrc = PDFJS_WORKER; pdfjs = m; return m;
   }
-  function calcular() {
-    const t = { integral: 0, bruto: 0, adiant: 0, descontos: 0, liquido: 0, pago: 0, falta: 0, nPago: 0 };
-    const ps = st.dados.pessoas.map(function (p) {
-      const r = calcPessoa(p);
-      ['integral', 'bruto', 'adiant', 'descontos', 'liquido'].forEach(function (k) { t[k] += r[k]; });
-      if (p.pago) { t.pago += r.liquido; t.nPago++; } else t.falta += r.liquido;
-      return r;
+  // valor em dinheiro mais perto de um rótulo: primeiro na mesma linha à direita, depois logo abaixo
+  function valorPerto(itens, rot) {
+    const mesmo = rot.str.slice(rot.ini).match(DINHEIRO);
+    if (mesmo) return valor(mesmo[1]);
+    let melhor = null, dist = Infinity;
+    itens.forEach(function (it) {
+      if (it === rot || !it.din) return;
+      const dy = rot.y - it.y, dx = it.x - rot.x;
+      let d;
+      if (Math.abs(dy) <= 4 && dx > -5) d = dx;                              // mesma linha, à direita
+      else if (dy > 0 && dy <= 45 && Math.abs(dx) <= 160) d = 400 + dy * 4 + Math.abs(dx); // logo abaixo
+      else return;
+      if (d < dist) { dist = d; melhor = it; }
     });
-    Object.keys(t).forEach(function (k) { if (k !== 'nPago') t[k] = FT.r2(t[k]); });
-    return { pessoas: ps, totais: t };
+    return melhor ? valor(melhor.din) : null;
   }
-
-  /* ---------- dados iniciais a partir das folhas do ano ---------- */
-  async function montarDados() {
-    const funcs = await FT.obterFuncionarios(true);
-    const salvo = await FT.store.config.ler(chaveCfg(st.ano, st.parcela));
-    const folhas = await FT.store.folha.listar().catch(function () { return {}; });
-    const p1 = st.parcela === 2 ? await FT.store.config.ler(chaveCfg(st.ano, 1)) : null;
-    // salário mais recente e primeiro mês com salário no ano, por funcionário
-    const info = {};
-    Object.keys(folhas || {}).filter(function (m) { return m.slice(0, 4) === String(st.ano) && +m.slice(5) <= 12; }).sort().forEach(function (m) {
-      ((folhas[m] || {}).pessoas || []).forEach(function (p) {
-        if (!(+p.salario)) return;
-        const i = info[p.id] = info[p.id] || { primeiro: +m.slice(5) };
-        i.salario = +p.salario;
-      });
+  // devolve uma lista de holerites encontrados na página: [{ liquido, texto }]
+  function lerPagina(tc) {
+    const itens = tc.items.filter(function (i) { return i.str && i.str.trim(); }).map(function (i) {
+      const so = i.str.trim().replace(/^R\$\s*/, '');
+      return { str: i.str, x: i.transform[4], y: i.transform[5], din: /^\d{1,3}(\.\d{3})*,\d{2}$/.test(so) ? so : null };
     });
-    const ativos = funcs.filter(function (f) { return f.ativo !== false && f.tipo === 'fixo'; });
-    const porId = {}; funcs.forEach(function (f) { porId[f.id] = f; });
-    const ant = {}; ((salvo && salvo.pessoas) || []).forEach(function (p) { ant[p.id] = p; });
-    const p1porId = {};
-    if (p1 && p1.pessoas) { const sp = st.parcela; st.parcela = 1; p1.pessoas.forEach(function (p) { p1porId[p.id] = calcPessoa(p); }); st.parcela = sp; }
-    const nova = function (f) {
-      const i = info[f.id] || {};
-      const p = { id: f.id, nome: f.nome, cargo: f.cargo || '', setor: f.setor || '', base: i.salario || +f.salario || 0, avos: i.primeiro ? 13 - i.primeiro : 12, descontos: 0, pago: false, obs: '' };
-      if (st.parcela === 2) {
-        const a = p1porId[f.id];
-        if (a) { p.adiant = a.bruto; const q = (p1.pessoas || []).find(function (x) { return x.id === f.id; }); if (q) { p.base = +q.base || p.base; p.avos = +q.avos || p.avos; } }
-        else p.adiant = 0;
+    const texto = itens.map(function (i) { return i.str; }).join(' ');
+    const rotulos = [];
+    itens.forEach(function (it) {
+      const s = FT.semAcento(it.str);
+      const m = s.match(/LIQUIDO/);
+      if (!m) return;
+      if (/SALARIO LIQUIDO|BASE|FGTS|LIQUIDO DE FERIAS|IRRF/.test(s) && !/VALOR LIQUIDO|LIQUIDO A RECEBER|LIQUIDO A PAGAR|TOTAL LIQUIDO/.test(s)) return;
+      it.ini = m.index; rotulos.push(it);
+    });
+    // rótulos com "VALOR LÍQUIDO / LÍQUIDO A RECEBER" valem mais que um "LÍQUIDO" solto
+    const fortes = rotulos.filter(function (r) { return /VALOR LIQUIDO|LIQUIDO A RECEBER|LIQUIDO A PAGAR|TOTAL LIQUIDO|LIQUIDO \(?R\$/.test(FT.semAcento(r.str)); });
+    const usar = (fortes.length ? fortes : rotulos).slice().sort(function (a, b) { return b.y - a.y; });
+    const achados = [];
+    let topo = Infinity;
+    usar.forEach(function (r) {
+      const v = valorPerto(itens, r);
+      if (v == null) return;
+      // texto do trecho da página que vai do rótulo anterior até este (para achar o nome de quem é)
+      const trecho = itens.filter(function (i) { return i.y >= r.y - 2 && i.y < topo - 2; }).map(function (i) { return i.str; }).join(' ');
+      achados.push({ liquido: v, texto: trecho, y: r.y });
+      topo = r.y;
+    });
+    if (!achados.length) {
+      // sem "líquido": tenta total de vencimentos − total de descontos
+      const ven = itens.find(function (i) { return /TOTAL (DE )?VENCIMENTOS|TOTAL (DE )?PROVENTOS/.test(FT.semAcento(i.str)); });
+      const des = itens.find(function (i) { return /TOTAL (DE )?DESCONTOS/.test(FT.semAcento(i.str)); });
+      if (ven) {
+        ven.ini = 0; const v1 = valorPerto(itens, ven);
+        let v2 = 0; if (des) { des.ini = 0; v2 = valorPerto(itens, des) || 0; }
+        if (v1 != null) achados.push({ liquido: FT.r2(v1 - v2), texto: texto, calculado: true });
       }
-      return p;
-    };
-    const pessoas = [];
-    ativos.forEach(function (f) {
-      const a = ant[f.id];
-      if (a) { a.nome = f.nome; a.cargo = f.cargo || ''; a.setor = f.setor || ''; pessoas.push(a); } else pessoas.push(nova(f));
-    });
-    // quem saiu do cadastro mas já tinha valor lançado continua na lista
-    Object.keys(ant).forEach(function (id) { if (!pessoas.some(function (p) { return String(p.id) === String(id); })) pessoas.push(ant[id]); });
-    st.existe = !!salvo;
-    st.dados = { pessoas: pessoas.sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); }) };
+    }
+    return { texto: texto, achados: achados };
+  }
+
+  async function lerArquivos(arquivos) {
+    const lib = await carregarPdfjs();
+    const pessoas = st.pessoas;
+    const novos = [];
+    for (let fi = 0; fi < arquivos.length; fi++) {
+      const f = arquivos[fi];
+      const bytes = new Uint8Array(await f.arrayBuffer());
+      if (String.fromCharCode.apply(null, bytes.subarray(0, 5)) !== '%PDF-') throw new Error(f.name + ' não é um PDF');
+      st.arquivos[f.name] = bytes;
+      const doc = await lib.getDocument({ data: bytes.slice() }).promise;
+      let ant = null;
+      for (let i = 1; i <= doc.numPages; i++) {
+        msg('Lendo ' + f.name + ' · página ' + i + ' de ' + doc.numPages + '…');
+        const pg = await doc.getPage(i);
+        const lida = lerPagina(await pg.getTextContent());
+        const daPagina = FT.holerites._identificar(lida.texto, f.name, pessoas);
+        if (!lida.achados.length) {
+          novos.push({ arq: f.name, pag: i, fid: daPagina || ant, liquido: null, aviso: lida.texto.trim() ? 'não achei o valor líquido' : 'página sem texto (escaneada?)' });
+          continue;
+        }
+        const vistos = {};
+        lida.achados.forEach(function (a) {
+          const fid = (lida.achados.length > 1 ? FT.holerites._identificar(a.texto, '', pessoas) : null) || daPagina;
+          const k = (fid || '?') + '|' + a.liquido;
+          if (vistos[k]) return; // segunda via do mesmo holerite na mesma página
+          vistos[k] = 1;
+          novos.push({ arq: f.name, pag: i, fid: fid, liquido: a.liquido, aviso: !fid ? 'não achei de quem é' : a.calculado ? 'calculado: vencimentos − descontos' : '' });
+        });
+        if (daPagina) ant = daPagina;
+      }
+    }
+    return novos;
   }
 
   /* ---------- tela ---------- */
@@ -6357,211 +6398,177 @@ window.FT_CONFIG = {
     cont.innerHTML =
       '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="dc-ant" aria-label="Ano anterior">‹</button>' +
       '<div class="nav-semana-t"><span>13º salário</span><b id="dc-ano"></b></div><button type="button" class="btn-icone" id="dc-prox" aria-label="Próximo ano">›</button></div>' +
-      '<div class="segmentado" role="group" aria-label="Parcela" id="dc-parc"><button type="button" data-p="1" aria-pressed="true">1ª parcela · até 30/11</button><button type="button" data-p="2" aria-pressed="false">2ª parcela · até 20/12</button></div>' +
-      '<div class="acoes-linha"><span class="pilula" id="dc-estado"></span><button type="button" class="btn btn-sec" id="dc-importar">Importar holerites da contabilidade</button><button type="button" class="btn btn-sec" id="dc-pdf">Baixar relação para pagamento</button></div></div>' +
+      '<div class="acoes-linha"><span class="pilula" id="dc-estado"></span>' +
+      '<button type="button" class="btn" id="dc-subir">Subir PDF dos holerites</button>' +
+      '<button type="button" class="btn btn-sec" id="dc-pdf">Baixar lista para pagamento</button>' +
+      '<button type="button" class="link" id="dc-limpar">Apagar e começar de novo</button></div>' +
+      '<input type="file" id="dc-arq" accept="application/pdf,.pdf" multiple hidden></div>' +
       '<div id="dc-msg" class="msg" hidden></div>' +
-      '<div class="kpis kpis-5" id="dc-kpis"></div>' +
-      '<div class="rolagem"><table class="pg fo dc" id="dc-tabela"></table></div>' +
-      '<div class="painel nota"><h3>Como funciona</h3><ul>' +
-      '<li><b>Salário base</b> e <b>avos</b> (meses trabalhados no ano) vêm das folhas mensais. Confira com o holerite da contabilidade e ajuste se precisar.</li>' +
-      '<li><b>1ª parcela</b>: metade do 13º, sem descontos. Se a contabilidade calculou outro valor, digite em "1ª parcela".</li>' +
-      '<li><b>2ª parcela</b>: 13º integral menos a 1ª parcela, menos INSS e IRRF. Digite os descontos que estão no holerite da contabilidade.</li>' +
-      '<li>Marque <b>Pago</b> quando fizer o pagamento. O total do topo mostra quanto ainda falta pagar.</li>' +
-      '<li>O botão <b>Enviar</b> manda o holerite para o Portal do Colaborador, como na folha do mês, para o colaborador conferir e assinar.</li></ul></div>';
-    $('#dc-ant').addEventListener('click', function () { ir(st.ano - 1, st.parcela); });
-    $('#dc-prox').addEventListener('click', function () { ir(st.ano + 1, st.parcela); });
-    $('#dc-parc').addEventListener('click', function (e) { const b = e.target.closest('[data-p]'); if (b) ir(st.ano, +b.dataset.p); });
-    $('#dc-estado').addEventListener('click', function () { if (st.erro) salvarAgora(); });
-    $('#dc-importar').addEventListener('click', async function () { await salvarAgora(); FT.holerites.importarContab(); });
-    $('#dc-pdf').addEventListener('click', relacaoPDF);
-    const tab = $('#dc-tabela');
-    tab.addEventListener('input', function (e) {
-      const el = e.target, p = pessoa(el.dataset.p); if (!p || !el.dataset.campo) return;
-      const c = el.dataset.campo;
-      if (c === 'obs') p.obs = el.value;
-      else if (c === 'pago') { p.pago = el.checked; p.pagoEm = el.checked ? FT.hoje() : null; }
-      else if (c === 'valorManual') p.valorManual = el.value.trim() ? FT.lerValor(el.value) : null;
-      else if (c === 'avos') p.avos = Math.max(0, Math.min(12, parseInt(el.value, 10) || 0));
-      else p[c] = el.value.trim() ? FT.lerValor(el.value) : 0;
-      mudou(c === 'pago');
+      '<div class="kpis kpis-4" id="dc-kpis"></div>' +
+      '<div class="rolagem"><table class="pg dc" id="dc-tabela"></table></div>' +
+      '<section class="painel"><div class="cab-secao"><h3 id="dc-lidos-tit">Holerites lidos</h3><button type="button" class="link" id="dc-ver-lidos"></button></div><div id="dc-lidos"></div></section>';
+    $('#dc-ant').addEventListener('click', function () { ir(st.ano - 1); });
+    $('#dc-prox').addEventListener('click', function () { ir(st.ano + 1); });
+    $('#dc-subir').addEventListener('click', function () { $('#dc-arq').click(); });
+    $('#dc-arq').addEventListener('change', async function (e) {
+      const fs = Array.prototype.slice.call(e.target.files); e.target.value = ''; if (!fs.length) return;
+      const b = $('#dc-subir'); b.disabled = true;
+      try {
+        const novos = await lerArquivos(fs);
+        // o mesmo arquivo subido de novo substitui o anterior
+        const nomes = fs.map(function (f) { return f.name; });
+        st.dados.holerites = st.dados.holerites.filter(function (h) { return nomes.indexOf(h.arq) < 0; }).concat(novos);
+        await salvar();
+        const conf = novos.filter(function (h) { return conferir(h); }).length;
+        msg(novos.length + ' holerite(s) lido(s)' + (conf ? ' · <b>' + conf + ' para conferir</b> na lista "Holerites lidos", abaixo.' : '. Tudo identificado.'), !!conf);
+        if (conf) st.verLidos = true;
+        desenhar();
+      } catch (x) { msg('Não consegui ler o PDF: ' + esc(FT.textoErro(x)), true); }
+      finally { b.disabled = false; }
     });
-    tab.addEventListener('change', function (e) {
-      const el = e.target, p = pessoa(el.dataset.p); if (!p) return;
-      const c = el.dataset.campo;
-      if (c === 'obs') { p.obs = FT.mai(el.value); el.value = p.obs; }
-      else if (c === 'avos') el.value = p.avos;
-      else if (c === 'valorManual') { el.value = p.valorManual != null ? FT.num2(p.valorManual) : ''; }
-      else if (c !== 'pago') { const v = +p[c] || 0; el.value = v ? FT.num2(v) : ''; }
+    $('#dc-pdf').addEventListener('click', listaPDF);
+    $('#dc-limpar').addEventListener('click', async function () {
+      if (!st.dados.holerites.length || !confirm('Apagar todos os holerites lidos e as marcações de pago do 13º de ' + st.ano + '?')) return;
+      st.dados = { holerites: [], pagos: {} }; await salvar(); $('#dc-msg').hidden = true; desenhar();
     });
-    tab.addEventListener('click', async function (e) {
-      const h = e.target.closest('[data-holerite]'); if (h) { imprimir(h.dataset.holerite); return; }
-      const en = e.target.closest('[data-enviar]'); if (en) { await salvarAgora(); FT.holerites.abrirEnvio(en.dataset.enviar); }
+    $('#dc-ver-lidos').addEventListener('click', function () { st.verLidos = !st.verLidos; desenharLidos(); });
+    $('#dc-tabela').addEventListener('change', async function (e) {
+      const c = e.target.closest('[data-pago]'); if (!c) return;
+      if (c.checked) st.dados.pagos[c.dataset.pago] = FT.hoje(); else delete st.dados.pagos[c.dataset.pago];
+      await salvar(); desenhar();
+    });
+    $('#dc-lidos').addEventListener('change', async function (e) {
+      const el = e.target, h = st.dados.holerites[+el.dataset.i]; if (!h) return;
+      if (el.dataset.campo === 'fid') { h.fid = el.value || null; h.aviso = h.fid ? '' : 'não achei de quem é'; }
+      if (el.dataset.campo === 'liquido') { h.liquido = el.value.trim() ? FT.lerValor(el.value) : null; if (h.liquido != null && /valor/.test(h.aviso || '')) h.aviso = ''; }
+      await salvar(); desenhar();
+    });
+    $('#dc-lidos').addEventListener('click', async function (e) {
+      const v = e.target.closest('[data-ver]'); if (v) { verPagina(st.dados.holerites[+v.dataset.ver]); return; }
+      const r = e.target.closest('[data-tirar]'); if (r) { st.dados.holerites.splice(+r.dataset.tirar, 1); await salvar(); desenhar(); }
     });
   }
-  function pessoa(id) { return id && st.dados.pessoas.find(function (p) { return String(p.id) === String(id); }); }
+  // holerite que precisa de olho: valor sem dono, dono sem valor ou página escaneada
+  function conferir(h) { return (h.liquido != null && !h.fid) || (h.fid && h.liquido == null) || /sem texto/.test(h.aviso || ''); }
+  function msg(html, erro) { const m = $('#dc-msg'); m.hidden = false; m.className = 'msg' + (erro ? ' erro' : ''); m.innerHTML = html; }
 
-  async function ir(ano, parcela) {
-    if (!st.salvo && st.dados) await salvarAgora();
-    st.ano = ano; st.parcela = parcela;
-    $('#dc-ano').textContent = ano;
-    document.querySelectorAll('#dc-parc button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.p === parcela)); });
+  async function ir(ano) {
+    st.ano = ano; $('#dc-ano').textContent = ano; $('#dc-msg').hidden = true;
     $('#dc-tabela').innerHTML = '<tbody><tr><td class="vazio-lista">Carregando…</td></tr></tbody>';
     try {
-      await montarDados();
-      st.salvo = true; st.erro = null;
-      desenhar(); estado();
-      FT.holerites.carregarStatus(chaveMes());
-      const m = $('#dc-msg');
-      if (!st.dados.pessoas.length) { m.hidden = false; m.innerHTML = 'Nenhum funcionário <b>fixo</b> ativo no cadastro.'; }
-      else if (st.parcela === 2 && st.dados.pessoas.every(function (p) { return !(+p.adiant); })) { m.hidden = false; m.innerHTML = 'A 1ª parcela de ' + st.ano + ' ainda não foi lançada aqui. Se ela foi paga, digite o valor na coluna "(−) 1ª parcela".'; }
-      else m.hidden = true;
+      const r = await Promise.all([FT.obterFuncionarios(true), FT.store.acessos.listar().catch(function () { return []; }), FT.store.config.ler(chave())]);
+      const cpf = {}; (r[1] || []).forEach(function (a) { cpf[a.funcionario_id] = a.cpf; });
+      st.funcs = r[0] || [];
+      st.pessoas = st.funcs.filter(function (f) { return f.ativo !== false; }).map(function (f) { return { id: String(f.id), nome: f.nome, cpf: cpf[f.id] }; });
+      st.dados = r[2] || { holerites: [], pagos: {} };
+      st.dados.holerites = st.dados.holerites || []; st.dados.pagos = st.dados.pagos || {};
+      estado('ok');
+      desenhar();
     } catch (e) { FT.aviso('Não consegui abrir o 13º: ' + FT.textoErro(e), true); }
   }
+  async function salvar() {
+    estado('salvando');
+    try { await FT.store.config.salvar(chave(), JSON.parse(JSON.stringify(st.dados))); estado('ok'); }
+    catch (e) { estado('erro', FT.textoErro(e)); }
+  }
+  function estado(s, txt) {
+    const el = $('#dc-estado');
+    el.className = 'pilula' + (s === 'erro' ? ' erro' : s === 'ok' && st.dados && st.dados.holerites.length ? ' ok' : '');
+    el.textContent = s === 'salvando' ? 'Salvando…' : s === 'erro' ? 'Não salvou: ' + txt : st.dados && st.dados.holerites.length ? '✓ Salvo' : 'Nenhum PDF ainda';
+  }
+  function nomeDe(fid) { const f = st.funcs.find(function (x) { return String(x.id) === String(fid); }); return f ? f.nome : 'FUNCIONÁRIO REMOVIDO'; }
 
-  function mudou(redesenhar) { st.salvo = false; st.erro = null; estado(); atualizar(redesenhar); salvarDepois(); }
-  const salvarDepois = FT.debounce(function () { salvarAgora(); }, 1000);
-  async function salvarAgora() {
-    if (st.salvo || st.salvando || !st.dados) return;
-    st.salvando = true; estado();
-    const chave = chaveCfg(st.ano, st.parcela), dados = JSON.parse(JSON.stringify(st.dados));
-    try { await FT.store.config.salvar(chave, dados); if (chave === chaveCfg(st.ano, st.parcela)) { st.salvo = true; st.existe = true; } }
-    catch (e) { st.erro = FT.textoErro(e); console.error(e); }
-    st.salvando = false; estado();
-    if (!st.salvo && !st.erro) salvarDepois();
+  // total por colaborador
+  function agrupar() {
+    const g = {};
+    st.dados.holerites.forEach(function (h, i) {
+      if (conferir(h)) return;
+      const x = g[h.fid] = g[h.fid] || { fid: h.fid, nome: nomeDe(h.fid), valores: [], total: 0 };
+      x.valores.push({ v: h.liquido, i: i }); x.total = FT.r2(x.total + h.liquido);
+    });
+    return Object.values(g).sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });
   }
-  function estado() {
-    const el = $('#dc-estado'); if (!el) return;
-    if (st.erro) { el.className = 'pilula erro'; el.textContent = 'Não salvou: ' + st.erro + ' · clique para tentar de novo'; return; }
-    if (st.salvando) { el.className = 'pilula'; el.textContent = 'Salvando…'; return; }
-    if (!st.salvo) { el.className = 'pilula'; el.textContent = 'Alterações não salvas'; return; }
-    el.className = st.existe ? 'pilula ok' : 'pilula'; el.textContent = st.existe ? '✓ Salvo' : 'Valores calculados pelas folhas do ano';
-  }
-  window.addEventListener('beforeunload', function (e) { if (st.dados && !st.salvo) { e.preventDefault(); e.returnValue = ''; } });
 
-  function inp(p, campo, valor, rot, cls) {
-    return '<input class="val inp-dinheiro' + (cls || '') + '" data-p="' + esc(p.id) + '" data-campo="' + campo + '" inputmode="decimal" placeholder="0,00" value="' + (valor ? FT.num2(valor) : '') + '" aria-label="' + esc(rot) + ' de ' + esc(p.nome) + '">';
-  }
   function desenhar() {
-    const p1 = st.parcela === 1;
-    let h = '<thead><tr><th class="col-nome">Funcionário</th><th class="num">Salário base</th><th class="num">Avos</th><th class="num">13º integral</th>' +
-      (p1 ? '<th class="num">1ª parcela (50%)</th>' : '<th class="num">(−) 1ª parcela</th><th class="num">2ª parcela bruta</th>') +
-      '<th class="num">(−) Descontos' + (p1 ? '' : '<small>INSS / IRRF</small>') + '</th><th class="num col-total">Líquido a pagar</th><th class="centro">Pago</th><th>Observação</th><th></th></tr></thead><tbody>';
-    st.dados.pessoas.forEach(function (p) {
-      const id = esc(p.id);
-      h += '<tr id="dc-l-' + id + '" class="' + (p.pago ? 'linha-paga' : '') + '"><th class="col-nome" scope="row"><b>' + esc(p.nome) + '</b><small>' + esc([p.cargo, p.setor ? FT.nomeSetor(p.setor) : ''].filter(Boolean).join(' · ') || 'Fixo') + '</small></th>' +
-        '<td class="num">' + inp(p, 'base', +p.base, 'Salário base') + '</td>' +
-        '<td class="num"><input class="val dc-avos" data-p="' + id + '" data-campo="avos" type="number" min="0" max="12" step="1" value="' + (+p.avos || 0) + '" aria-label="Avos de ' + esc(p.nome) + '"><small>/12</small></td>' +
-        '<td class="num" id="dc-int-' + id + '"></td>' +
-        (p1 ? '<td class="num">' + '<input class="val inp-dinheiro" data-p="' + id + '" data-campo="valorManual" inputmode="decimal" value="' + (p.valorManual != null ? FT.num2(p.valorManual) : '') + '" placeholder="" id="dc-v1-' + id + '" aria-label="1ª parcela de ' + esc(p.nome) + '"></td>'
-          : '<td class="num">' + inp(p, 'adiant', +p.adiant, '1ª parcela paga') + '</td><td class="num" id="dc-bruto-' + id + '"></td>') +
-        '<td class="num">' + inp(p, 'descontos', +p.descontos, 'Descontos') + '</td>' +
-        '<td class="num col-total" id="dc-liq-' + id + '"></td>' +
-        '<td class="centro"><input type="checkbox" data-p="' + id + '" data-campo="pago"' + (p.pago ? ' checked' : '') + ' aria-label="' + esc(p.nome) + ' pago"><small id="dc-pg-' + id + '">' + (p.pago && p.pagoEm ? FT.ddmm(p.pagoEm) : '') + '</small></td>' +
-        '<td><input class="val inp-obs" data-p="' + id + '" data-campo="obs" value="' + esc(p.obs || '') + '" placeholder="ex.: pago por PIX" aria-label="Observação de ' + esc(p.nome) + '"></td>' +
-        '<td class="fo-acoes"><div><button type="button" class="btn btn-sec btn-p" data-holerite="' + id + '">Holerite</button><button type="button" class="btn btn-p" data-enviar="' + id + '">Enviar</button></div><small class="fo-env" id="fo-env-' + id + '"></small></td></tr>';
-    });
-    if (!st.dados.pessoas.length) h += '<tr><td colspan="11" class="vazio-lista">Sem funcionários fixos.</td></tr>';
-    h += '</tbody><tfoot><tr><th class="col-nome">Total</th><td></td><td></td><td class="num" id="dc-t-int"></td>' + (p1 ? '<td class="num" id="dc-t-bruto"></td>' : '<td class="num" id="dc-t-adiant"></td><td class="num" id="dc-t-bruto"></td>') +
-      '<td class="num" id="dc-t-desc"></td><td class="num col-total" id="dc-t-liq"></td><td class="centro" id="dc-t-pg"></td><td></td><td></td></tr></tfoot>';
-    $('#dc-tabela').innerHTML = h;
-    atualizar(false);
-  }
-  function txt(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
-  function atualizar() {
-    const c = calcular(), t = c.totais, p1 = st.parcela === 1;
-    c.pessoas.forEach(function (r) {
-      const p = pessoa(r.id), id = r.id;
-      txt('dc-int-' + id, FT.moeda(r.integral)); txt('dc-bruto-' + id, FT.moeda(r.bruto)); txt('dc-liq-' + id, FT.moeda(r.liquido));
-      const v1 = document.getElementById('dc-v1-' + id); if (v1) v1.placeholder = FT.num2(FT.r2(r.integral / 2));
-      const l = document.getElementById('dc-l-' + id); if (l) l.className = p.pago ? 'linha-paga' : '';
-      txt('dc-pg-' + id, p.pago && p.pagoEm ? FT.ddmm(p.pagoEm) : '');
-    });
-    txt('dc-t-int', FT.moeda(t.integral)); txt('dc-t-bruto', FT.moeda(t.bruto)); txt('dc-t-adiant', FT.moeda(t.adiant)); txt('dc-t-desc', t.descontos ? FT.moeda(t.descontos) : '—');
-    txt('dc-t-liq', FT.moeda(t.liquido)); txt('dc-t-pg', t.nPago + '/' + st.dados.pessoas.length);
+    const lista = agrupar();
+    const tot = lista.reduce(function (s, x) { return s + x.total; }, 0);
+    const pago = lista.reduce(function (s, x) { return s + (st.dados.pagos[x.fid] ? x.total : 0); }, 0);
+    const nPago = lista.filter(function (x) { return st.dados.pagos[x.fid]; }).length;
+    const conf = st.dados.holerites.filter(function (h) { return conferir(h); }).length;
     $('#dc-kpis').innerHTML = [
-      { t: 'Total a pagar · ' + st.parcela + 'ª parcela', v: FT.moeda(t.liquido), s: st.dados.pessoas.length + ' funcionários · prazo ' + prazo(), d: true },
-      { t: 'Já pago', v: FT.moeda(t.pago), s: t.nPago + ' de ' + st.dados.pessoas.length + ' marcados como pagos' },
-      { t: 'Falta pagar', v: FT.moeda(t.falta), s: (st.dados.pessoas.length - t.nPago) + ' funcionário(s)', a: t.falta > 0 },
-      { t: p1 ? 'Bruto da 1ª parcela' : 'Descontos (INSS / IRRF)', v: FT.moeda(p1 ? t.bruto : t.descontos), s: p1 ? 'metade do 13º integral' : 'digitados do holerite da contabilidade' },
-      { t: '13º integral do ano', v: FT.moeda(t.integral), s: 'soma das duas parcelas, bruto' }
+      { t: 'Total a pagar', v: FT.moeda(tot), s: lista.length + ' colaborador(es) · ' + st.dados.holerites.filter(function (h) { return h.liquido != null && h.fid; }).length + ' holerite(s)', d: true },
+      { t: 'Já pago', v: FT.moeda(pago), s: nPago + ' de ' + lista.length + ' marcados' },
+      { t: 'Falta pagar', v: FT.moeda(FT.r2(tot - pago)), s: (lista.length - nPago) + ' colaborador(es)', a: tot - pago > 0.004 },
+      { t: 'Para conferir', v: String(conf), s: conf ? 'holerites sem nome ou sem valor' : 'tudo identificado', a: conf > 0 }
     ].map(function (k) { return '<article class="kpi' + (k.d ? ' kpi-destaque' : '') + (k.a ? ' kpi-alerta' : '') + '"><h3>' + esc(k.t) + '</h3><p class="kpi-v">' + k.v + '</p><p class="kpi-s">' + esc(k.s) + '</p></article>'; }).join('');
+
+    let h = '<thead><tr><th class="col-nome">Colaborador</th><th>Holerites (valor líquido de cada um)</th><th class="num col-total">Total a pagar</th><th class="centro">Pago</th></tr></thead><tbody>';
+    if (!lista.length) h += '<tr><td colspan="4" class="vazio-lista">Suba o PDF com os holerites do 13º que a contabilidade mandou. O sistema lê o valor líquido de cada um e soma por colaborador.</td></tr>';
+    lista.forEach(function (x) {
+      const pg = st.dados.pagos[x.fid];
+      h += '<tr class="' + (pg ? 'linha-paga' : '') + '"><th class="col-nome" scope="row"><b>' + esc(x.nome) + '</b></th>' +
+        '<td>' + x.valores.map(function (v) { return '<span class="dc-val">' + FT.moeda(v.v) + '</span>'; }).join(' <span class="dc-mais">+</span> ') + '</td>' +
+        '<td class="num col-total">' + FT.moeda(x.total) + '</td>' +
+        '<td class="centro"><input type="checkbox" data-pago="' + esc(x.fid) + '"' + (pg ? ' checked' : '') + ' aria-label="' + esc(x.nome) + ' pago">' + (pg ? '<small>' + FT.ddmm(pg) + '</small>' : '') + '</td></tr>';
+    });
+    h += '</tbody>' + (lista.length ? '<tfoot><tr><th class="col-nome">Total</th><td></td><td class="num col-total">' + FT.moeda(tot) + '</td><td class="centro">' + nPago + '/' + lista.length + '</td></tr></tfoot>' : '');
+    $('#dc-tabela').innerHTML = h;
+    desenharLidos();
   }
 
-  /* ---------- holerite (recibo) do 13º ---------- */
-  function linhaH(desc, ref, prov, d) { return '<tr><td>' + esc(desc) + '</td><td class="ref">' + esc(ref || '') + '</td><td class="num">' + (prov ? FT.num2(prov) : '') + '</td><td class="num">' + (d ? FT.num2(d) : '') + '</td></tr>'; }
-  function via(p, r, rotuloVia) {
-    let linhas = '';
-    if (st.parcela === 1) linhas += linhaH('13º SALÁRIO · 1ª PARCELA (ADIANTAMENTO)', (+p.avos || 0) + '/12 AVOS', r.bruto);
-    else {
-      linhas += linhaH('13º SALÁRIO', (+p.avos || 0) + '/12 AVOS', r.integral);
-      if (r.adiant) linhas += linhaH('(-) 1ª PARCELA JÁ PAGA', '', 0, r.adiant);
-    }
-    if (r.descontos) linhas += linhaH(st.parcela === 1 ? 'DESCONTOS' : 'INSS / IRRF', '', 0, r.descontos);
-    const prov = st.parcela === 1 ? r.bruto : r.integral, desc = FT.r2(r.adiant + r.descontos);
-    return '<section class="via"><header><div><b>FORNERIA TOSCANA</b><span>GUARAREMA/SP</span></div><div class="via-tit"><b>RECIBO DE 13º SALÁRIO</b><span>' + st.parcela + 'ª PARCELA · ' + st.ano + '</span></div><div class="via-rot">' + rotuloVia + '</div></header>' +
-      '<div class="via-func"><div><span>FUNCIONÁRIO</span><b>' + esc(p.nome) + '</b></div><div><span>CARGO</span><b>' + esc(p.cargo || '—') + '</b></div><div><span>SALÁRIO BASE</span><b>' + FT.moeda(+p.base || 0) + '</b></div></div>' +
-      '<table><thead><tr><th>DESCRIÇÃO</th><th class="ref">REFERÊNCIA</th><th class="num">PROVENTOS</th><th class="num">DESCONTOS</th></tr></thead><tbody>' + linhas + '</tbody>' +
-      '<tfoot><tr><td colspan="2">TOTAIS</td><td class="num">' + FT.num2(prov) + '</td><td class="num">' + FT.num2(desc) + '</td></tr>' +
-      '<tr class="liq"><td colspan="3">LÍQUIDO A RECEBER</td><td class="num">' + FT.moeda(r.liquido) + '</td></tr></tfoot></table>' +
-      (p.obs ? '<p class="via-obs">OBS.: ' + esc(p.obs) + '</p>' : '') +
-      '<p class="via-decl">DECLARO TER RECEBIDO DE FORNERIA TOSCANA A IMPORTÂNCIA LÍQUIDA DE <b>' + FT.moeda(r.liquido) + '</b> (' + C.extenso(r.liquido) + '), REFERENTE À ' + st.parcela + 'ª PARCELA DO 13º SALÁRIO DE ' + st.ano + '.</p>' +
-      '<div class="via-ass"><div><span class="linha"></span>LOCAL E DATA: GUARAREMA, ____/____/______</div><div><span class="linha"></span>ASSINATURA DO FUNCIONÁRIO</div></div></section>';
-  }
-  function imprimir(id) {
-    const p = pessoa(id); if (!p) return;
-    salvarAgora();
-    const r = calcPessoa(p);
-    let area = document.getElementById('impressao');
-    if (!area) { area = document.createElement('div'); area.id = 'impressao'; document.body.appendChild(area); }
-    area.innerHTML = '<div class="holerite-pagina">' + via(p, r, '1ª VIA · EMPRESA') + '<div class="corte">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>' + via(p, r, '2ª VIA · FUNCIONÁRIO') + '</div>';
-    setTimeout(function () { window.print(); }, 50);
+  function desenharLidos() {
+    const hs = st.dados.holerites, conf = hs.filter(function (h) { return conferir(h); }).length;
+    $('#dc-lidos-tit').textContent = 'Holerites lidos (' + hs.length + ')' + (conf ? ' · ' + conf + ' para conferir' : '');
+    $('#dc-ver-lidos').textContent = hs.length ? (st.verLidos ? 'Esconder' : 'Ver e corrigir') : '';
+    if (!hs.length || !st.verLidos) { $('#dc-lidos').innerHTML = hs.length ? '<p class="dica">Confira aqui de qual página saiu cada valor e corrija se o sistema errou o nome ou o valor.</p>' : ''; return; }
+    const opts = function (sel) {
+      return '<option value="">— de quem é? —</option>' + st.pessoas.slice().sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); })
+        .map(function (p) { return '<option value="' + esc(p.id) + '"' + (String(sel) === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('');
+    };
+    $('#dc-lidos').innerHTML = '<div class="rolagem"><table class="lista dc-lidos"><thead><tr><th>Arquivo</th><th class="num">Pág.</th><th>Colaborador</th><th class="num">Valor líquido</th><th></th><th></th></tr></thead><tbody>' +
+      hs.map(function (h, i) {
+        return '<tr class="' + (conferir(h) ? 'conc-falta' : '') + '"><td>' + esc(h.arq) + '</td><td class="num">' + h.pag + '</td>' +
+          '<td><select data-i="' + i + '" data-campo="fid" aria-label="Colaborador do holerite da página ' + h.pag + '">' + opts(h.fid) + '</select>' + (h.aviso ? '<small class="dc-aviso">' + esc(h.aviso) + '</small>' : '') + '</td>' +
+          '<td class="num"><input class="inp-dinheiro" data-i="' + i + '" data-campo="liquido" inputmode="decimal" value="' + (h.liquido != null ? FT.num2(h.liquido) : '') + '" placeholder="0,00" aria-label="Valor líquido da página ' + h.pag + '"></td>' +
+          '<td>' + (st.arquivos[h.arq] ? '<button type="button" class="link" data-ver="' + i + '">ver página</button>' : '') + '</td>' +
+          '<td><button type="button" class="link" data-tirar="' + i + '">tirar</button></td></tr>';
+      }).join('') + '</tbody></table></div><p class="dica">Página sem valor (continuação do holerite anterior) pode ser tirada. Se escolher "— de quem é? —", o valor não entra na soma.</p>';
   }
 
-  async function relacaoPDF() {
-    if (!st.dados) return;
+  async function verPagina(h) {
+    try {
+      const L = await FT.carregarScript(FT.PDFLIB_URL || 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js', 'PDFLib');
+      const src = await L.PDFDocument.load(st.arquivos[h.arq]);
+      const out = await L.PDFDocument.create();
+      (await out.copyPages(src, [h.pag - 1])).forEach(function (p) { out.addPage(p); });
+      const url = URL.createObjectURL(new Blob([await out.save()], { type: 'application/pdf' }));
+      window.open(url, '_blank'); setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    } catch (x) { msg('Não consegui mostrar a página: ' + esc(FT.textoErro(x)), true); }
+  }
+
+  async function listaPDF() {
+    const lista = agrupar(); if (!lista.length) { msg('Suba o PDF dos holerites primeiro.', true); return; }
     const b = $('#dc-pdf'); b.disabled = true;
     try {
-      const c = calcular(), porId = {}; c.pessoas.forEach(function (r) { porId[r.id] = r; });
-      const p1 = st.parcela === 1;
-      const colunas = p1
-        ? [{ t: 'FUNCIONÁRIO', w: 0.34 }, { t: 'SALÁRIO BASE', w: 0.13, a: 'r' }, { t: 'AVOS', w: 0.07, a: 'r' }, { t: '1ª PARCELA', w: 0.13, a: 'r' }, { t: 'DESCONTOS', w: 0.11, a: 'r' }, { t: 'LÍQUIDO', w: 0.13, a: 'r' }, { t: 'PAGO', w: 0.09 }]
-        : [{ t: 'FUNCIONÁRIO', w: 0.28 }, { t: '13º INTEGRAL', w: 0.12, a: 'r' }, { t: 'AVOS', w: 0.06, a: 'r' }, { t: '(-) 1ª PARCELA', w: 0.12, a: 'r' }, { t: '(-) INSS/IRRF', w: 0.12, a: 'r' }, { t: 'LÍQUIDO', w: 0.13, a: 'r' }, { t: 'PAGO', w: 0.09 }];
-      const linhas = st.dados.pessoas.map(function (p) {
-        const r = porId[p.id];
-        return p1 ? [p.nome, FT.moeda(+p.base || 0), String(+p.avos || 0) + '/12', FT.moeda(r.bruto), r.descontos ? FT.moeda(r.descontos) : '-', FT.moeda(r.liquido), p.pago ? 'SIM ' + (p.pagoEm ? FT.ddmm(p.pagoEm) : '') : '']
-          : [p.nome, FT.moeda(r.integral), String(+p.avos || 0) + '/12', r.adiant ? FT.moeda(r.adiant) : '-', r.descontos ? FT.moeda(r.descontos) : '-', FT.moeda(r.liquido), p.pago ? 'SIM ' + (p.pagoEm ? FT.ddmm(p.pagoEm) : '') : ''];
-      });
-      const t = c.totais;
-      const bytes = await FT.gerarPDF({ titulo: '13º SALÁRIO · ' + st.parcela + 'ª PARCELA · ' + st.ano, subtitulo: 'Forneria Toscana · CNPJ 09.385.499/0001-77 · relação para pagamento',
-        info: [['Total a pagar', FT.moeda(t.liquido)], ['Já pago', FT.moeda(t.pago)], ['Falta pagar', FT.moeda(t.falta)], ['Prazo', prazo()]],
-        blocos: [{ colunas: colunas, linhas: linhas, total: p1 ? ['TOTAL', '', '', FT.moeda(t.bruto), t.descontos ? FT.moeda(t.descontos) : '-', FT.moeda(t.liquido), t.nPago + '/' + st.dados.pessoas.length]
-          : ['TOTAL', FT.moeda(t.integral), '', FT.moeda(t.adiant), t.descontos ? FT.moeda(t.descontos) : '-', FT.moeda(t.liquido), t.nPago + '/' + st.dados.pessoas.length] }] });
-      FT.baixarArquivo(bytes, '13_salario_' + st.ano + '_parcela' + st.parcela + '.pdf');
-    } catch (e) { FT.aviso('Não consegui gerar o PDF: ' + FT.textoErro(e), true); }
+      const tot = lista.reduce(function (s, x) { return s + x.total; }, 0);
+      const pago = lista.reduce(function (s, x) { return s + (st.dados.pagos[x.fid] ? x.total : 0); }, 0);
+      const bytes = await FT.gerarPDF({ titulo: '13º SALÁRIO ' + st.ano + ' · LISTA PARA PAGAMENTO', subtitulo: 'Forneria Toscana · CNPJ 09.385.499/0001-77',
+        info: [['Total a pagar', FT.moeda(tot)], ['Já pago', FT.moeda(pago)], ['Falta pagar', FT.moeda(FT.r2(tot - pago))], ['Colaboradores', String(lista.length)]],
+        blocos: [{ colunas: [{ t: 'COLABORADOR', w: 0.38 }, { t: 'HOLERITES', w: 0.3 }, { t: 'TOTAL A PAGAR', w: 0.18, a: 'r' }, { t: 'PAGO', w: 0.14 }],
+          linhas: lista.map(function (x) { return [x.nome, x.valores.map(function (v) { return FT.moeda(v.v); }).join(' + '), FT.moeda(x.total), st.dados.pagos[x.fid] ? 'SIM ' + FT.ddmm(st.dados.pagos[x.fid]) : '']; }),
+          total: ['TOTAL', '', FT.moeda(tot), ''] }] });
+      FT.baixarArquivo(bytes, '13_salario_' + st.ano + '_pagamento.pdf');
+    } catch (e) { msg('Não consegui gerar o PDF: ' + esc(FT.textoErro(e)), true); }
     finally { b.disabled = false; }
   }
 
-  // o envio e a importação de holerites (FT.holerites) falam com a folha por FT.folhaAPI:
-  // na aba 13º, responde com os dados do 13º
-  const apiMensal = FT.folhaAPI;
-  const api13 = {
-    estado: function () { return { mes: chaveMes(), dados: st.dados }; },
-    nomeMes: function () { return nomeRef(); },
-    calculo: function (id) { const p = pessoa(id); return p ? calcPessoa(p) : null; },
-    pessoa: function (id) { return pessoa(id); },
-    via: via
-  };
-  FT.folhaAPI = new Proxy({}, { get: function (_, k) { return (st.ativo ? api13 : apiMensal)[k]; } });
-
   FT.decimo = {
     abrir: async function (cont) {
-      st.ativo = true;
       if (!cont.dataset.montado) { cont.dataset.montado = '1'; montar(cont); }
-      const hoje = FT.hoje();
-      if (!st.ano) { st.ano = +hoje.slice(0, 4); st.parcela = hoje.slice(5, 7) === '12' ? 2 : 1; }
-      await ir(st.ano, st.parcela);
+      await ir(st.ano || +FT.hoje().slice(0, 4));
     },
-    sair: async function () { await salvarAgora(); st.ativo = false; const t = document.getElementById('dc-tabela'); if (t) t.innerHTML = ''; }
+    sair: async function () {},
+    _lerPagina: lerPagina
   };
 })();
 
