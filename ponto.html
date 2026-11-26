@@ -232,7 +232,7 @@ window.FT_CONFIG = {
   FT.diaSemana = function (iso) { return FT.dataDe(iso).getDay(); }; // 0 = domingo
   FT.DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   FT.DIAS_CURTOS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  FT.MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  FT.MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro', '13º salário 1ª parcela', '13º salário 2ª parcela'];
   FT.ddmm = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1]; };
   FT.ddmmaaaa = function (iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; };
   FT.rotuloSemana = function (seg) { return FT.ddmm(seg) + ' a ' + FT.ddmmaaaa(FT.somaDias(seg, 6)); };
