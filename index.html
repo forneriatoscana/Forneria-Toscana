@@ -3137,6 +3137,7 @@ window.FT_CONFIG = {
         },
         remover: async function (id) { return ok(sb.from('funcionarios').delete().eq('id', id)); }
       },
+      vendasFormas: async function (ano) { return ok(sb.from('vw_vendas_formas_mes').select('mes,forma,valor,pedidos').gte('mes', ano + '-01').lte('mes', ano + '-12')); },
       fila: {
         listar: async function (dia) { return ok(sb.from('fila_espera').select('*').eq('dia', dia).order('chegada')); },
         salvar: async function (r) {
@@ -3394,6 +3395,7 @@ window.FT_CONFIG = {
         salvarVarios: function (lista) { const r = lista.map(function (f) { f = Object.assign(clonar(f), FT.limparFuncionario(f)); f.id = 'p' + (seq++); f.ativo = true; db.funcionarios.push(f); return f; }); return espera(r); },
         remover: function (id) { db.funcionarios = db.funcionarios.filter(function (x) { return x.id !== id; }); return espera(null); }
       },
+      vendasFormas: function () { return espera(clonar(db.formas || [])); },
       fila: {
         listar: function (dia) { db.fila = db.fila || []; return espera(db.fila.filter(function (r) { return r.dia === dia; }).map(clonar)); },
         salvar: function (r) {
@@ -10758,7 +10760,7 @@ window.FT_CONFIG = {
 (function () {
   'use strict';
   const FT = window.FT, $ = FT.$, esc = FT.esc;
-  const st = { ano: null, mes: null, visao: 'mes', zeradas: false, abertos: {}, manuais: {} };
+  const st = { ano: null, mes: null, visao: 'mes', zeradas: false, abertos: {}, manuais: {}, taxas: {}, formas: [] };
   const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const k = function (s) { return FT.semAcento(s); };
 
@@ -10881,6 +10883,19 @@ window.FT_CONFIG = {
     return 59;
   }
 
+  /* ---------- taxas das operadoras (estimadas pelas formas de pagamento do Sischef) ---------- */
+  const TAXAS_PADRAO = { credito: 0, debito: 0, voucher: 0, pix: 0 };
+  function tipoForma(f) {
+    const t = k(f);
+    if (/CREDITO/.test(t)) return 'credito';
+    if (/DEBITO/.test(t)) return 'debito';
+    if (/VALE|VOUCHER|TICKET|ALELO|SODEXO|PLUXEE|VR |VR$|\bVA\b|BEN |FLASH|CAJU/.test(t)) return 'voucher';
+    if (/PIX/.test(t)) return 'pix';
+    if (/CARTAO|MAQUIN|POS\b/.test(t)) return 'credito';
+    return null; // dinheiro, contas a receber, não informado...
+  }
+  const NOME_TIPO = { credito: 'crédito', debito: 'débito', voucher: 'vale-refeição/voucher', pix: 'PIX' };
+
   /* ---------- dados financeiros por mês ---------- */
   function calcularDados(ano) {
     const meses = {};
@@ -10911,6 +10926,20 @@ window.FT_CONFIG = {
       const x = meses[m];
       // sem a semana lançada na tela Pagamento 10%, usa a conta "10%" do financeiro
       if (!x.pg10 && x.dezFin) soma(x, 10, x.dezFin, 'FOLHA DE PAGAMENTO · 10% (FINANCEIRO)');
+      // taxas das operadoras: se o financeiro não tem a conta lançada no mês, calcula pelas vendas de cada forma × taxa
+      x.formas = {}; x.semForma = 0;
+      st.formas.filter(function (f) { return f.mes === m; }).forEach(function (f) {
+        const tp = tipoForma(f.forma), v = +f.valor || 0;
+        if (/NAO INFORMADO/.test(k(f.forma))) x.semForma += v;
+        if (tp) x.formas[tp] = (x.formas[tp] || 0) + v;
+      });
+      const tx = st.taxas;
+      x.cartaoEstimado = false;
+      if (!x.v[20]) ['credito', 'debito', 'pix'].forEach(function (tp) {
+        const v = x.formas[tp] || 0, t = +tx[tp] || 0;
+        if (v && t) { soma(x, 20, FT.r2(v * t / 100), 'ESTIMADO · VENDAS NO ' + NOME_TIPO[tp].toUpperCase() + ' ' + FT.moeda(v) + ' × ' + FT.num2(t) + '%'); x.cartaoEstimado = true; }
+      });
+      if (!x.v[23] && x.formas.voucher && +tx.voucher) soma(x, 23, FT.r2(x.formas.voucher * tx.voucher / 100), 'ESTIMADO · VENDAS EM VALE/VOUCHER ' + FT.moeda(x.formas.voucher) + ' × ' + FT.num2(+tx.voucher) + '%');
       const man = st.manuais[m] || {};
       MANUAIS.forEach(function (r) { if (+man[r] && r !== 7) soma(x, r, +man[r], 'LANÇADO À MÃO'); });
       x.v[7] = +man[7] || st.nFunc; x.funcManual = !!+man[7];
@@ -10926,8 +10955,8 @@ window.FT_CONFIG = {
     d.fat = g(6);
     d.ded = s(10, 11); d.liq = d.fat - d.ded;
     d.cmv = g(13);
-    d.entreg = g(14); d.musica = s(15, 16, 18, 19); d.tarifas = s(20, 21, 23); d.impostos = g(24);
-    d.outrosCV = d.tarifas + d.impostos + d.entreg + d.musica;
+    d.entreg = g(14); d.musica = s(15, 16, 18, 19); d.cartao = g(20); d.tarifas = s(21, 23); d.impostos = g(24);
+    d.outrosCV = d.cartao + d.tarifas + d.impostos + d.entreg + d.musica;
     d.cv = d.cmv + d.outrosCV;
     d.mc = d.fat - d.cv;                       // planilha: Faturamento bruto − custos variáveis
     d.cmo = s(26, 27, 28, 29, 30, 31, 32, 33, 34, 36);
@@ -10955,7 +10984,8 @@ window.FT_CONFIG = {
     ['grp', 'Custo da Mercadoria Vendida (CMV)', 'cmv', [13]],
     ['grp', 'Entregadores', 'entreg', [14]],
     ['grp', 'Música ao vivo / Royalties', 'musica', [15, 16, 18, 19]],
-    ['grp', 'Tarifas de Cartões / Marketplaces', 'tarifas', [20, 21, 23]],
+    ['grp', 'Taxas das operadoras de cartão (crédito e débito)', 'cartao', [20], 'sempre'],
+    ['grp', 'Marketplaces e vouchers (iFood, vale-refeição)', 'tarifas', [21, 23]],
     ['grp', 'Impostos sob vendas', 'impostos', [24]],
     ['tot', 'Margem de Contribuição (Bruta)', 'mc'],
     ['sec', 'Despesas Fixas (-)', 'df'],
@@ -10972,7 +11002,7 @@ window.FT_CONFIG = {
   function montar() {
     $('#tela-dre').innerHTML =
       '<div class="cab-tela"><div><h1>DRE Simplificado</h1><p>No modelo da planilha "DRE Simplificado": cada linha da aba Dados financeiros vem das vendas do Sischef, das contas a pagar e da tela Pagamento 10%. O que o sistema não tem você lança à mão.</p></div>' +
-      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="dre-manual">Lançar valores à mão</button><button type="button" class="btn btn-sec" id="dre-excel">Baixar Excel</button><button type="button" class="btn" id="dre-pdf">Baixar PDF</button></div></div>' +
+      '<div class="acoes-linha"><button type="button" class="btn btn-sec" id="dre-taxas">Taxas da maquininha</button><button type="button" class="btn btn-sec" id="dre-manual">Lançar valores à mão</button><button type="button" class="btn btn-sec" id="dre-excel">Baixar Excel</button><button type="button" class="btn" id="dre-pdf">Baixar PDF</button></div></div>' +
       '<div class="barra"><div class="nav-semana"><button type="button" class="btn-icone" id="dre-ant" aria-label="Ano anterior">‹</button><div class="nav-semana-t"><span>Ano</span><b id="dre-ano"></b></div><button type="button" class="btn-icone" id="dre-prox" aria-label="Próximo ano">›</button></div>' +
       '<div class="segmentado" role="group" aria-label="Colunas" id="dre-visao"><button type="button" data-v="mes" aria-pressed="true">Mensal</button><button type="button" data-v="tri" aria-pressed="false">Trimestral</button></div>' +
       '<label class="switch"><input type="checkbox" id="dre-zeradas"> Mostrar linhas zeradas</label>' +
@@ -10985,9 +11015,16 @@ window.FT_CONFIG = {
       '<li><b>Faturamento</b>: vendas do Sischef já sem os descontos, com taxa de serviço e taxa de entrega. Um mês só aparece depois de importar os pedidos dele.</li>' +
       '<li><b>Taxa de serviço repassada, entregas e diárias</b>: da tela Pagamento 10%. Se o mês não tiver semanas lançadas lá, usa a conta "10%" do financeiro.</li>' +
       '<li><b>Despesas</b>: relatório de contas a pagar, pela data de vencimento, inclusive CAIXA DINHEIRO. CMV = compras de mercadoria, bebidas e hortifruti do mês.</li>' +
+      '<li><b>Taxas das operadoras de cartão</b>: a operadora desconta antes de depositar, então não vem das contas a pagar. O sistema calcula pelas vendas no crédito e no débito do Sischef × as taxas informadas em "Taxas da maquininha". Se o mês tiver a conta Bancário · Taxas cartão lançada, vale o financeiro.</li>' +
       '<li><b>Fora</b>: acertos de saldo e de estoque, sangria, fechamento de caixa, empréstimo a funcionário e "descontos concedidos" do banco (o desconto já sai do faturamento).</li>' +
       '<li><b>Nº de funcionários</b>: os ativos no cadastro hoje. Para um mês passado, lance o número certo à mão.</li>' +
       '<li>Clique em uma linha para ver as contas que formam o valor. É uma visão de gestão; a DRE oficial continua com a contabilidade.</li></ul></div>' +
+      '<dialog id="dlg-dre-tx" aria-labelledby="h-dre-tx"><form class="dlg form" id="dre-tx-form" novalidate><h2 id="h-dre-tx">Taxas das operadoras de cartão</h2>' +
+      '<p>A operadora desconta a taxa antes de depositar, por isso ela não aparece nas contas a pagar. O sistema calcula: vendas de cada forma de pagamento no Sischef × a taxa. Use a taxa média do seu contrato (com antecipação, se tiver).</p>' +
+      '<div class="dre-man-grade">' + ['credito', 'debito', 'voucher', 'pix'].map(function (tp) { return '<label for="dre-tx-' + tp + '">Taxa no ' + NOME_TIPO[tp] + ' (%)<input id="dre-tx-' + tp + '" inputmode="decimal" placeholder="0,00"></label>'; }).join('') + '</div>' +
+      '<p class="dica">Se em algum mês a taxa estiver lançada no financeiro (Bancário · Taxas cartão), vale o valor do financeiro e a estimativa não é usada.</p>' +
+      '<p class="erro-form" id="dre-tx-erro" role="alert"></p>' +
+      '<div class="dlg-acoes"><span class="espaco"></span><button type="button" class="btn btn-sec" id="dre-tx-cancelar">Cancelar</button><button type="submit" class="btn">Salvar</button></div></form></dialog>' +
       '<dialog id="dlg-dre-man" aria-labelledby="h-dre-man"><form class="dlg form" id="dre-man-form" novalidate><h2 id="h-dre-man">Valores lançados à mão</h2>' +
       '<p>Linhas da planilha que o sistema não tem. O valor é somado ao do sistema (se houver). Deixe em branco o que não se aplica.</p>' +
       '<label for="dre-man-mes">Mês<select id="dre-man-mes"></select></label><div class="dre-man-grade" id="dre-man-campos"></div>' +
@@ -11011,6 +11048,10 @@ window.FT_CONFIG = {
       const c = e.target.closest('[data-col]'); if (c && c.dataset.col.length === 7) { st.mes = c.dataset.col; desenhar(); }
     });
     $('#dre-manual').addEventListener('click', abrirManual);
+    $('#dre-taxas').addEventListener('click', abrirTaxas);
+    $('#dre-tx-cancelar').addEventListener('click', function () { $('#dlg-dre-tx').close(); });
+    $('#dre-tx-form').addEventListener('submit', salvarTaxas);
+    $('#dre-msg').addEventListener('click', function (e) { if (e.target.closest('[data-taxas]')) abrirTaxas(); });
     $('#dre-man-mes').addEventListener('change', desenharManual);
     $('#dre-man-cancelar').addEventListener('click', function () { $('#dlg-dre-man').close(); });
     $('#dre-man-form').addEventListener('submit', salvarManual);
@@ -11026,7 +11067,9 @@ window.FT_CONFIG = {
         st.ind ? Promise.resolve(st.ind) : FT.store.indicadores.carregar(),
         FT.store.fluxo.carregar(ano + '-01-01', ano + '-12-31'),
         FT.store.funcionarios.listar(),
-        FT.store.config.ler('dre_manuais')
+        FT.store.config.ler('dre_manuais'),
+        FT.store.config.ler('taxas_cartao'),
+        FT.store.vendasFormas(ano).catch(function (e) { st.erroFormas = FT.textoErro(e); return []; })
       ]);
       st.ind = r[0];
       const doAno = function (x) { return String(x.data).slice(0, 4) === String(ano); };
@@ -11035,6 +11078,8 @@ window.FT_CONFIG = {
       st.fluxo = (r[1].resumo || []).filter(doAno);
       st.nFunc = (r[2] || []).filter(function (f) { return f.ativo !== false; }).length;
       st.manuais = r[3] || {};
+      st.taxas = Object.assign({}, TAXAS_PADRAO, r[4] || {});
+      st.formas = r[5] || [];
       recalcular();
     } catch (e) { FT.aviso('Não consegui montar a DRE: ' + FT.textoErro(e), true); }
   }
@@ -11085,6 +11130,11 @@ window.FT_CONFIG = {
       const tela = (x.det[10] ? Object.values(x.det[10]).reduce(function (a, b) { return a + b; }, 0) : 0) + (x.v[14] || 0) + Object.keys(x.det[27] || {}).filter(function (z) { return /^PAGAMENTO 10%/.test(z); }).reduce(function (a, z) { return a + x.det[27][z]; }, 0);
       if (Math.abs(tela - x.dezFin) > Math.max(50, x.dezFin * 0.1)) av.push('<b>' + rotMes(m) + '</b>: a tela Pagamento 10% soma ' + moeda(tela) + ' e a conta "10%" do financeiro ' + moeda(x.dezFin) + '. A DRE usa a tela Pagamento 10%: confira se todas as semanas do mês foram lançadas lá.');
     });
+    const semTaxa = ms.filter(function (m) { return !d[m].v[20]; });
+    if (st.erroFormas) av.push('Para calcular as taxas de cartão, rode no Supabase o arquivo <b>supabase-atualizacao-19-formas-pagamento.sql</b>.');
+    else if (semTaxa.length && !['credito', 'debito'].some(function (tp) { return +st.taxas[tp]; })) av.push('A linha <b>Taxas das operadoras de cartão</b> está zerada. <button type="button" class="link" data-taxas>Informe as taxas da maquininha</button> para o sistema calcular pelas vendas no crédito e no débito.');
+    const semFormas = ms.filter(function (m) { return d[m].semForma > d[m].vendas * 0.5; });
+    if (!st.erroFormas && semFormas.length) av.push('Em <b>' + semFormas.map(rotMes).join(', ') + '</b> as vendas estão sem forma de pagamento (importadas antes da atualização 13). Importe de novo o relatório de pedidos desses meses para calcular as taxas de cartão.');
     if (semContas.length) av.push('Sem contas a pagar importadas em <b>' + semContas.map(rotMes).join(', ') + '</b>: as despesas desses meses estão faltando.');
     $('#dre-msg').hidden = !av.length; $('#dre-msg').innerHTML = av.join('<br>');
     if (!ms.length) { $('#dre-tab').innerHTML = ''; $('#dre-kpis').innerHTML = ''; $('#dre-ind').innerHTML = ''; return; }
@@ -11113,7 +11163,7 @@ window.FT_CONFIG = {
     const linhaVisivel = function (r) { return st.zeradas || cols.some(function (c) { return c.v[r]; }); };
     ESTR.forEach(function (e) {
       const tipo = e[0], chave = e[2], linhas = e[3];
-      if (tipo === 'grp' && !st.zeradas && !cols.some(function (c) { return c.d[chave]; })) return;
+      if (tipo === 'grp' && e[4] !== 'sempre' && !st.zeradas && !cols.some(function (c) { return c.d[chave]; })) return;
       const temAbrir = tipo === 'grp' && linhas && linhas.some(linhaVisivel);
       const aberto = st.abertos[chave];
       const cls = tipo === 'tot' ? 'linha-forte' + (e[4] === 'final' ? ' dre-final' : '') : tipo === 'sec' ? 'dre-sec' : 'dre-grupo';
@@ -11175,6 +11225,23 @@ window.FT_CONFIG = {
     return pct(z[chave], z.liq);
   }
 
+  /* ---------- taxas ---------- */
+  function abrirTaxas() {
+    ['credito', 'debito', 'voucher', 'pix'].forEach(function (tp) { $('#dre-tx-' + tp).value = +st.taxas[tp] ? FT.num2(+st.taxas[tp]) : ''; });
+    $('#dre-tx-erro').textContent = ''; $('#dlg-dre-tx').showModal();
+  }
+  async function salvarTaxas(e) {
+    e.preventDefault();
+    const t = {}; let erro = '';
+    ['credito', 'debito', 'voucher', 'pix'].forEach(function (tp) {
+      const v = $('#dre-tx-' + tp).value.trim(); const n = v ? parseFloat(v.replace(',', '.')) : 0;
+      if (!isFinite(n) || n < 0 || n > 20) erro = 'Taxa inválida no ' + NOME_TIPO[tp] + ' (use, por exemplo, 3,19).'; t[tp] = n;
+    });
+    if (erro) { $('#dre-tx-erro').textContent = erro; return; }
+    try { await FT.store.config.salvar('taxas_cartao', t); st.taxas = t; $('#dlg-dre-tx').close(); FT.aviso('Taxas da maquininha salvas.'); recalcular(); }
+    catch (x) { $('#dre-tx-erro').textContent = 'Não consegui salvar: ' + FT.textoErro(x); }
+  }
+
   /* ---------- lançamentos à mão ---------- */
   function abrirManual() {
     const sel = $('#dre-man-mes');
@@ -11221,18 +11288,98 @@ window.FT_CONFIG = {
     });
     const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 62 }].concat(nomes.map(function () { return { wch: 13 }; }));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Dados financeiros');
-    // aba 2: DRE calculada
-    const cols = st.cols || colunas();
-    const d2 = [['DRE Simplificado ' + st.ano].concat(cols.map(function (c) { return c.rot.toUpperCase(); }))];
-    ESTR.forEach(function (e) {
-      const ch = e[2], neg = e[0] === 'grp' || e[0] === 'sec';
-      d2.push([(e[0] === 'tot' ? '' : '  ') + e[1]].concat(cols.map(function (c) { return r2((neg ? -1 : 1) * c.d[ch]); })));
-      if (e[0] === 'grp' && e[3]) e[3].forEach(function (r) { if (cols.some(function (c) { return c.v[r]; })) d2.push(['      ' + L[r]].concat(cols.map(function (c) { return r2(-(c.v[r] || 0)); }))); });
+    // aba 2: DRE Simplificada no mesmo layout da planilha (cada mês com a coluna AV) + total e média do ano
+    const ms = mesesAno.filter(function (m) { return st.dados[m].vendas > 0; });
+    const colsX = mesesAno.map(function (m, i) { return { rot: nomes[i], meses: st.dados[m].vendas > 0 ? [m] : [] }; });
+    colsX.push({ rot: 'Total do ano', meses: ms }); colsX.push({ rot: 'Média do ano', meses: ms, media: true });
+    colsX.forEach(function (c) {
+      const v = {};
+      c.meses.forEach(function (m) { Object.keys(st.dados[m].v).forEach(function (r) { if (+r !== 7) v[r] = (v[r] || 0) + st.dados[m].v[r]; }); });
+      v[7] = c.meses.length ? Math.round(c.meses.reduce(function (a, m) { return a + (st.dados[m].v[7] || 0); }, 0) / c.meses.length) : 0;
+      if (c.media && c.meses.length) Object.keys(v).forEach(function (r) { if (+r !== 7) v[r] = v[r] / c.meses.length; });
+      c.d = c.meses.length ? dre(v) : null; c.v = v;
     });
-    d2.push([]); d2.push(['Indicadores']);
-    [['Ponto de equilíbrio', 'pe'], ['Ponto de equilíbrio econômico', 'peEco'], ['Número de funcionários', 'func'], ['Produtividade (fat./funcionário)', 'produt']].forEach(function (i) { d2.push([i[0]].concat(cols.map(function (c) { return c.d[i[1]] == null ? null : r2(c.d[i[1]]); }))); });
-    [['Margem de contribuição %', 'mc'], ['CMV %', 'cmv'], ['CMO %', 'cmo'], ['Ocupação %', 'ocup'], ['Marketing %', 'mkt'], ['Resultado operacional %', 'ro']].forEach(function (i) { d2.push([i[0]].concat(cols.map(function (c) { return c.d.liq ? Math.round(c.d[i[1]] / c.d.liq * 1000) / 10 : null; }))); });
-    const ws2 = XLSX.utils.aoa_to_sheet(d2); ws2['!cols'] = [{ wch: 66 }].concat(cols.map(function () { return { wch: 14 }; }));
+    // [rótulo, valor(d, v), base do AV(d) ou null, negrito]
+    const Lv = function (r) { return function (d, v) { return v[r] || 0; }; };
+    const D = function (k) { return function (d) { return d[k]; }; };
+    const liq = function (d) { return d.liq; };
+    const RX = [
+      ['Faturamento Bruto: total salão + delivery', D('fat'), liq, 1],
+      ['Deduções', D('ded'), function (d) { return d.fat; }, 1],
+      [L[10], Lv(10), function (d) { return d.ded; }],
+      [L[11], Lv(11), function (d) { return d.ded; }],
+      ['Faturamento Líquido', D('liq'), liq, 1],
+      [],
+      ['Custos Variáveis (-)', D('cv'), liq, 1],
+      ['Custo da Mercadoria Vendida (CMV)', D('cmv'), liq, 1],
+      ['Outros Custos Variáveis', D('outrosCV'), liq, 1],
+      ['Entregadores', D('entreg'), function (d) { return d.outrosCV; }],
+      [L[14], Lv(14), liq],
+      ['Música ao vivo/Royalties', D('musica'), liq],
+      [L[15], Lv(15), liq], [L[16], Lv(16), liq], [L[18], Lv(18), liq], [L[19], Lv(19), liq],
+      ['Tarifas de Cartões/Marketplaces (ifood, aiqfome)', function (d) { return d.cartao + d.tarifas; }, liq, 1],
+      [L[20], Lv(20), liq, 1], [L[21], Lv(21), liq], [L[23], Lv(23), liq],
+      ['Impostos sob vendas', D('impostos'), function (d) { return d.fat; }, 1],
+      [L[24], Lv(24), function (d) { return d.fat; }],
+      [],
+      ['Margem de Contribuição (Bruta)', D('mc'), liq, 1],
+      [],
+      ['Despesas Fixas (-)', D('df'), liq, 1],
+      ['CMO - Custo de Mão de Obra', D('cmo'), liq, 1]
+    ].concat([26, 27, 28, 29, 30, 31, 32, 33, 34, 36].map(function (r) { return [L[r], Lv(r), liq]; }))
+     .concat([['Ocupação', D('ocup'), liq, 1]]).concat([38, 39, 40].map(function (r) { return [L[r], Lv(r), liq]; }))
+     .concat([['Marketing', D('mkt'), liq, 1]]).concat([42, 22, 43].map(function (r) { return [L[r], Lv(r), liq]; }))
+     .concat([['Outros Custos Fixos', D('outrosCF'), liq, 1]]).concat([45, 46, 35, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62].map(function (r) { return [L[r], Lv(r), liq]; }))
+     .concat([[],
+      ['Resultado Operacional 1 (Bruto)', D('ro'), liq, 1],
+      ['Saídas Não operacionais'],
+      ['Despesas com sócios ou investimentos', D('naoOp'), liq, 1]])
+     .concat([64, 65, 66, 67, 68, 69].map(function (r) { return [L[r], Lv(r), function (d) { return d.naoOp; }]; }))
+     .concat([
+      ['Sobra "CAIXA"', D('sobra'), liq, 1],
+      [],
+      ['Indicadores', null, null, 1],
+      ['Ponto de Equilíbrio', D('pe'), null],
+      ['Ponto de Equilíbrio Econômico', D('peEco'), null],
+      ['Número de funcionários totais', D('func'), null],
+      ['Despesas Fixas totais', D('df'), liq],
+      ['Margem de Contribuição (referência 45 - 60%)', D('mc'), liq],
+      ['CMV (depende do CMO)', D('cmv'), liq],
+      ['CMO (depende do CMV)', D('cmo'), liq],
+      ['Prime cost (CMV + CMO) (referência 50 - 60%)', function (d) { return d.cmv + d.cmo; }, liq],
+      ['Produtividade (Fat./n° funcionário) (referência R$ 10 a R$ 20 mil)', D('produt'), null],
+      ['Marketing', D('mkt'), liq],
+      ['Ocupação (referência 5 - 7%; 10% em shopping)', D('ocup'), liq],
+      ['Taxas das operadoras de cartão', D('cartao'), liq],
+      [L[17], D('couvert'), null],
+      ['Saldo gasto de banda', D('saldoBanda'), null],
+      ['Resultado Operacional (referência 10 - 15%)', D('ro'), liq],
+      ['Saídas não operacionais', D('naoOp'), liq],
+      ['"Sobra" (+) ou "Falta" (-) de caixa', D('sobra'), liq]
+    ]);
+    const cab = ['DRE Simplificado ' + st.ano];
+    colsX.forEach(function (c) { cab.push(c.rot, 'AV'); });
+    const d2 = [cab];
+    RX.forEach(function (row) {
+      if (!row.length) { d2.push([]); return; }
+      const linha = [row[0]];
+      colsX.forEach(function (c) {
+        if (!row[1] || !c.d) { linha.push(null, null); return; }
+        const val = row[1](c.d, c.v);
+        const base = row[2] ? row[2](c.d) : null;
+        linha.push(val == null ? null : r2(val), base ? Math.round(val / base * 10000) / 10000 : null);
+      });
+      d2.push(linha);
+    });
+    const ws2 = XLSX.utils.aoa_to_sheet(d2);
+    ws2['!cols'] = [{ wch: 66 }].concat(colsX.reduce(function (a) { return a.concat([{ wch: 13 }, { wch: 8 }]); }, []));
+    ws2['!freeze'] = { xSplit: 1, ySplit: 1 };
+    // formatos: valores em R$ e AV em %
+    for (let R = 1; R < d2.length; R++) for (let Cc = 1; Cc < cab.length; Cc++) {
+      const ref = XLSX.utils.encode_cell({ r: R, c: Cc }), cel = ws2[ref]; if (!cel || cel.t !== 'n') continue;
+      const rot = String(d2[R][0] || '');
+      cel.z = Cc % 2 === 0 ? '0.0%' : (/funcionários totais/.test(rot) ? '0' : '#,##0.00');
+    }
     XLSX.utils.book_append_sheet(wb, ws2, 'DRE Simplificada');
     XLSX.writeFile(wb, 'dre_simplificado_' + st.ano + '.xlsx');
   }
